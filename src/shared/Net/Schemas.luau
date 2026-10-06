@@ -59,7 +59,10 @@ local Schemas: { [string]: { Validator } } = {
 	Claim = { V.oneOf({ "gift", "streak", "quest", "offline", "trail", "weekly" }), V.int(0, 64) },
 	Frontier = {},
 	ShopBuy = { V.str(32), V.int(1, 10) },
-	Equip = { V.oneOf({ "lassoTrail", "horse", "ranchTheme", "poster", "hat", "title" }), V.str(32) },
+	Equip = {
+		V.oneOf({ "lassoTrail", "horse", "ranchTheme", "poster", "hat", "title", "companion" }),
+		V.str(32),
+	},
 	Setting = {
 		V.oneOf({ "Quality", "Music", "Sfx", "Voice", "ReducedFx", "QuickReveal" }),
 		function(value: any): boolean

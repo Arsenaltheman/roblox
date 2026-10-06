@@ -49,6 +49,26 @@ return function()
 			check.equal(Economy.multiplier({ frontier = 2, passes = { DoubleCash = true, VIP = true } }), 9)
 		end)
 
+		test.case("a companion adds a free boost by rarity, inside the free cap", function()
+			local none = Economy.multiplier({ frontier = 0, passes = {} })
+			local common = Economy.multiplier({ frontier = 0, passes = {}, companion = { tier = 1 } })
+			local secret = Economy.multiplier({ frontier = 0, passes = {}, companion = { tier = 40 } })
+			check.is_true(common > none)
+			check.is_true(near(common, 1.03))
+			check.is_true(near(secret, 1.24))
+			check.is_true(near(Economy.companionBoost({ tier = 13, mutation = "Gold" }), 0.12))
+			check.equal(Economy.companionBoost(nil), 0)
+			-- Friends + event already hit the cap; the companion can't push past it.
+			local capped = Economy.multiplier({
+				frontier = 0,
+				passes = {},
+				friends = 3,
+				eventActive = true,
+				companion = { tier = 40, mutation = "Rainbow" },
+			})
+			check.is_true(near(capped, 2.3))
+		end)
+
 		test.case("ranch income sums critters with mutations", function()
 			local income = Economy.ranchIncome({
 				{ tier = 1 },

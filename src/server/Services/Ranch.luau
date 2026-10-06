@@ -137,7 +137,19 @@ function Ranch.context(player: Player): Economy.IncomeContext
 		timedDoubleCash = Registry.Monetization.timedBoostActive(player, "DoubleCash"),
 		incomeScale = Registry.LiveConfig.get("econ.incomeScale"),
 		almanacSets = if d then Almanac.completedSets(d.Almanac) else 0,
+		companion = Ranch.companion(player),
 	}
+end
+
+-- The equipped companion's tier and mutation (nil when none, gone or being carried off).
+function Ranch.companion(player: Player): { tier: number, mutation: string? }?
+	local d = Registry.Data.get(player)
+	local cid = if d then d.Equipped.companion else nil
+	local critter = if d and cid then d.Critters[cid] else nil
+	if not critter or critter.it then
+		return nil
+	end
+	return { tier = critter.tier, mutation = critter.m }
 end
 
 -- Current income per second.
@@ -386,6 +398,10 @@ function Ranch.removeCritter(player: Player, cid: string): Profile.Critter?
 	if critter.p > 0 then
 		syncPad(player, critter.p)
 	end
+	if d.Equipped.companion == cid then
+		-- applyEquipped drops a companion whose critter is gone and clears its attributes.
+		Registry.Shop.applyEquipped(player)
+	end
 	Registry.Ui.pushState(player)
 	return critter
 end
@@ -598,6 +614,9 @@ local function frontier(player: Player)
 		if not critter.br and not critter.it then
 			d.Critters[cid] = nil
 		end
+	end
+	if d.Equipped.companion and not d.Critters[d.Equipped.companion] then
+		Registry.Shop.applyEquipped(player)
 	end
 	local spent = d.Cash
 	d.Cash = 0

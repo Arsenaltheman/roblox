@@ -22,6 +22,9 @@ return {
 	eventBoost = 1.0,
 	-- Each completed Almanac rarity set adds this much income, for good (earned, never sold).
 	almanacSetBonus = 0.05,
+	-- A companion critter following you adds this per rarity step (Common 3% .. Secret 24%), plus one
+	-- extra step when it is mutated. Free boost: counts toward freeBoostCap.
+	companionBoostPerRarity = 0.03,
 	paidMultipliers = {
 		DoubleCash = 2,
 		VIP = 1.5,

@@ -24,6 +24,7 @@ local ORDER = {
 	"Looks",
 	"Ambience",
 	"BanditCampView",
+	"Companion",
 	"Intro",
 }
 local loaded = {}

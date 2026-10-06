@@ -7,6 +7,7 @@ local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
 
 local Cosmetics = require("@game/ReplicatedStorage/Shared/Config/Cosmetics")
+local Profile = require("@game/ReplicatedStorage/Shared/Sim/Profile")
 local Rng = require("@game/ReplicatedStorage/Shared/Sim/Rng")
 local Net = require("@game/ReplicatedStorage/Shared/Net/Net")
 local Registry = require("../Registry")
@@ -97,14 +98,31 @@ function Shop.grantRandomCosmetic(player: Player, rng: any): string?
 	return pick.id
 end
 
+-- The companion slot holds a critter id, not a cosmetic. Drops it when that critter is gone
+-- (sold, stolen, Frontier reset) or being carried off, and publishes its look for other clients.
+local function applyCompanion(player: Player, d: Profile.Data)
+	local cid = d.Equipped.companion
+	local critter = if cid then d.Critters[cid] else nil
+	if cid and (not critter or critter.it) then
+		(d.Equipped :: { [string]: string? }).companion = nil
+		critter = nil
+	end
+	player:SetAttribute("Equip_companion", if critter then critter.s else nil)
+	player:SetAttribute("CompanionTier", if critter then critter.tier else nil)
+	player:SetAttribute("CompanionMutation", if critter then (critter.m or "") else nil)
+end
+
 -- Publishes equipped cosmetics as attributes so every client can render them.
 function Shop.applyEquipped(player: Player)
 	local d = Registry.Data.get(player)
 	if not d then
 		return
 	end
+	applyCompanion(player, d)
 	for slot, id in d.Equipped do
-		player:SetAttribute("Equip_" .. slot, id)
+		if slot ~= "companion" then
+			player:SetAttribute("Equip_" .. slot, id)
+		end
 	end
 	if Registry.Monetization.owns(player, "VIP") and not d.Equipped.lassoTrail then
 		player:SetAttribute("Equip_lassoTrail", "trail_gold")
@@ -123,6 +141,13 @@ local function equip(player: Player, slot: string, id: string)
 		d.Equipped[slot] = nil
 		-- applyEquipped only sets slots that are still equipped, so clear this one for everyone.
 		player:SetAttribute("Equip_" .. slot, nil)
+	elseif slot == "companion" then
+		-- One of your own critters (any pen, Branded too), as long as a thief isn't carrying it.
+		local critter = d.Critters[id]
+		if not critter or critter.it then
+			return
+		end
+		d.Equipped.companion = id
 	else
 		local cosmetic = Cosmetics.byId[id]
 		local vipTrail = id == "trail_gold" and Registry.Monetization.owns(player, "VIP")

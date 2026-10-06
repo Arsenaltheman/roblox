@@ -785,6 +785,7 @@ end
 function Components.mascot(props: {
 	species: string,
 	tier: number?,
+	mutation: string?,
 	size: UDim2,
 	position: UDim2,
 	anchor: Vector2?,
@@ -805,7 +806,7 @@ function Components.mascot(props: {
 			local viewport = instance :: ViewportFrame
 			local world = Instance.new("WorldModel")
 			world.Parent = viewport
-			local model = CritterRig.build(props.species, props.tier or 5, nil, 2, 3)
+			local model = CritterRig.build(props.species, props.tier or 5, props.mutation, 2, 3)
 			model.Parent = world
 			local camera = Instance.new("Camera")
 			camera.FieldOfView = 30
