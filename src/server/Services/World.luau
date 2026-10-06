@@ -145,7 +145,6 @@ end
 local function buildTerrain()
 	local terrain = Workspace.Terrain
 	terrain:Clear()
-	terrain.Decoration = false -- animated grass costs frames on phones
 	-- Base sand layer. Its surface sits ~1 stud BELOW y = 0 so the town's floors, pens and plates
 	-- (built at y = 0) always show on top of it instead of being swallowed.
 	terrain:FillBlock(CFrame.new(0, -7, 75), Vector3.new(960, 12, 960), Enum.Material.Sand)
@@ -841,18 +840,26 @@ function World.init()
 	end
 	local town = Instance.new("Folder")
 	town.Name = "Town"
-	buildGround(town)
-	buildTrack(town)
-	buildStation(town)
+	-- Gameplay pieces first; each decorative step is isolated so a failure in one (an engine API
+	-- change, a bad terrain call) can never stop the town from appearing. Failures are logged.
+	local function step(name: string, fn: (Instance) -> ())
+		local ok, err = pcall(fn :: any, town)
+		if not ok then
+			warn(`[World] {name} failed: {err}`)
+		end
+	end
+	step("ground", buildGround)
+	step("track", buildTrack)
+	step("station", buildStation)
 	local ranches = Instance.new("Folder")
 	ranches.Name = "Ranches"
 	for _, info in Layout.ranches do
 		buildRanch(ranches, info)
 	end
 	ranches.Parent = town
-	buildLandmarks(town)
-	buildScenery(town)
-	buildZones(town)
+	step("landmarks", buildLandmarks)
+	step("scenery", buildScenery)
+	step("zones", buildZones)
 	town.Parent = Workspace
 end
 
