@@ -79,6 +79,12 @@ local Schemas: { [string]: { Validator } } = {
 	BuyBoots = {},
 	SpinWheel = {},
 	HitBoss = {},
+	TradeInvite = { V.int(-1e12, 1e12) }, -- target userId
+	TradeRespond = { V.int(-1e12, 1e12), V.bool() }, -- inviter userId, accept
+	TradeOffer = { critterId, V.bool() }, -- critter id, include
+	TradeNuggets = { V.int(0, 1e9) },
+	TradeReady = { V.bool() },
+	TradeCancel = {},
 	GetOdds = { V.oneOf({ "wild", "reserved", "mutations", "egg", "species" }) },
 }
 

@@ -24,6 +24,7 @@ local ORDER = {
 	"Heist",
 	"Wheel",
 	"Gear",
+	"Trade",
 	"Shop",
 	"LiveOps",
 	"Boss",

@@ -30,6 +30,12 @@ local Store = {
 	trainCycle = source(-1),
 	activeMinutes = source(0),
 	grab = source(nil :: { started: number, duration: number }?),
+	-- Open trade window view from the server (nil = not trading), see server/Services/Trade.luau.
+	trade = source(nil :: any),
+	-- Pending incoming trade invite.
+	tradeInvite = source(nil :: { from: number, expires: number }?),
+	-- Server time, ticked while a trade is open (countdowns).
+	serverClock = source(0),
 }
 
 local nextId = 0
