@@ -662,14 +662,13 @@ end
 -- they share a server in the next 7 days; catching them with the lasso pays double.
 local BOUNTY_SECONDS = 10 * 60
 
-local function clearBounty(target: Player)
+-- Paid out: only the collector's saved bounty goes; other victims' bounties on the thief stand.
+local function clearBounty(collector: Player, target: Player)
 	bountyMark[target] = nil
 	target:SetAttribute("Bounty", nil)
-	for _, p in Players:GetPlayers() do
-		local d = Registry.Data.get(p)
-		if d then
-			d.Bounties[tostring(target.UserId)] = nil
-		end
+	local d = Registry.Data.get(collector)
+	if d then
+		d.Bounties[tostring(target.UserId)] = nil
 	end
 end
 
@@ -859,7 +858,7 @@ local function lasso(player: Player, targetUserId: number)
 			"golden"
 		)
 		Registry.Ui.fx(player, "collect", reward)
-		clearBounty(target)
+		clearBounty(player, target)
 	end
 	applySpeed(target)
 end

@@ -165,8 +165,11 @@ function ProgressionService.restoreStreak(player: Player, free: boolean): boolea
 	local p = pending[player]
 	if p then
 		p.broken = nil
-		p.streakSlot = Streak.slotFor(d.Streak.count)
-		d.Stats.PendingStreakSlot = p.streakSlot :: number
+		-- Today's reward moves to the restored slot, unless it was already claimed today (no double dip).
+		if (d.Stats.StreakClaimedDay or -1) ~= Streak.dayOf(os.time()) then
+			p.streakSlot = Streak.slotFor(d.Streak.count)
+			d.Stats.PendingStreakSlot = p.streakSlot :: number
+		end
 	end
 	Registry.Ui.toast(player, `Streak restored! Day {d.Streak.count}. Your reward is waiting.`)
 	Registry.Ui.fx(player, "boost", 0)
@@ -262,6 +265,7 @@ local function claim(player: Player, what: string, index: number)
 		local reward = Progression.streak.rewards[p.streakSlot]
 		p.streakSlot = nil
 		d.Stats.PendingStreakSlot = 0
+		d.Stats.StreakClaimedDay = Streak.dayOf(os.time())
 		grantReward(player, reward.kind, reward.amount, "Streak", 300)
 		Registry.Ui.reveal(player, { kind = "streak", slot = d.Streak.count })
 		-- Every 30 days in a row: a Legendary critter and the "Regular" title.

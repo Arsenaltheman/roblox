@@ -63,7 +63,7 @@ local Schemas: { [string]: { Validator } } = {
 	Frontier = {},
 	ShopBuy = { V.str(32), V.int(1, 10) },
 	Equip = {
-		V.oneOf({ "lassoTrail", "horse", "ranchTheme", "poster", "hat", "title", "companion" }),
+		V.oneOf({ "lassoTrail", "horse", "ranchTheme", "poster", "hat", "title", "companion", "cape" }),
 		V.str(32),
 	},
 	Setting = {
