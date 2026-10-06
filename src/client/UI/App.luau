@@ -24,6 +24,7 @@ local Store = require("../Store")
 local Components = require("./Components")
 local Shop = require("./Shop")
 local Hotbar = require("./Hotbar")
+local SprintButton = require("./SprintButton")
 local EventBanner = require("./EventBanner")
 local Quests = require("./Quests")
 local Theme = require("./Theme")
@@ -1545,6 +1546,7 @@ function App.build(scale: () -> number): Instance
 			toasts(),
 			runBanner(),
 			Hotbar.build(),
+			SprintButton.build(),
 			EventBanner.build(),
 			Quests.tracker(function()
 				return (state().tutorial or 0) >= 3 and Store.menu() == ""

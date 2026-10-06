@@ -18,6 +18,7 @@ local HeistConfig = require("@game/ReplicatedStorage/Shared/Config/Heist")
 local BanditClock = require("@game/ReplicatedStorage/Shared/Sim/BanditClock")
 local Economy = require("@game/ReplicatedStorage/Shared/Sim/Economy")
 local StealRules = require("@game/ReplicatedStorage/Shared/Sim/StealRules")
+local Stamina = require("@game/ReplicatedStorage/Shared/Sim/Stamina")
 local Net = require("@game/ReplicatedStorage/Shared/Net/Net")
 local Registry = require("../Registry")
 
@@ -66,7 +67,40 @@ end
 -- Temporary speed boosts (Smoke Bomb).
 local burstUntil: { [Player]: { untilTime: number, multiplier: number } } = {}
 
--- Walk speed from Speed Boots, passes and carry state (stealing or a heist crate).
+-- Sprint stamina per player. The server owns it (the client only predicts the bar), so a client
+-- can't sprint forever: it asks to start/stop and the server drains the bar while it actually moves.
+local stamina: { [Player]: Stamina.State } = {}
+
+local function loaded(player: Player): boolean
+	return carrying[player] ~= nil or Registry.Heist.isCarrying(player)
+end
+
+local function staminaOf(player: Player): Stamina.State
+	local s = stamina[player]
+	if not s then
+		s = Stamina.new(now())
+		stamina[player] = s
+	end
+	return s
+end
+
+-- Running, not just holding the key: standing still (or stunned in place) doesn't drain stamina.
+local function moving(player: Player): boolean
+	local r = root(player)
+	if not r then
+		return false
+	end
+	local v = r.AssemblyLinearVelocity
+	return v.X * v.X + v.Z * v.Z > 4
+end
+
+-- The client reconciles its predicted bar against these whenever the sprint starts or stops.
+local function publishSprint(player: Player, s: Stamina.State)
+	player:SetAttribute("Sprinting", s.active)
+	player:SetAttribute("Stamina", math.floor(s.value * 100 + 0.5) / 100)
+end
+
+-- Walk speed from Speed Boots, passes, carry state (stealing or a heist crate) and sprint.
 local function applySpeed(player: Player)
 	local h = humanoid(player)
 	if not h then
@@ -75,16 +109,40 @@ local function applySpeed(player: Player)
 	local d = Registry.Data.get(player)
 	local boots = if d then d.Stats.Boots or 0 else 0
 	local spurs = Registry.Monetization.owns(player, "SpeedSpurs")
-	local loaded = carrying[player] ~= nil or Registry.Heist.isCarrying(player)
-	local speed = HeistConfig.walkSpeed(boots, spurs, loaded)
+	local speed = HeistConfig.walkSpeed(boots, spurs, loaded(player))
 	local burst = burstUntil[player]
 	if burst and now() < burst.untilTime then
 		speed *= burst.multiplier
 	end
+	local s = stamina[player]
 	if now() < (stunnedUntil[player] or 0) then
 		speed = 0
+		-- A tackle or lasso ends the sprint; the player has to press again afterwards.
+		if s and s.active then
+			Stamina.advance(s, now(), false, false)
+			Stamina.set(s, now(), false)
+			publishSprint(player, s)
+		end
+	elseif s and s.active then
+		speed *= Stamina.MULTIPLIER
 	end
 	h.WalkSpeed = speed
+end
+
+-- Client holds or releases sprint (Shift / L3 / the touch button).
+local function sprint(player: Player, on: boolean)
+	local s = staminaOf(player)
+	local t = now()
+	Stamina.advance(s, t, s.active and moving(player), loaded(player))
+	if t < (stunnedUntil[player] or 0) or not humanoid(player) then
+		on = false
+	end
+	local was = s.active
+	Stamina.set(s, t, on)
+	publishSprint(player, s)
+	if s.active ~= was then
+		applySpeed(player)
+	end
 end
 
 -- Other services (Heist) change carry state or boots and ask for the speed to be recomputed.
@@ -575,11 +633,16 @@ function Steal.start()
 	Net.on("StealCancel", stealCancel)
 	Net.on("Lasso", lasso)
 	Net.on("Lockpick", lockpick)
+	Net.on("Sprint", sprint)
 
 	local function onCharacter(player: Player)
 		player.CharacterAdded:Connect(function()
 			-- Dying while carrying drops the critter home.
 			returnCarry(player, "died")
+			-- A fresh body starts with a full bar.
+			local s = Stamina.new(now())
+			stamina[player] = s
+			publishSprint(player, s)
 			task.wait()
 			applySpeed(player)
 		end)
@@ -609,11 +672,12 @@ function Steal.start()
 		end
 		grabbing[player] = nil
 		stunnedUntil[player] = nil
+		stamina[player] = nil
 		lassoReadyAt[player] = nil
 		banditReadyAt[player] = nil
 	end)
 
-	-- 10 Hz: deliveries and timeouts.
+	-- 10 Hz: deliveries, timeouts and sprint drain.
 	local accumulator = 0
 	RunService.Heartbeat:Connect(function(dt)
 		accumulator += dt
@@ -622,6 +686,13 @@ function Steal.start()
 		end
 		accumulator = 0
 		local t = now()
+		for player, s in stamina do
+			if s.active and Stamina.advance(s, t, moving(player), loaded(player)) then
+				-- Ran dry: back to normal speed until they let go and press again.
+				publishSprint(player, s)
+				applySpeed(player)
+			end
+		end
 		for thief, carry in carrying do
 			if t - carry.started > CARRY_TIMEOUT then
 				returnCarry(thief, "timeout")
