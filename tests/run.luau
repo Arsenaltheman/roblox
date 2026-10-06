@@ -25,6 +25,7 @@ local specs = {
 	"./unit/Boss.spec",
 	"./unit/Almanac.spec",
 	"./unit/Trail.spec",
+	"./unit/Season.spec",
 	"./unit/Stamina.spec",
 	"./unit/Trade.spec",
 	"./unit/Music.spec",

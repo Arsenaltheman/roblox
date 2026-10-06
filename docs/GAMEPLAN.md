@@ -59,6 +59,7 @@ Status: ✅ built · 🔨 being built now · 📅 next · 🧊 later.
 | Group-join reward | +100 Nuggets once (owner sets the group id) | ✅ |
 | Trading | Same-server escrow trading: invite a player (MORE → TRADE), up to 6 critters + Gold Nuggets per side, both READY → 5 s countdown, server swaps atomically. Frontier 1+, 7-day accounts, PolicyService-gated; Branded and Robux-luck critters excluded | ✅ |
 | Potions / boosts | 2x Cash for finishing all daily quests; Luck Potion for beating the Bandit King | ✅ |
+| Season pass (Jailbreak seasons, Clash Royale pass) | **Rail Pass:** 8-week seasons, free track 20 tiers / premium 40 (perks, a season title and the Season Stetson, never heist power), season XP from everything you already do (1,500/day cap), 4 weekly contracts (+2 with the pass), 399 R$ per season and retroactive | ✅ |
 | Image-based, chunky UI | Icon set + gold titles, stripes, mascots | ✅ (icons appear after upload) |
 
 ### The "wow" layer (our own)
@@ -91,6 +92,7 @@ Roblox only sells an item once it exists in Creator Hub, and only the owner can 
    - create each **Pass**;
    - create each **Developer Product**.
    `python3 tools/cloud/create_products.py --list` prints the exact names, prices and descriptions.
+   - create the **Rail Pass** developer product (399 R$; a product, not a pass, because it is bought again each season).
 3. Give the IDs to a Claude session, or run `python3 tools/cloud/create_products.py --set VIP=123 DoubleCash=456 ...`.
 4. **Sheriff's Club** (monthly subscription, 199 R$): Creator Hub → Monetization → **Subscriptions** → create it with the name and benefits from `--list`, then `python3 tools/cloud/create_products.py --subscription <id>`.
 5. Optional **group reward**: make a Roblox group for the game, then `python3 tools/cloud/create_products.py --group <groupId>`. Members claim +100 Nuggets once under MORE.

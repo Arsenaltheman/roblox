@@ -9,12 +9,21 @@ local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 
 local Cosmetics = require("@game/ReplicatedStorage/Shared/Config/Cosmetics")
+local SeasonConfig = require("@game/ReplicatedStorage/Shared/Config/Season")
 
 local Looks = {}
 
+-- Rail Pass cosmetics take the current season's accent so each season's set looks different.
+local function cosmeticHex(cosmetic: Cosmetics.Cosmetic): string
+	if cosmetic.id == "title_season" or cosmetic.id == "hat_season" then
+		return SeasonConfig.color(SeasonConfig.seasonOf(Workspace:GetServerTimeNow()))
+	end
+	return cosmetic.color
+end
+
 local function color(id: string?): Color3?
 	local cosmetic = id and Cosmetics.byId[id]
-	return if cosmetic then Color3.fromHex(cosmetic.color) else nil
+	return if cosmetic then Color3.fromHex(cosmeticHex(cosmetic)) else nil
 end
 
 function Looks.colorOf(player: Player?, slot: string): Color3?
@@ -64,7 +73,7 @@ local function nameTag(player: Player, character: Model)
 		stroke.Parent = l
 		l.Parent = gui
 	end
-	label(string.upper(cosmetic.name), 0, 0.42, Color3.fromHex(cosmetic.color), Enum.Font.LuckiestGuy)
+	label(string.upper(cosmetic.name), 0, 0.42, Color3.fromHex(cosmeticHex(cosmetic)), Enum.Font.LuckiestGuy)
 	label(player.DisplayName, 0.44, 0.56, Color3.new(1, 1, 1), Enum.Font.FredokaOne)
 	gui.Parent = head
 end
@@ -99,10 +108,11 @@ local function buildHat(id: string, head: BasePart): Model?
 	local hat = Instance.new("Model")
 	hat.Name = "LooksHat"
 	local flat = CFrame.Angles(0, 0, math.rad(90))
-	if id == "hat_StarterStetson" or id == "hat_sheriff" or id == "hat_club" then
+	if id == "hat_StarterStetson" or id == "hat_sheriff" or id == "hat_club" or id == "hat_season" then
 		local brown = if id == "hat_sheriff"
 			then Color3.fromRGB(226, 169, 59)
 			elseif id == "hat_club" then Color3.fromRGB(255, 200, 61)
+			elseif id == "hat_season" then color(id) or Color3.fromRGB(63, 183, 176)
 			else Color3.fromRGB(138, 90, 59)
 		hatPart(
 			hat,

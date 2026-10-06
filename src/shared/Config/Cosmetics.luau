@@ -42,6 +42,9 @@ local list: { Cosmetic } = {
 	{ id = "title_bountyhunter", slot = "title", name = "Bounty Hunter", color = "#9A5AFF" },
 	{ id = "title_legend_trail", slot = "title", name = "Living Legend", color = "#FF5FD2" },
 	{ id = "title_king", slot = "title", name = "King of the West", color = "#FFC83D" },
+	-- Rail Pass premium track (tiers 20 and 40). Colour follows the season (Config/Season.color).
+	{ id = "title_season", slot = "title", name = "Rail Baron", color = "#3FB7B0" },
+	{ id = "hat_season", slot = "hat", name = "Season Stetson", color = "#3FB7B0" },
 }
 
 local byId: { [string]: Cosmetic } = {}

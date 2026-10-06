@@ -31,6 +31,7 @@ local ORDER = {
 	"Events",
 	"Leaderboards",
 	"Trail",
+	"Season",
 	"Posse",
 	"Afk",
 }

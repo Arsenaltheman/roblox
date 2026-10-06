@@ -192,6 +192,10 @@ local function productItems(): { Item }
 					elseif product.kind == "subscription" then
 						return localPlayer:GetAttribute("Club") == true
 					end
+					if product.key == "RailPass" then
+						local season = state().season
+						return season ~= nil and season.premium == true
+					end
 					return product.key == "StarterPack" and state().starterPack == true
 				end,
 				locked = function(): string?

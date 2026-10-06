@@ -94,6 +94,8 @@ local Schemas: { [string]: { Validator } } = {
 	TradeNuggets = { V.int(0, 1e9) },
 	TradeReady = { V.bool() },
 	TradeCancel = {},
+	SeasonClaim = { V.int(0, 40), V.bool() }, -- tier (0 = every claimable tier), premium track
+	ContractClaim = { V.int(1, 6) }, -- contract slot
 	GetOdds = { V.oneOf({ "wild", "reserved", "mutations", "egg", "species" }) },
 	GetManifests = {},
 }

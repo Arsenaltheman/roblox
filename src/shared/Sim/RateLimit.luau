@@ -58,6 +58,8 @@ RateLimit.limits = {
 	TradeNuggets = { rate = 3, burst = 5 },
 	TradeReady = { rate = 2, burst = 3 },
 	TradeCancel = { rate = 1, burst = 2 },
+	SeasonClaim = { rate = 3, burst = 5 },
+	ContractClaim = { rate = 2, burst = 3 },
 } :: { [string]: Limit }
 
 function RateLimit.newBucket(limit: Limit, now: number): Bucket

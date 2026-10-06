@@ -7,6 +7,7 @@ local Players = game:GetService("Players")
 
 local Cosmetics = require("@game/ReplicatedStorage/Shared/Config/Cosmetics")
 local Species = require("@game/ReplicatedStorage/Shared/Config/Species")
+local SeasonConfig = require("@game/ReplicatedStorage/Shared/Config/Season")
 local TrailConfig = require("@game/ReplicatedStorage/Shared/Config/Trail")
 local Almanac = require("@game/ReplicatedStorage/Shared/Sim/Almanac")
 local NumberFormat = require("@game/ReplicatedStorage/Shared/Sim/NumberFormat")
@@ -202,6 +203,7 @@ local function claimWeekly(player: Player, d: any, slot: number)
 	d.Weekly.Claimed[key] = true
 	Registry.Wallet.addNuggets(player, TrailConfig.weeklyNuggets, "Weekly")
 	Registry.Wheel.addSpins(player, TrailConfig.weeklySpins, "Weekly bounty")
+	Registry.Season.addXp(player, SeasonConfig.WEEKLY_BOUNTY_XP, "weekly bounty")
 	Registry.Ui.fx(player, "trailClaim", 0)
 	Registry.Ui.toast(
 		player,

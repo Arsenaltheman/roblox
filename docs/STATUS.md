@@ -11,6 +11,7 @@ Last updated: 2026-10-07 (plan v2: "complete everything").
 
 All pushed to `main`; 141 unit tests and every check pass. Still never run in Studio.
 
+- **Rail Pass (season track):** QUESTS → RAIL PASS. 8-week seasons from Monday 2026-10-05 UTC; free track 20 tiers, premium 40 (Nuggets, spins, boosts, the "Rail Baron" title at 20 and the Season Stetson at 40), season XP from heists, steals, lassos, hatches, bosses, daily quests and weekly bounties (1,500 XP/day cap), 4 weekly contracts (+2 with the pass). The pass is a 399 R$ developer product per season, retroactive. **Owner step:** create it in Creator Hub (GAMEPLAN section 3).
 - **Posse (party of up to 4):** MORE → Posse → invite anyone in the server. Posse mates can't rob or lasso each other, each mate adds +10% cash (shared +30% cap), and every 10 crates run home together pays everyone a spin and Nuggets. A HUD strip shows mates and the bounty.
   - **Playing with a friend:** they join your server from your Roblox profile (or you invite them with MORE → Invite friends). **Owner step:** in Creator Hub → your experience → Places → *Server Fill*, pick **Reserve slots** (2–4) so a friend or a Roblox Party can always get in. Servers hold 8 players (8 ranches).
 - **Companion pets:** MORE → Wardrobe → COMPANION. One of your own critters follows you around and boosts your cash by rarity (+3% per rarity step, +3% if mutated, up to +24% for a Secret). It still earns in its pen.

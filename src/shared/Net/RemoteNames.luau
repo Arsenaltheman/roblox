@@ -43,6 +43,8 @@ return {
 		"TradeNuggets",
 		"TradeReady",
 		"TradeCancel",
+		"SeasonClaim",
+		"ContractClaim",
 	},
 	-- Client -> server with a reply (RemoteFunctions). Kept minimal.
 	functions = {

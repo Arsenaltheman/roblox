@@ -52,6 +52,10 @@ end
 local function howToGet(cosmetic: Cosmetics.Cosmetic): string
 	if cosmetic.nuggets then
 		return `{cosmetic.nuggets} Nuggets in the Trading Post`
+	elseif cosmetic.id == "title_season" then
+		return "Rail Pass premium tier 20"
+	elseif cosmetic.id == "hat_season" then
+		return "Rail Pass premium tier 40"
 	elseif string.sub(cosmetic.id, 1, 6) == "title_" then
 		return "Earned on the Bounty Trail"
 	elseif cosmetic.id == "hat_premium" then
