@@ -117,7 +117,6 @@ local function spin(player: Player)
 	Registry.Progression.questEvent(player, "spin", 1)
 	mirror(player)
 	Registry.Ui.pushState(player)
-	Registry.Data.saveNow(player)
 	Net.send(player, "WheelResult", index, prizeText)
 	if segment.id == "jackpot" then
 		Registry.Ui.announce(`{player.DisplayName} hit the JACKPOT on the Prize Wheel!`, "golden")

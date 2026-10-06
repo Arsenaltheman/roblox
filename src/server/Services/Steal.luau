@@ -683,8 +683,8 @@ function Steal.start()
 		returnCarry(player, "left")
 		for thief, carry in carrying do
 			if carry.owner == player then
-				carrying[thief] = nil
-				setCarryAttributes(thief, nil)
+				-- Clears the critter's in-transit flag on the owner's save too.
+				returnCarry(thief, "ownerLeft")
 				Registry.Ui.toast(thief, "The owner left — the critter ran home.")
 			end
 		end

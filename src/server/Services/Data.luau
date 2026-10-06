@@ -38,11 +38,35 @@ function Data.waitFor(player: Player): Profile.Data?
 end
 
 -- Ask ProfileStore to save soon (used after important changes: purchases, steals, Frontiers).
+-- Saves are coalesced: at most one DataStore write per player every SAVE_GAP seconds (the
+-- per-key budget is about 10 writes a minute). A request inside the gap is delayed, not dropped.
+local SAVE_GAP = 8
+local lastSave: { [Player]: number } = {}
+local savePending: { [Player]: boolean } = {}
+
 function Data.saveNow(player: Player)
 	local profile = profiles[player]
-	if profile then
-		profile:Save()
+	if not profile then
+		return
 	end
+	local wait = (lastSave[player] or 0) + SAVE_GAP - os.clock()
+	if wait <= 0 then
+		lastSave[player] = os.clock()
+		profile:Save()
+		return
+	end
+	if savePending[player] then
+		return
+	end
+	savePending[player] = true
+	task.delay(wait, function()
+		savePending[player] = nil
+		local p = profiles[player]
+		if p then
+			lastSave[player] = os.clock()
+			p:Save()
+		end
+	end)
 end
 
 -- Calls fn once a completed save actually contains what `saved` checks for (used to confirm Robux
@@ -54,25 +78,37 @@ function Data.afterSaveWhere(player: Player, saved: (any) -> boolean, fn: () -> 
 		return false
 	end
 	local connection
-	local expires = os.clock() + 20
+	local done = false
 	connection = profile.OnAfterSave:Connect(function(lastSaved: any)
+		if done then
+			return
+		end
 		if lastSaved and saved(lastSaved) then
+			done = true
 			connection:Disconnect()
 			fn()
-		elseif os.clock() > expires then
-			connection:Disconnect() -- the caller has given up (receipt returns NotProcessedYet)
 		else
-			profile:Save()
+			Data.saveNow(player)
 		end
 	end)
-	profile:Save()
+	-- The caller gives up after 15 s (the receipt returns NotProcessedYet), so stop listening then.
+	task.delay(20, function()
+		if not done then
+			done = true
+			connection:Disconnect()
+		end
+	end)
+	Data.saveNow(player)
 	return true
 end
 
 local function onPlayerAdded(player: Player)
+	-- Give up after 90 s (a DataStore outage) rather than leaving the player in a frozen game;
+	-- a session held by another server frees itself well inside that.
+	local started = os.clock()
 	local profile = store:StartSessionAsync(tostring(player.UserId), {
 		Cancel = function()
-			return player.Parent ~= Players
+			return player.Parent ~= Players or os.clock() - started > 90
 		end,
 	})
 	if profile == nil then
@@ -83,8 +119,9 @@ local function onPlayerAdded(player: Player)
 	end
 
 	profile:AddUserId(player.UserId)
-	profile:Reconcile()
 
+	-- Migrate first, then fill in this version's new fields: a migration must never find a target
+	-- field pre-filled by Reconcile.
 	local result = Profile.migrate(profile.Data)
 	if not result.ok then
 		-- "newer" means this server runs old code: don't touch the data, send them to a fresh server.
@@ -98,6 +135,8 @@ local function onPlayerAdded(player: Player)
 		return
 	end
 	profile.Data = result.data
+	profile:Reconcile()
+	profile.Data.Minor = Profile.CURRENT_MINOR
 
 	profile.OnSessionEnd:Connect(function()
 		profiles[player] = nil
