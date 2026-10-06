@@ -28,6 +28,6 @@ Rules that stay in force:
 | # | Work | Status |
 |---|---|---|
 | 8 | **Onboarding for the new loop.** After the tutorial, a teal arc and a hint lead to the first heist, then hints for Speed Boots and the first gear | ✅ |
-| 9 | **Rarity-based juice for heist deliveries.** Bigger fanfare for rarer crates, and a server-wide shout for Legendary and up | 📅 |
-| 10 | **Performance pass.** Cap particles and effects on Low quality; check every loop exits | 📅 |
-| 11 | **Final rebuild** of `build/CritterExpress.rbxl` | 📅 |
+| 9 | **Rarity-based juice for heist deliveries.** Bigger fanfare for rarer crates, and a server-wide shout for Legendary and up | ✅ Already in place: fireworks scale with rarity, reveal card, shout for Legendary+ |
+| 10 | **Performance pass.** Cap particles and effects on Low quality; check every loop exits | ✅ Checked: effects scale with the quality tier; fixed the one leaking loop (Eggs menu) |
+| 11 | **Final rebuild** of `build/CritterExpress.rbxl` | ✅ |
