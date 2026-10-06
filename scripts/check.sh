@@ -25,6 +25,10 @@ lune run tools/check-registry
 echo "== economy simulator gates"
 lune run tools/econ-sim/main -- --seeds 60 --gates > /dev/null
 
+echo "== place lint (requires resolve, banned classes)"
+rojo sourcemap default.project.json -o sourcemap.json > /dev/null
+python3 -I tools/place_lint.py
+
 echo "== build (Rojo)"
 mkdir -p build
 rojo build default.project.json -o build/CritterExpress.rbxl
