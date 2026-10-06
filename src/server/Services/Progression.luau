@@ -87,6 +87,18 @@ function ProgressionService.questEvent(player: Player, kind: string, amount: num
 	Registry.Ui.pushState(player)
 end
 
+-- Adds a timed boost (stacks by extending). `key` is a Boosts entry: "DoubleCash" or "Luck".
+function ProgressionService.giveBoost(player: Player, key: string, minutes: number, label: string)
+	local d = Registry.Data.get(player)
+	if not d then
+		return
+	end
+	d.Boosts[key] = math.max(d.Boosts[key] or 0, os.time()) + minutes * 60
+	Registry.Ui.toast(player, `{label} boost for {minutes} minutes!`)
+	Registry.Ui.fx(player, "boost", minutes)
+	Registry.Ui.pushState(player)
+end
+
 function ProgressionService.giftView(player: Player): { any }
 	local seconds = giftSeconds[player] or 0
 	local claimed = giftClaimed[player] or {}
@@ -203,6 +215,21 @@ local function claim(player: Player, what: string, index: number)
 		grantReward(player, "cash", Progression.quests.cashSeconds, "Quest", 500)
 		Registry.Wallet.addNuggets(player, Progression.quests.nuggets, "Quest")
 		ProgressionService.onboard(player, "FirstQuest")
+		-- All of today's quests claimed: a free 2x Cash boost.
+		local all = true
+		for _, q in dailyQuests(today()) do
+			if not d.Quests.Claimed[q.id] then
+				all = false
+			end
+		end
+		if all then
+			ProgressionService.giveBoost(
+				player,
+				"DoubleCash",
+				Progression.boosts.questsDoneCashMinutes,
+				"2x CASH"
+			)
+		end
 	end
 	Registry.Ui.pushState(player)
 end

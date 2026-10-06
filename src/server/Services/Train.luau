@@ -9,6 +9,7 @@ local Workspace = game:GetService("Workspace")
 
 local Layout = require("@game/ReplicatedStorage/Shared/Config/Layout")
 local LuckConfig = require("@game/ReplicatedStorage/Shared/Config/Luck")
+local Progression = require("@game/ReplicatedStorage/Shared/Config/Progression")
 local Products = require("@game/ReplicatedStorage/Shared/Config/Products")
 local Rarities = require("@game/ReplicatedStorage/Shared/Config/Rarities")
 local Species = require("@game/ReplicatedStorage/Shared/Config/Species")
@@ -101,7 +102,9 @@ function Train.personalLuck(player: Player): (number, boolean)
 		activeMinutes = Registry.Session.activeMinutes(player),
 		horseshoe = horseshoe,
 		serverLuck = Train.serverLuck(),
-		eventLuck = eventLuck(),
+		eventLuck = eventLuck() * (if Registry.Monetization.timedBoostActive(player, "Luck")
+			then Progression.boosts.luckPotion
+			else 1),
 	})
 	local paid = horseshoe or Train.serverLuck() > 1
 	return luck, paid

@@ -27,6 +27,8 @@ export type IncomeContext = {
 	timedDoubleCash: boolean?,
 	-- Live-config dial (1 = normal).
 	incomeScale: number?,
+	-- Completed Almanac rarity sets.
+	almanacSets: number?,
 }
 
 export type CritterLike = {
@@ -78,7 +80,8 @@ function Economy.multiplier(ctx: IncomeContext): number
 		paid *= Config.paidMultipliers.VIP
 	end
 
-	return (1 + ctx.frontier) * (1 + free) * paid * (ctx.incomeScale or 1)
+	local almanac = 1 + (ctx.almanacSets or 0) * Config.almanacSetBonus
+	return (1 + ctx.frontier) * (1 + free) * paid * almanac * (ctx.incomeScale or 1)
 end
 
 function Economy.ranchIncome(critters: { CritterLike }, ctx: IncomeContext): number

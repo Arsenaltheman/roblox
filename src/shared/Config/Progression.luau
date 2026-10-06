@@ -72,6 +72,9 @@ return {
 			{ id = "collect20", kind = "collect", goal = 20, text = "Collect your ranch cash 20 times" },
 			{ id = "bandit1", kind = "bandit", goal = 1, text = "Rob the Bandit Camp" },
 			{ id = "golden1", kind = "goldenbuy", goal = 1, text = "Buy from the Golden Express" },
+			{ id = "heist3", kind = "heist", goal = 3, text = "Run 3 heist crates home" },
+			{ id = "heist8", kind = "heist", goal = 8, text = "Run 8 heist crates home" },
+			{ id = "boss1", kind = "boss", goal = 5, text = "Lasso the Bandit King 5 times" },
 		},
 	},
 
@@ -91,4 +94,12 @@ return {
 	},
 
 	newbieShieldSeconds = 15 * 60,
+
+	-- Timed boosts (earned, never sold): finishing all daily quests gives 2x Cash, helping beat the
+	-- Bandit King gives a Luck Potion (2x luck on your reserved cage).
+	boosts = {
+		questsDoneCashMinutes = 15,
+		bossLuckMinutes = 10,
+		luckPotion = 2,
+	},
 }

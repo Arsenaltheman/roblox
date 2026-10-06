@@ -390,6 +390,7 @@ local function deliver(player: Player)
 	local d = Registry.Data.get(player)
 	if d then
 		d.Stats.Heists = (d.Stats.Heists or 0) + 1
+		Registry.Progression.questEvent(player, "heist", 1)
 	end
 	Registry.Wheel.heistDelivered(player)
 	Registry.Data.saveNow(player)

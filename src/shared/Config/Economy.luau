@@ -20,6 +20,8 @@ return {
 	friendBoostEach = 0.1,
 	friendBoostMax = 0.3,
 	eventBoost = 1.0,
+	-- Each completed Almanac rarity set adds this much income, for good (earned, never sold).
+	almanacSetBonus = 0.05,
 	paidMultipliers = {
 		DoubleCash = 2,
 		VIP = 1.5,

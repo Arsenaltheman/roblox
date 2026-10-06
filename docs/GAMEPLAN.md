@@ -24,7 +24,7 @@ Status: ✅ built · 🔨 being built now · 📅 next · 🧊 later.
 | **"Admin Abuse" live events** | **Server events** every ~25 min with a countdown: Crate Rain, Gold Rush, Jackpot Restock | ✅ |
 | Server luck products | Server Luck ×2/×3/×5 (odds shown, policy-gated) | ✅ |
 | Lucky blocks (paid random) | Not copied: paid random boxes are a compliance risk for kids | ❌ skipped |
-| Index / collection | Almanac; set bonuses come next | ✅ · 📅 bonuses |
+| Index / collection | Almanac with rarity set bonuses (+5% income per completed set) | ✅ |
 | Saturday updates | Weekly content drops: species, a zone, an event | 📅 process |
 
 ### From Steal An Egg (#1 in July 2026; the active run)
@@ -53,7 +53,7 @@ Status: ✅ built · 🔨 being built now · 📅 next · 🧊 later.
 | Quests | Wanted Board daily quests | ✅ |
 | Leaderboards in the world | Boards for Richest (with a gold statue of the #1), Top Heisters, Most Wanted; this server + all-time | ✅ |
 | Trading | Same-server escrow trading (policy-gated) | 🧊 |
-| Potions / boosts | Timed boosts from the wheel and quests | 📅 |
+| Potions / boosts | 2x Cash for finishing all daily quests; Luck Potion for beating the Bandit King | ✅ |
 | Image-based, chunky UI | Icon set + gold titles, stripes, mascots | ✅ (icons appear after upload) |
 
 ### The "wow" layer (our own)

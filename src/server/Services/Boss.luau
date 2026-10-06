@@ -10,6 +10,7 @@ local Workspace = game:GetService("Workspace")
 
 local BossConfig = require("@game/ReplicatedStorage/Shared/Config/Boss")
 local HeistConfig = require("@game/ReplicatedStorage/Shared/Config/Heist")
+local Progression = require("@game/ReplicatedStorage/Shared/Config/Progression")
 local Species = require("@game/ReplicatedStorage/Shared/Config/Species")
 local NumberFormat = require("@game/ReplicatedStorage/Shared/Sim/NumberFormat")
 local Profile = require("@game/ReplicatedStorage/Shared/Sim/Profile")
@@ -228,6 +229,7 @@ local function reward(f: Fight)
 			Registry.Wallet.addCash(p, cash, "BanditKing")
 			Registry.Wallet.addNuggets(p, BossConfig.REWARD_NUGGETS, "BanditKing")
 			Registry.Wheel.addSpins(p, 1, "Bandit King")
+			Registry.Progression.giveBoost(p, "Luck", Progression.boosts.bossLuckMinutes, "LUCK POTION")
 			Registry.Ui.toast(
 				p,
 				`Bandit King loot: +{NumberFormat.cash(cash)} and +{BossConfig.REWARD_NUGGETS} Gold Nuggets!`
@@ -312,6 +314,7 @@ local function hit(player: Player)
 		table.insert(f.order, player)
 	end
 	f.hits[player] = (f.hits[player] or 0) + 1
+	Registry.Progression.questEvent(player, "boss", 1)
 	f.hp -= 1
 	f.model:SetAttribute("Hp", f.hp)
 	f.bar.Size = UDim2.fromScale(math.max(0, f.hp / f.maxHp), 1)

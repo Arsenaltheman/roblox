@@ -16,6 +16,7 @@ local WheelConfig = require("@game/ReplicatedStorage/Shared/Config/Wheel")
 local Palette = require("@game/ReplicatedStorage/Shared/Config/Palette")
 local Economy = require("@game/ReplicatedStorage/Shared/Sim/Economy")
 local Luck = require("@game/ReplicatedStorage/Shared/Sim/Luck")
+local Almanac = require("@game/ReplicatedStorage/Shared/Sim/Almanac")
 local NumberFormat = require("@game/ReplicatedStorage/Shared/Sim/NumberFormat")
 local Net = require("@game/ReplicatedStorage/Shared/Net/Net")
 local Context = require("../Controllers/Context")
@@ -319,6 +320,13 @@ local function giftButton(): Instance
 end
 
 local function statusBadges(): Instance
+	local clock = source(os.time())
+	task.spawn(function()
+		while true do
+			clock(os.time())
+			task.wait(1)
+		end
+	end)
 	local function badge(order: number, label: () -> string, color: Color3, visible: () -> boolean): Instance
 		return create("TextLabel")({
 			Size = UDim2.fromOffset(200, 34),
@@ -376,6 +384,28 @@ local function statusBadges(): Instance
 			Theme.color.brass,
 			function()
 				return Store.serverLuck() > 1
+			end
+		),
+		badge(
+			5,
+			function()
+				local left = ((state().boosts or {}).DoubleCash or 0) - clock()
+				return `2x CASH {NumberFormat.clock(math.max(0, left))}`
+			end,
+			Theme.color.green,
+			function()
+				return ((state().boosts or {}).DoubleCash or 0) > clock()
+			end
+		),
+		badge(
+			6,
+			function()
+				local left = ((state().boosts or {}).Luck or 0) - clock()
+				return `LUCK POTION {NumberFormat.clock(math.max(0, left))}`
+			end,
+			Theme.color.purple,
+			function()
+				return ((state().boosts or {}).Luck or 0) > clock()
 			end
 		),
 		badge(
@@ -807,8 +837,54 @@ local function almanacMenu(): Instance
 			Store.menu("")
 		end,
 		children = {
+			-- Rarity sets: find every species of a rarity for +5% income forever.
+			create("Frame")({
+				Size = UDim2.new(1, 0, 0, 56),
+				BackgroundTransparency = 1,
+				create("UIListLayout")({
+					FillDirection = Enum.FillDirection.Horizontal,
+					Padding = UDim.new(0, 6),
+					SortOrder = Enum.SortOrder.LayoutOrder,
+				}),
+				indexes(function()
+					return Almanac.sets(state().almanac or {})
+				end, function(set, i)
+					return create("Frame")({
+						Size = UDim2.new(1 / #Rarities.list, -6, 1, 0),
+						LayoutOrder = i,
+						BackgroundColor3 = function()
+							return if set().done
+								then Theme.rarityColor(set().rarity)
+								else Theme.color.woodDark
+						end,
+						Components.corner(UDim.new(0, 10)),
+						Components.stroke(2.5),
+						text({
+							Size = UDim2.new(1, -6, 0.5, 0),
+							Position = UDim2.fromOffset(3, 3),
+							TextColor3 = Theme.color.white,
+							FontFace = Theme.font.title,
+							Text = function()
+								return string.upper(Rarities.byId[set().rarity].name)
+							end,
+							Components.textStroke(1.5),
+						}),
+						text({
+							Size = UDim2.new(1, -6, 0.42, 0),
+							Position = UDim2.new(0, 3, 0.52, 0),
+							TextColor3 = Theme.color.white,
+							FontFace = Theme.font.number,
+							Text = function()
+								return if set().done then "✔ +5% $" else `{set().have}/{set().total}`
+							end,
+							Components.textStroke(1.5),
+						}),
+					})
+				end),
+			}),
 			create("ScrollingFrame")({
-				Size = UDim2.fromScale(1, 1),
+				Size = UDim2.new(1, 0, 1, -64),
+				Position = UDim2.fromOffset(0, 64),
 				BackgroundTransparency = 1,
 				AutomaticCanvasSize = Enum.AutomaticSize.Y,
 				CanvasSize = UDim2.new(),

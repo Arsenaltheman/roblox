@@ -503,6 +503,12 @@ local function onFx(kind: string, value: number, position: Vector3?)
 	elseif kind == "bossEscape" and position then
 		Vfx.smoke(position, 2)
 		Sound.play("whistle")
+	elseif kind == "boost" then
+		if root then
+			Vfx.burst(root.Position, C("purple"), 50, 1.4, 20)
+			Vfx.floatText(root.Position + Vector3.new(0, 5, 0), "BOOST!", C("gold"))
+		end
+		Sound.play("frontier")
 	elseif kind == "spinEarned" then
 		Sound.play("giftReady")
 		if root then

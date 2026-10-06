@@ -8,6 +8,7 @@ local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
 
 local Economy = require("@game/ReplicatedStorage/Shared/Sim/Economy")
+local Almanac = require("@game/ReplicatedStorage/Shared/Sim/Almanac")
 local EconomyConfig = require("@game/ReplicatedStorage/Shared/Config/Economy")
 local Profile = require("@game/ReplicatedStorage/Shared/Sim/Profile")
 local Progression = require("@game/ReplicatedStorage/Shared/Config/Progression")
@@ -126,6 +127,7 @@ function Ranch.context(player: Player): Economy.IncomeContext
 		eventActive = Registry.LiveOps.incomeEventActive(),
 		timedDoubleCash = Registry.Monetization.timedBoostActive(player, "DoubleCash"),
 		incomeScale = Registry.LiveConfig.get("econ.incomeScale"),
+		almanacSets = if d then Almanac.completedSets(d.Almanac) else 0,
 	}
 end
 
