@@ -20,6 +20,7 @@ local Progression = require("@game/ReplicatedStorage/Shared/Config/Progression")
 local Species = require("@game/ReplicatedStorage/Shared/Config/Species")
 local NumberFormat = require("@game/ReplicatedStorage/Shared/Sim/NumberFormat")
 local Net = require("@game/ReplicatedStorage/Shared/Net/Net")
+local Quality = require("../Controllers/Quality")
 local Sound = require("../Controllers/Sound")
 local Store = require("../Store")
 local Components = require("./Components")
@@ -427,6 +428,9 @@ local function runEffect(fx: string, color: Color3, layer: GuiObject, pic: GuiOb
 		tween(s, 0.4, { Scale = 1 }, Enum.EasingStyle.Back)
 	end
 	local function shake(px: number)
+		if Quality.reducedMotion() then
+			return
+		end
 		task.spawn(function()
 			for _ = 1, 6 do
 				stage.Position = UDim2.new(0, math.random(-px, px), 0, math.random(-px, px))

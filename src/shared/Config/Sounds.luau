@@ -48,9 +48,21 @@ local Sounds = {
 	ann_frontier = { id = "", bus = "voice" },
 	ann_weather = { id = "", bus = "voice" },
 	ann_strongbox = { id = "", bus = "voice" },
-	-- Music (Creator Store licensed tracks)
-	musicCalm = { id = "", bus = "music", volume = 0.4 },
-	musicChase = { id = "", bus = "music", volume = 0.45 },
+	-- Music: licensed Creator Store tracks picked by the owner in Studio (Toolbox -> Audio -> Music,
+	-- Roblox-licensed/APM). See docs/MUSIC.md for each slot's mood. Paste the "rbxassetid://..." into
+	-- the id below; Config/Music maps these keys to states (calm/menu, tense, event, boss).
+	-- Calm (town): 90-110 BPM, acoustic guitar, banjo, whistling, harmonica; light, loopable.
+	musicCalm1 = { id = "", bus = "music", volume = 0.4 },
+	musicCalm2 = { id = "", bus = "music", volume = 0.4 },
+	musicCalm3 = { id = "", bus = "music", volume = 0.4 },
+	-- Tense (carrying a heist crate or a stolen critter): 130-150 BPM galloping drums, muted guitar.
+	musicTense1 = { id = "", bus = "music", volume = 0.45 },
+	musicTense2 = { id = "", bus = "music", volume = 0.45 },
+	-- Event (server event running): 120-140 BPM, brass + fiddle, celebratory saloon energy.
+	musicEvent1 = { id = "", bus = "music", volume = 0.45 },
+	musicEvent2 = { id = "", bus = "music", volume = 0.45 },
+	-- Boss (Bandit King on the map): 80-100 BPM, low drums, bass, sparse twangy guitar stabs.
+	musicBoss1 = { id = "", bus = "music", volume = 0.5 },
 	-- Critter name callouts, keyed by species id (files: assets/audio/game/voice/<SpeciesId>.ogg).
 	VoiceIds = AssetIds.voice,
 } :: any

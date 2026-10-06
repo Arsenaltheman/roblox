@@ -253,7 +253,7 @@ local function play(data: any)
 		Sound.play(if data.kind == "strongbox" then "strongboxOpen" else "eggCrack")
 		egg:Destroy()
 	elseif data.kind == "frontier" or data.kind == "chapter" then
-		Sound.play("frontier")
+		Sound.stinger(data.kind)
 		Sound.announce("ann_frontier")
 		wait(if quick then 0.2 else 0.8)
 	end
@@ -413,7 +413,10 @@ local function pump()
 	task.spawn(function()
 		while #queue > 0 do
 			local data = table.remove(queue, 1)
+			-- The music ducks under every reveal and comes back once it is off screen.
+			Sound.duck("reveal", true)
 			local ok, err = pcall(play :: any, data)
+			Sound.duck("reveal", false)
 			if not ok then
 				warn("[Reveal] " .. tostring(err))
 				-- Never leave the screen blurred or covered after a failed reveal.

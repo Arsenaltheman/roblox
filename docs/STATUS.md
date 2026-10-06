@@ -106,7 +106,7 @@ Everything below is pushed to `main`, and every check passes: 119 unit tests, ty
 **Not done yet, and why:**
 - **Nothing tested on Roblox.** Blocked on the API key and network access (section 2). This is the biggest risk: expect a round of fixes the first time it runs.
 - **Figma UI.** Waiting on a paid Figma seat. The UI is built in code to the art bible meanwhile.
-- **Music.** Plan is free licensed Creator Store tracks. They're picked in Studio or the Creator Store, then their ids go into `musicCalm` / `musicChase` in `src/shared/Config/Sounds.luau`.
+- **Music.** Plan is free licensed Creator Store tracks. They're picked in Studio or the Creator Store, then their ids go into `musicCalm1..3`, `musicTense1..2`, `musicEvent1..2`, `musicBoss1` in `src/shared/Config/Sounds.luau`; docs/MUSIC.md has the mood for each slot and the steps.
 - **Uploaded 3D models.** The game uses the procedural rig. Swapping in the FBX meshes is the "asset-upload spike" in the plan (`tools/cloud/upload_assets.py --models`, then load the models by id).
 - **Art.** The hero pass on the top tiers is done (`assets/concept/critter_sheet_v2.png`):
   - real crowns, layered wings, flame tufts, serpent tails and a cloud;

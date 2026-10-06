@@ -64,7 +64,7 @@ local Schemas: { [string]: { Validator } } = {
 		V.str(32),
 	},
 	Setting = {
-		V.oneOf({ "Quality", "Music", "Sfx", "Voice", "ReducedFx", "QuickReveal" }),
+		V.oneOf({ "Quality", "Music", "Sfx", "Voice", "ReducedFx", "QuickReveal", "Muted" }),
 		function(value: any): boolean
 			return type(value) == "boolean"
 				or (type(value) == "number" and value == value and value >= 0 and value <= 1)
