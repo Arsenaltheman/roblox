@@ -59,6 +59,14 @@ Status: ✅ built · 🔨 being built now · 📅 next · 🧊 later.
 | Group-join reward | +100 Nuggets once (owner sets the group id) | ✅ |
 | Trading | Same-server escrow trading: invite a player (MORE → TRADE), up to 6 critters + Gold Nuggets per side, both READY → 5 s countdown, server swaps atomically. Frontier 1+, 7-day accounts, PolicyService-gated; Branded and Robux-luck critters excluded | ✅ |
 | Potions / boosts | 2x Cash for finishing all daily quests; Luck Potion for beating the Bandit King | ✅ |
+| Revenge + "while you were away" (Clash of Clans, Coin Master) | **Sheriff's Report:** who robbed you, one-tap revenge bounty (10 min mark in any shared server for 7 days, lasso pays extra) | ✅ |
+| Masteries (Pet Simulator 99) | **Trail Skills:** 6 skills, levels 1–50 from normal play, a small perk every 10, a cape at 50; never buyable | ✅ |
+| Fusion (Steal an Egg fuse, Adopt Me Neon) | **Branding Iron:** 3 of a species → PRIZE variant (x2 income, glow), rarest mutation survives | ✅ |
+| Fixed live-ops clock (admin-abuse hours, update parties) | **Sheriff Hour:** Tue/Sat 30 min, Server Luck x2 + Crate Rain every 5 min, HUD countdown | ✅ |
+| Odds-shifting weather (Grow a Garden 2, Fisch) | **Lightning Storm** event: nests refill Electric for 90 s | ✅ |
+| Grief shield (Steal a Brainrot Update 62) | **Tin Star** gear: 15 s absorb the next lasso/tackle | ✅ |
+| Kill feed (Rivals, Blade Ball) | Steal and lasso lines in the announcement band | ✅ |
+| Streak protection (Adopt Me Star Rewards) | **Streak Saver:** 29 R$ or one free per 30 days, restores a 3+ day streak broken in the last 3 days | ✅ |
 | Season pass (Jailbreak seasons, Clash Royale pass) | **Rail Pass:** 8-week seasons, free track 20 tiers / premium 40 (perks, a season title and the Season Stetson, never heist power), season XP from everything you already do (1,500/day cap), 4 weekly contracts (+2 with the pass), 399 R$ per season and retroactive | ✅ |
 | Image-based, chunky UI | Icon set + gold titles, stripes, mascots | ✅ (icons appear after upload) |
 
@@ -93,6 +101,7 @@ Roblox only sells an item once it exists in Creator Hub, and only the owner can 
    - create each **Developer Product**.
    `python3 tools/cloud/create_products.py --list` prints the exact names, prices and descriptions.
    - create the **Rail Pass** developer product (399 R$; a product, not a pass, because it is bought again each season).
+   - create the **Streak Saver** developer product (29 R$).
 3. Give the IDs to a Claude session, or run `python3 tools/cloud/create_products.py --set VIP=123 DoubleCash=456 ...`.
 4. **Sheriff's Club** (monthly subscription, 199 R$): Creator Hub → Monetization → **Subscriptions** → create it with the name and benefits from `--list`, then `python3 tools/cloud/create_products.py --subscription <id>`.
 5. Optional **group reward**: make a Roblox group for the game, then `python3 tools/cloud/create_products.py --group <groupId>`. Members claim +100 Nuggets once under MORE.

@@ -1,13 +1,26 @@
 # Status and owner checklist
 
-Last updated: 2026-10-07 (plan v2: "complete everything").
+Last updated: 2026-10-07 (round 5: inspiration wave 1).
 
 **Short version:**
 - The game is fully written: code, economy, 43 critter models, sound and voice.
 - It has **never run on a real Roblox server.** This cloud environment can't reach `apis.roblox.com`, and nobody has opened it in Studio yet.
 - The next step is yours (section 2). After it, a new Claude session can publish, upload and smoke-test without you.
 
-## 0. Latest: party play, pets, AFK raids, always-on events (round 4)
+## 0. Latest: ideas stolen from 30 games (round 5)
+
+All pushed to `main`; 161 unit tests and every check pass. Still never run in Studio. The research and ranking are in `docs/INSPIRATION.md`; this is wave 1, built:
+
+- **Sheriff's Report + revenge bounty:** the welcome panel lists who robbed you (steals and AFK raids) since your last visit with a one-tap **POST BOUNTY**. The thief is marked for 10 minutes in any server you share within 7 days (a BOUNTY tag over their head), and lassoing them while they carry pays you a bounty on top of the catch.
+- **Trail Skills (masteries):** QUESTS → SKILLS. Six skills (Rustler, Wrangler, Trader, Rancher, Gambler, Ranger) level 1–50 from things you already do; a small perk every 10 levels (carry speed, lasso range, sell cash, income, hatch time, shorter stuns) and an untradable cape at 50 (Wardrobe → CAPES). Never buyable.
+- **Branding Iron (fusion):** in the EGGS menu. Three plain critters of one species forge a **PRIZE** critter (highest tier of the three, rarest mutation survives) that earns x2 and glows. Duplicates become a goal and trading has demand.
+- **Sheriff Hour:** Tuesday 22:00 and Saturday 18:00 UTC, 30 minutes of Server Luck x2 for everyone and a Crate Rain every 5 minutes. The event banner counts down to it. (In Studio it starts 2 minutes after the server does, for testing.)
+- **Lightning Storm event:** every heist nest refills with an Electric critter for 90 seconds.
+- **Tin Star gear** (Frontier 1, key 9): for 15 seconds the next lasso or tackle on you bounces off.
+- **Kill feed:** every steal and lasso catch is a line in the announcement band.
+- **Streak Saver:** a login streak of 3+ days that breaks is remembered for 3 days; the welcome panel offers RESTORE FREE (one per 30 days) or the 29 R$ Streak Saver. **Owner step:** create the product (GAMEPLAN section 3).
+
+## 0. Party play, pets, AFK raids, always-on events (round 4)
 
 All pushed to `main`; 141 unit tests and every check pass. Still never run in Studio.
 
