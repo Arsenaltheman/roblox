@@ -5,7 +5,9 @@
 
 local TweenService = game:GetService("TweenService")
 
+local AssetIds = require("@game/ReplicatedStorage/Shared/Config/AssetIds")
 local Vide = require("@game/ReplicatedStorage/Packages/Vide")
+local CritterRig = require("../Controllers/CritterRig")
 local Theme = require("./Theme")
 
 local create = Vide.create :: any
@@ -206,6 +208,7 @@ local function faceAndBase(color: ColorProp, radius: UDim, depth: number, shine:
 			create("UICorner")({ CornerRadius = radius }),
 			Components.stroke(3),
 			Components.gradient(color),
+			Components.stripes(radius, 0.07),
 			Components.gloss(radius),
 			if shine then Components.shine(radius) else nil,
 		}),
@@ -325,16 +328,19 @@ function Components.button(props: ButtonProps): Instance
 end
 
 -- Square icon tile button (side menu): big glyph, label under it, optional red count badge.
-function Components.tile(props: {
-	glyph: string,
-	label: string,
-	color: ColorProp,
-	onClick: () -> (),
-	layoutOrder: number?,
-	visible: (() -> boolean)?,
-	badge: (() -> number)?,
-	size: number?,
-}): Instance
+function Components.tile(
+	props: {
+		glyph: string,
+		label: string,
+		color: ColorProp,
+		onClick: () -> (),
+		image: string?, -- name of an icon in assets/ui (used once uploaded)
+		layoutOrder: number?,
+		visible: (() -> boolean)?,
+		badge: (() -> number)?,
+		size: number?,
+	}
+): Instance
 	local radius = UDim.new(0, 18)
 	local depth = 5
 	local px = props.size or 78
@@ -353,17 +359,13 @@ function Components.tile(props: {
 			Size = UDim2.fromScale(1, 1),
 			BackgroundTransparency = 1,
 			ZIndex = 4,
-			create("TextLabel")({
-				Size = UDim2.fromScale(0.8, 0.56),
-				Position = UDim2.fromScale(0.5, 0.38),
+			create("Frame")({
+				Size = UDim2.fromScale(0.78, 0.6),
+				Position = UDim2.fromScale(0.5, 0.37),
 				AnchorPoint = Vector2.new(0.5, 0.5),
 				BackgroundTransparency = 1,
-				Text = props.glyph,
-				TextColor3 = Theme.color.white,
-				FontFace = Theme.font.title,
-				TextScaled = true,
 				ZIndex = 4,
-				Components.textStroke(3),
+				Components.icon(props.image or "", props.glyph),
 				Components.idle(6, 2.2),
 			}),
 			create("TextLabel")({
@@ -411,6 +413,7 @@ end
 function Components.pill(props: {
 	icon: string,
 	iconColor: Color3,
+	image: string?,
 	text: () -> string,
 	sub: (() -> string)?,
 	size: UDim2?,
@@ -453,17 +456,13 @@ function Components.pill(props: {
 			Components.stroke(3),
 			Components.gradient(props.iconColor),
 			Components.gloss(UDim.new(1, 0)),
-			create("TextLabel")({
-				Size = UDim2.fromScale(0.7, 0.7),
+			create("Frame")({
+				Size = UDim2.fromScale(0.8, 0.8),
 				Position = UDim2.fromScale(0.5, 0.5),
 				AnchorPoint = Vector2.new(0.5, 0.5),
 				BackgroundTransparency = 1,
-				Text = props.icon,
-				TextColor3 = Theme.color.white,
-				FontFace = Theme.font.title,
-				TextScaled = true,
 				ZIndex = 4,
-				Components.textStroke(2.5),
+				Components.icon(props.image or "", props.icon),
 			}),
 		}),
 		create("TextLabel")({
@@ -516,13 +515,16 @@ function Components.pill(props: {
 end
 
 -- A full-screen overlay: dimmed background (tap to close) and a bright panel that pops open.
-function Components.panel(props: {
-	title: string | () -> string,
-	size: UDim2?,
-	onClose: () -> (),
-	children: { Child },
-	accent: Color3?,
-}): Instance
+function Components.panel(
+	props: {
+		title: string | () -> string,
+		size: UDim2?,
+		onClose: () -> (),
+		children: { Child },
+		accent: Color3?,
+		mascot: string?, -- species id of a 3D critter peeking over the panel's top-left corner
+	}
+): Instance
 	local accent = props.accent or Theme.color.red
 	return create("Frame")({
 		Name = "Overlay",
@@ -576,26 +578,49 @@ function Components.panel(props: {
 					ZIndex = 1,
 					Components.corner(UDim.new(0, 22)),
 					Components.gradient(Theme.darken(accent, 0.15)),
+					Components.stripes(UDim.new(0, 22), 0.14),
 				}),
+				Components.stripes(UDim.new(0, 22), 0.05),
 			}),
-			create("TextLabel")({
-				Name = "Title",
-				Size = UDim2.new(0.66, 0, 0, 60),
-				Position = UDim2.new(0.5, 0, 0, -30),
+			-- Title ribbon: striped accent banner with big gold gradient lettering and sparkles.
+			create("Frame")({
+				Name = "Ribbon",
+				Size = UDim2.new(0.66, 0, 0, 64),
+				Position = UDim2.new(0.5, 0, 0, -32),
 				AnchorPoint = Vector2.new(0.5, 0),
 				Rotation = -2,
-				BackgroundColor3 = accent,
-				Text = props.title,
-				TextColor3 = Theme.color.white,
-				FontFace = Theme.font.title,
-				TextScaled = true,
+				BackgroundColor3 = Color3.new(1, 1, 1),
 				ZIndex = 5,
-				Components.corner(UDim.new(0, 14)),
+				Components.corner(UDim.new(0, 16)),
 				Components.stroke(4),
-				Components.textStroke(3.5),
-				Components.padding(9),
+				Components.gradient(accent),
+				Components.stripes(UDim.new(0, 16), 0.16),
+				Components.gloss(UDim.new(0, 16)),
 				Components.popIn(0.08),
+				create("TextLabel")({
+					Name = "Title",
+					Size = UDim2.new(1, -24, 1, -12),
+					Position = UDim2.fromScale(0.5, 0.5),
+					AnchorPoint = Vector2.new(0.5, 0.5),
+					BackgroundTransparency = 1,
+					Text = props.title,
+					TextColor3 = Color3.new(1, 1, 1),
+					FontFace = Theme.font.title,
+					TextScaled = true,
+					ZIndex = 7,
+					Components.goldText(),
+					Components.textStroke(4),
+				}),
+				Components.sparkles(4),
 			}),
+			if props.mascot
+				then Components.mascot({
+					species = props.mascot,
+					size = UDim2.fromOffset(170, 170),
+					position = UDim2.new(0, -40, 0, -50),
+					rotation = -10,
+				})
+				else nil,
 			Components.button({
 				name = "Close",
 				text = "X",
@@ -614,6 +639,221 @@ function Components.panel(props: {
 				props.children,
 			}),
 		}),
+	})
+end
+
+-- ---------------------------------------------------------------- character & flair
+
+-- Gold-to-orange fill for big headline text (goes on a TextLabel; tints its text).
+function Components.goldText(): Instance
+	return create("UIGradient")({
+		Rotation = 90,
+		Color = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 251, 190)),
+			ColorSequenceKeypoint.new(0.45, Color3.fromRGB(255, 214, 60)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 132, 30)),
+		}),
+	})
+end
+
+-- Diagonal candy stripes laid over a frame (a white overlay whose transparency alternates).
+function Components.stripes(radius: UDim?, strength: number?): Instance
+	local keys = {}
+	local n = 9
+	local a = 1 - (strength or 0.12)
+	for i = 0, n do
+		local t = i / n
+		table.insert(keys, NumberSequenceKeypoint.new(t, if i % 2 == 0 then a else 1))
+		if i < n then
+			table.insert(
+				keys,
+				NumberSequenceKeypoint.new(math.min(1, t + 1 / n - 0.001), if i % 2 == 0 then a else 1)
+			)
+		end
+	end
+	return create("Frame")({
+		Name = "Stripes",
+		Size = UDim2.fromScale(1, 1),
+		BackgroundColor3 = Color3.new(1, 1, 1),
+		BackgroundTransparency = 0,
+		ZIndex = 1,
+		create("UICorner")({ CornerRadius = radius or Theme.corner }),
+		create("UIGradient")({ Rotation = 35, Transparency = NumberSequence.new(keys) }),
+	})
+end
+
+-- A slowly spinning sunburst of light rays (behind prizes, titles and the wheel).
+function Components.sunburst(color: Color3?, rays: number?, size: UDim2?): Instance
+	local list = {}
+	local count = rays or 12
+	for i = 1, count do
+		table.insert(
+			list,
+			create("Frame")({
+				Size = UDim2.fromScale(0.16, 1),
+				Position = UDim2.fromScale(0.5, 0.5),
+				AnchorPoint = Vector2.new(0.5, 0.5),
+				Rotation = i * (180 / count),
+				BackgroundColor3 = color or Theme.color.gold,
+				BorderSizePixel = 0,
+				create("UIGradient")({
+					Rotation = 90,
+					Transparency = NumberSequence.new({
+						NumberSequenceKeypoint.new(0, 1),
+						NumberSequenceKeypoint.new(0.5, 0.35),
+						NumberSequenceKeypoint.new(1, 1),
+					}),
+				}),
+			})
+		)
+	end
+	return create("Frame")({
+		Name = "Sunburst",
+		Size = size or UDim2.fromScale(1.6, 1.6),
+		SizeConstraint = Enum.SizeConstraint.RelativeYY,
+		Position = UDim2.fromScale(0.5, 0.5),
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		BackgroundTransparency = 1,
+		ZIndex = 0,
+		list,
+		action(function(instance: Instance)
+			local gui = instance :: GuiObject
+			local alive = true
+			task.spawn(function()
+				while alive and gui.Parent do
+					gui.Rotation = (gui.Rotation + 0.25) % 360
+					task.wait()
+				end
+			end)
+			cleanup(function()
+				alive = false
+			end)
+		end),
+	})
+end
+
+-- Twinkling sparkles scattered over an element.
+function Components.sparkles(count: number?, color: Color3?): Instance
+	local list = {}
+	for i = 1, count or 6 do
+		table.insert(
+			list,
+			create("TextLabel")({
+				Size = UDim2.fromOffset(26, 26),
+				Position = UDim2.fromScale(math.random(), math.random()),
+				AnchorPoint = Vector2.new(0.5, 0.5),
+				BackgroundTransparency = 1,
+				Text = "✦",
+				TextScaled = true,
+				TextColor3 = color or Color3.fromRGB(255, 245, 190),
+				FontFace = Theme.font.title,
+				ZIndex = 9,
+				action(function(instance: Instance)
+					local label = instance :: TextLabel
+					local scale = Instance.new("UIScale")
+					scale.Scale = 0
+					scale.Parent = label
+					local alive = true
+					task.spawn(function()
+						task.wait(i * 0.37)
+						while alive and label.Parent do
+							label.Position = UDim2.fromScale(math.random(), math.random())
+							tween(scale, 0.35, { Scale = 0.6 + math.random() * 0.8 }, Enum.EasingStyle.Back)
+							task.wait(0.6 + math.random() * 0.6)
+							tween(scale, 0.3, { Scale = 0 })
+							task.wait(0.5 + math.random())
+						end
+					end)
+					cleanup(function()
+						alive = false
+					end)
+				end),
+			})
+		)
+	end
+	return create("Frame")({
+		Name = "Sparkles",
+		Size = UDim2.fromScale(1, 1),
+		BackgroundTransparency = 1,
+		ZIndex = 9,
+		list,
+	})
+end
+
+-- A live 3D critter in the UI (mascots peeking out of panels, prize cards). Gently bobs and turns.
+function Components.mascot(props: {
+	species: string,
+	tier: number?,
+	size: UDim2,
+	position: UDim2,
+	anchor: Vector2?,
+	rotation: number?,
+}): Instance
+	return create("ViewportFrame")({
+		Name = "Mascot",
+		Size = props.size,
+		Position = props.position,
+		AnchorPoint = props.anchor or Vector2.new(0.5, 0.5),
+		BackgroundTransparency = 1,
+		Rotation = props.rotation or 0,
+		Ambient = Color3.fromRGB(200, 190, 180),
+		LightColor = Color3.fromRGB(255, 240, 220),
+		LightDirection = Vector3.new(-1, -1.5, -1),
+		ZIndex = 8,
+		action(function(instance: Instance)
+			local viewport = instance :: ViewportFrame
+			local world = Instance.new("WorldModel")
+			world.Parent = viewport
+			local model = CritterRig.build(props.species, props.tier or 5, nil, 2, 3)
+			model.Parent = world
+			local camera = Instance.new("Camera")
+			camera.FieldOfView = 30
+			camera.CFrame = CFrame.lookAt(Vector3.new(0, 1.2, -11), Vector3.new(0, 0.6, 0))
+			camera.Parent = viewport
+			viewport.CurrentCamera = camera
+			local alive = true
+			local seed = math.random() * 10
+			task.spawn(function()
+				while alive and viewport.Parent do
+					local t = os.clock()
+					model:PivotTo(
+						CFrame.new(0, math.abs(math.sin(t * 3 + seed)) * 0.5, 0)
+							* CFrame.Angles(0, math.sin(t * 0.9) * 0.6, math.sin(t * 2.2) * 0.06)
+					)
+					task.wait()
+				end
+			end)
+			cleanup(function()
+				alive = false
+			end)
+		end),
+	})
+end
+
+-- An icon: the uploaded image when it exists (assets/ui/<name>.png → AssetIds.images), otherwise the
+-- glyph fallback in chunky outlined text.
+function Components.icon(name: string, glyph: string, color: Color3?): Instance
+	local image = (AssetIds :: any).images and (AssetIds :: any).images[name]
+	if image then
+		return create("ImageLabel")({
+			Name = "Icon",
+			Size = UDim2.fromScale(1, 1),
+			BackgroundTransparency = 1,
+			Image = image,
+			ScaleType = Enum.ScaleType.Fit,
+			ZIndex = 5,
+		})
+	end
+	return create("TextLabel")({
+		Name = "Icon",
+		Size = UDim2.fromScale(1, 1),
+		BackgroundTransparency = 1,
+		Text = glyph,
+		TextScaled = true,
+		TextColor3 = color or Theme.color.white,
+		FontFace = Theme.font.title,
+		ZIndex = 5,
+		Components.textStroke(3),
 	})
 end
 

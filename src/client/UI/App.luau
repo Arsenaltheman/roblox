@@ -76,6 +76,7 @@ local function cashPills(): Instance
 		}),
 		Components.pill({
 			icon = "$",
+			image = "coin",
 			iconColor = Theme.color.cash,
 			size = UDim2.fromOffset(250, 56),
 			layoutOrder = 1,
@@ -88,6 +89,7 @@ local function cashPills(): Instance
 		}),
 		Components.pill({
 			icon = "◆",
+			image = "nugget",
 			iconColor = Theme.color.nugget,
 			size = UDim2.fromOffset(150, 56),
 			layoutOrder = 2,
@@ -154,10 +156,12 @@ local function menuButton(
 	menu: string,
 	visible: () -> boolean,
 	badge: (() -> number)?,
-	color: Color3?
+	color: Color3?,
+	image: string?
 ): Instance
 	return Components.tile({
 		glyph = glyph,
+		image = image,
 		label = label,
 		color = color or Theme.color.blue,
 		layoutOrder = order,
@@ -221,31 +225,31 @@ local function sideMenu(): Instance
 		}),
 		menuButton(1, "★", "SHOP", "shop", function()
 			return step() >= 1
-		end, nil, Theme.color.yellow),
+		end, nil, Theme.color.yellow, "shop"),
 		menuButton(2, "◉", "EGGS", "eggs", function()
 			return step() >= 2 or #(state().eggs or {}) > 0
-		end, readyEggs, Theme.color.pink),
+		end, readyEggs, Theme.color.pink, "egg"),
 		menuButton(3, "!", "QUESTS", "quests", function()
 			return step() >= 2
-		end, readyQuests, Theme.color.orange),
+		end, readyQuests, Theme.color.orange, "scroll"),
 		menuButton(4, "▤", "ALMANAC", "almanac", function()
 			return step() >= 3
-		end, nil, Theme.color.purple),
+		end, nil, Theme.color.purple, "book"),
 		menuButton(-1, "✪", "SPIN", "wheel", function()
 			return true
 		end, function()
 			return spinsAttr()
-		end, Theme.color.pink),
+		end, Theme.color.pink, "wheel"),
 		menuButton(0, "»", "BOOTS", "boots", function()
 			return true
 		end, function()
 			local level = bootsLevel()
 			local cost = HeistConfig.bootsCost(level)
 			return if cost and (state().cash or 0) >= cost then 1 else 0
-		end, Theme.color.blue),
+		end, Theme.color.blue, "boots"),
 		menuButton(5, "⚙", "MORE", "settings", function()
 			return true
-		end, nil, Theme.color.teal),
+		end, nil, Theme.color.teal, "settings"),
 	})
 end
 
@@ -720,6 +724,7 @@ local function shopMenu(): Instance
 	end)
 	return Components.panel({
 		title = "TRADING POST",
+		mascot = "SheriffShrimpo",
 		onClose = function()
 			Store.menu("")
 		end,
@@ -1293,6 +1298,7 @@ local function bootsMenu(): Instance
 	return Components.panel({
 		title = "SPEED BOOTS",
 		accent = Theme.color.blue,
+		mascot = "Thunderhoof",
 		onClose = function()
 			Store.menu("")
 		end,
@@ -1392,6 +1398,17 @@ Net.listen("WheelResult", function(index: number, prizeText: string)
 	playWheel(index, prizeText)
 end)
 
+local WHEEL_ICONS: { [string]: string } = {
+	cash5 = "coin",
+	nug15 = "nugget",
+	cash20 = "moneybag",
+	spin = "wheel",
+	nug50 = "nugget",
+	cash60 = "moneybag",
+	critter = "crate",
+	jackpot = "crown",
+}
+
 local function wheelMenu(): Instance
 	local bubbles = {}
 	local count = #WheelConfig.segments
@@ -1426,15 +1443,13 @@ local function wheelMenu(): Instance
 						return if wheelLit() == i then 1.28 else 1
 					end, 0.12, 0.5),
 				}),
-				text({
-					Size = UDim2.fromScale(0.8, 0.5),
+				create("Frame")({
+					Size = UDim2.fromScale(0.62, 0.55),
 					Position = UDim2.fromScale(0.5, 0.36),
 					AnchorPoint = Vector2.new(0.5, 0.5),
-					Text = segment.glyph,
-					FontFace = Theme.font.title,
-					TextColor3 = Theme.color.white,
+					BackgroundTransparency = 1,
 					ZIndex = 4,
-					Components.textStroke(2.5),
+					Components.icon(WHEEL_ICONS[segment.id] or "", segment.glyph),
 				}),
 				text({
 					Size = UDim2.fromScale(1.3, 0.26),
@@ -1462,6 +1477,7 @@ local function wheelMenu(): Instance
 	return Components.panel({
 		title = "PRIZE WHEEL",
 		accent = Theme.color.pink,
+		mascot = "CloudCowboy",
 		size = UDim2.fromScale(0.5, 0.86),
 		onClose = function()
 			if not wheelBusy() then
@@ -1469,6 +1485,7 @@ local function wheelMenu(): Instance
 			end
 		end,
 		children = {
+			Components.sunburst(Theme.color.gold, 14, UDim2.fromScale(1.15, 1.15)),
 			create("Frame")({
 				Name = "Ring",
 				Size = UDim2.fromScale(1, 1),

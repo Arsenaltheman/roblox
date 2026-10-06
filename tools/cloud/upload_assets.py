@@ -1,6 +1,6 @@
 """Uploads game audio (and optionally critter models) to Roblox and records the asset ids.
 
-  python3 tools/cloud/upload_assets.py             # audio: assets/audio/game/*.ogg and voice/*.ogg
+  python3 tools/cloud/upload_assets.py             # audio (assets/audio/game) + UI icons (assets/ui/*.png)
   python3 tools/cloud/upload_assets.py --models    # also assets/critters/*.fbx (asset-upload spike)
   python3 tools/cloud/upload_assets.py --dry-run   # list what would be uploaded
 
@@ -19,6 +19,7 @@ import time
 from common import API, ROOT, ApiError, creator, load_ids, multipart, request, save_ids
 
 AUDIO = ROOT / "assets" / "audio" / "game"
+UI_IMAGES = ROOT / "assets" / "ui"
 MODELS = ROOT / "assets" / "critters"
 
 
@@ -73,6 +74,7 @@ def main() -> None:
     args = parser.parse_args()
     sync("audio", sorted(AUDIO.glob("*.ogg")), "Audio", "audio/ogg", args.dry_run)
     sync("voice", sorted((AUDIO / "voice").glob("*.ogg")), "Audio", "audio/ogg", args.dry_run)
+    sync("images", sorted(UI_IMAGES.glob("*.png")), "Image", "image/png", args.dry_run)
     if args.models:
         sync("models", sorted(MODELS.glob("*.fbx")), "Model", "model/fbx", args.dry_run)
 

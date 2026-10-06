@@ -11,4 +11,6 @@ return {
 	models = {} :: { [string]: number },
 	-- Product key (Config/Products) -> game pass / developer product id
 	products = {} :: { [string]: number },
+	-- UI icon name (assets/ui/<name>.png) -> "rbxassetid://..."
+	images = {} :: { [string]: string },
 }
