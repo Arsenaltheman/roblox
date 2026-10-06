@@ -4,7 +4,7 @@ Four research passes (top Roblox simulators, Roblox social/co-op hits, the long-
 
 Compliance lines we never cross (several of these games got demoted or sued for them): paid randomness without live numeric odds; rewards for likes/favourites/watching feeds; fake timers or "limited" offers; purchasable admin powers over the economy; opaque lotteries. Everything below is deterministic or odds-disclosed, and no item here lets a player edit the economy.
 
-## Ranked: wave 1 (building now)
+## Ranked: wave 1 (built, see STATUS.md section 0)
 
 | # | Mechanic | Taken from | Why it works | Our version |
 |---|---|---|---|---|
@@ -17,7 +17,7 @@ Compliance lines we never cross (several of these games got demoted or sued for 
 | 7 | **Kill feed** | Rivals / Blade Ball feel | Instant social proof of the core verb | "X rustled Y's Armadillo", "X lassoed Y and took the crate back" lines in the announcement band |
 | 8 | **Streak Saver** | Adopt Me Star Rewards | Protects the streak without resentment | 29 R$ product that restores a streak broken in the last 3 days (also one free saver every 30 days) |
 
-## Wave 2 (next)
+## Wave 2 (next; Rail Pass is built)
 
 | # | Mechanic | From | Our version |
 |---|---|---|---|
