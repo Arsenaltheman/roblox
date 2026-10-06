@@ -157,6 +157,11 @@ end
 
 -- A temporary speed multiplier (Smoke Bomb).
 function Steal.burst(player: Player, seconds: number, multiplier: number)
+	-- Keep whichever burst lasts longer (a short one mustn't cut a longer one short).
+	local current = burstUntil[player]
+	if current and current.untilTime > now() + seconds and current.multiplier >= multiplier then
+		return
+	end
 	burstUntil[player] = { untilTime = now() + seconds, multiplier = multiplier }
 	applySpeed(player)
 	task.delay(seconds, function()
@@ -173,6 +178,10 @@ function Steal.carryingFrom(thief: Player): Player?
 end
 
 -- Freeze a player briefly (guard tackle).
+function Steal.isStunned(player: Player): boolean
+	return now() < (stunnedUntil[player] or 0)
+end
+
 function Steal.stun(player: Player, seconds: number)
 	stunnedUntil[player] = math.max(stunnedUntil[player] or 0, now() + seconds)
 	applySpeed(player)

@@ -33,13 +33,13 @@ end
 
 function Trail.view(
 	quest: TrailConfig.Quest,
-	progress: { [number]: number },
+	progress: { [string]: number },
 	facts: Facts
 ): ({ ObjectiveView }, boolean)
 	local out = {}
 	local all = true
 	for i, objective in quest.objectives do
-		local have = Trail.have(objective, progress[i] or 0, facts)
+		local have = Trail.have(objective, progress[tostring(i)] or 0, facts)
 		local done = have >= objective.goal
 		all = all and done
 		table.insert(out, {
@@ -55,16 +55,18 @@ end
 -- Adds an event to every counted objective of that kind. Returns true if anything changed.
 function Trail.event(
 	quest: TrailConfig.Quest,
-	progress: { [number]: number },
+	progress: { [string]: number },
 	kind: string,
 	amount: number
 ): boolean
 	local changed = false
 	for i, objective in quest.objectives do
 		if objective.kind == kind and TrailConfig.counted[kind] then
-			local before = progress[i] or 0
+			-- String keys: data stores don't keep sparse number keys reliably.
+			local key = tostring(i)
+			local before = progress[key] or 0
 			if before < objective.goal then
-				progress[i] = math.min(objective.goal, before + amount)
+				progress[key] = math.min(objective.goal, before + amount)
 				changed = true
 			end
 		end

@@ -43,7 +43,7 @@ local chapters: { Chapter } = {
 			{
 				name = "First Heist",
 				objectives = {
-					o("heist", 1, "Run a heist crate home from Cactus Flats"),
+					o("heist", 1, "Run a heist crate home (try Cactus Flats)"),
 					o("spin", 1, "Spin the Prize Wheel"),
 				},
 			},

@@ -57,10 +57,10 @@ return function()
 		test.case("checked objectives read facts", function()
 			local quest = TrailConfig.chapters[1].quests[5]
 			local facts = table.clone(noFacts)
-			local _, done = Trail.view(quest, { 3 }, facts)
+			local _, done = Trail.view(quest, { ["1"] = 3 }, facts)
 			check.is_true(not done)
 			facts.frontier = 1
-			_, done = Trail.view(quest, { 3 }, facts)
+			_, done = Trail.view(quest, { ["1"] = 3 }, facts)
 			check.is_true(done)
 		end)
 

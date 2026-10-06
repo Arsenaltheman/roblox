@@ -1408,12 +1408,15 @@ local function buildScenery(root: Instance)
 	-- Clutter by each landmark building: barrels, crates, hay.
 	for name, at: Layout.V3 in Layout.landmarks :: { [string]: Layout.V3 } do
 		local base = Vector3.new(at.x, GROUND, at.z)
+		-- Buildings north of the ranches (Saloon, Trading Post) get their clutter on the track side,
+		-- so it never lands inside ranches 1 and 4.
+		local side = if at.z < 46 then -1 else 1
 		if name ~= "banditCamp" then
-			barrel(scenery, base + Vector3.new(-12, 0, 9))
-			barrel(scenery, base + Vector3.new(-9.5, 0, 10))
-			crate(scenery, base + Vector3.new(12, 0, 9), 3, rand())
-			crate(scenery, base + Vector3.new(12.5, 3, 9), 2.2, rand())
-			hayBale(scenery, base + Vector3.new(9, 0, 12), rand() * 3)
+			barrel(scenery, base + Vector3.new(-12, 0, 9 * side))
+			barrel(scenery, base + Vector3.new(-9.5, 0, 10 * side))
+			crate(scenery, base + Vector3.new(12, 0, 9 * side), 3, rand())
+			crate(scenery, base + Vector3.new(12.5, 3, 9 * side), 2.2, rand())
+			hayBale(scenery, base + Vector3.new(9, 0, 12 * side), rand() * 3)
 		end
 	end
 	-- Freight on the platform ends.

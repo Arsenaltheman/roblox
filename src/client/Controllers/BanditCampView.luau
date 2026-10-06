@@ -26,10 +26,17 @@ local function part(model: Model, size: Vector3, cf: CFrame, color: Color3, shap
 	return p
 end
 
-local function build(): (Model, BasePart, { BasePart }, TextLabel, TextLabel)
+local function build(): (
+	Model,
+	BasePart,
+	{ BasePart },
+	TextLabel,
+	TextLabel,
+	{ { part: BasePart, offset: CFrame } }
+)
 	local camp = Layout.landmarks.banditCamp
 	-- Sits beside the fire, facing the loot pens.
-	local base = CFrame.new(camp.x + 3.5, 0, camp.z - 3.5) * CFrame.Angles(0, math.rad(225), 0)
+	local base = CFrame.new(camp.x + 3.5, -1, camp.z - 3.5) * CFrame.Angles(0, math.rad(225), 0)
 	local model = Instance.new("Model")
 	model.Name = "CampBandit"
 	local coat = Color3.fromRGB(110, 60, 50)
@@ -42,14 +49,15 @@ local function build(): (Model, BasePart, { BasePart }, TextLabel, TextLabel)
 		Color3.fromRGB(235, 180, 130),
 		Enum.PartType.Ball
 	)
-	part(
+	local brim = part(
 		model,
 		Vector3.new(0.3, 3.4, 3.4),
 		base * CFrame.new(0, 4.4, 0) * CFrame.Angles(0, 0, math.rad(90)),
 		Color3.fromRGB(40, 28, 22),
 		Enum.PartType.Cylinder
 	)
-	part(model, Vector3.new(1.6, 1, 1.6), base * CFrame.new(0, 4.9, 0), Color3.fromRGB(40, 28, 22))
+	local crown =
+		part(model, Vector3.new(1.6, 1, 1.6), base * CFrame.new(0, 4.9, 0), Color3.fromRGB(40, 28, 22))
 	local eyes: { BasePart } = {
 		part(
 			model,
@@ -91,7 +99,12 @@ local function build(): (Model, BasePart, { BasePart }, TextLabel, TextLabel)
 	end
 	gui.Parent = head
 	model.Parent = Workspace
-	return model, head, eyes, icon, label
+	-- Everything on the head turns and nods together.
+	local group: { { part: BasePart, offset: CFrame } } = {}
+	for _, p in { head, brim, crown, eyes[1], eyes[2] } :: { BasePart } do
+		table.insert(group, { part = p, offset = head.CFrame:ToObjectSpace(p.CFrame) })
+	end
+	return model, head, eyes, icon, label, group
 end
 
 function BanditCampView.init() end
@@ -99,14 +112,19 @@ function BanditCampView.init() end
 function BanditCampView.start()
 	task.spawn(function()
 		Workspace:WaitForChild("Town", 30)
-		local _, head, eyes, icon, label = build()
+		local _, head, eyes, icon, label, group = build()
 		local headHome = head.CFrame
+		local function placeHead(cf: CFrame)
+			for _, g in group do
+				g.part.CFrame = cf * g.offset
+			end
+		end
 		local last: string = ""
 		RunService.Heartbeat:Connect(function()
 			local state = BanditClock.state(Workspace:GetServerTimeNow())
 			if state == "napping" then
 				-- Slow nodding while asleep.
-				head.CFrame = headHome * CFrame.new(0, math.sin(os.clock() * 1.5) * 0.08, 0)
+				placeHead(headHome * CFrame.new(0, math.sin(os.clock() * 1.5) * 0.08, 0))
 			end
 			if state == last then
 				return
@@ -122,11 +140,11 @@ function BanditCampView.start()
 			elseif state == "tell" then
 				icon.Text, icon.TextColor3 = "!", Color3.fromRGB(255, 220, 60)
 				label.Text, label.TextColor3 = "WAKING UP...", Color3.fromRGB(255, 220, 60)
-				head.CFrame = headHome * CFrame.Angles(0, math.rad(25), 0)
+				placeHead(headHome * CFrame.Angles(0, math.rad(25), 0))
 			else
 				icon.Text, icon.TextColor3 = "!!", Color3.fromRGB(255, 70, 60)
 				label.Text, label.TextColor3 = "WATCHING! DON'T GRAB!", Color3.fromRGB(255, 70, 60)
-				head.CFrame = headHome
+				placeHead(headHome)
 				for _, e in eyes do
 					e.Size, e.Color, e.Material =
 						Vector3.new(0.4, 0.4, 0.1), Color3.fromRGB(255, 60, 50), Enum.Material.Neon

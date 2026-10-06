@@ -44,7 +44,7 @@ export type Data = {
 	Almanac: { [string]: number },
 	Quests: { Day: number, Progress: { [string]: number }, Claimed: { [string]: boolean } },
 	-- Bounty Trail campaign (Config/Trail): current chapter/quest and its objective counters.
-	Trail: { Chapter: number, Quest: number, Progress: { [number]: number }, Notified: boolean },
+	Trail: { Chapter: number, Quest: number, Progress: { [string]: number }, Notified: boolean },
 	-- Weekly bounties: progress by pool index for the current week.
 	Weekly: { Week: number, Progress: { [string]: number }, Claimed: { [string]: boolean }, Bonus: boolean },
 	Streak: { count: number, lastDay: number, graceUsed: boolean },

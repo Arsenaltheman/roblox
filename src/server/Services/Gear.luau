@@ -9,6 +9,7 @@ local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 
 local GearConfig = require("@game/ReplicatedStorage/Shared/Config/Gear")
+local HeistConfig = require("@game/ReplicatedStorage/Shared/Config/Heist")
 local Layout = require("@game/ReplicatedStorage/Shared/Config/Layout")
 local Net = require("@game/ReplicatedStorage/Shared/Net/Net")
 local Registry = require("../Registry")
@@ -143,9 +144,16 @@ local function use(player: Player, key: string)
 	if t < (mine[key] or 0) then
 		return
 	end
+	-- No gear while stunned (no dashing or bombing your way out of a tackle or trap).
+	if Registry.Steal.isStunned(player) then
+		return
+	end
 
 	if key == "SmokeBomb" then
-		player:SetAttribute("HiddenUntil", t + GearConfig.SMOKE_SECONDS)
+		player:SetAttribute(
+			"HiddenUntil",
+			math.max((player:GetAttribute("HiddenUntil") :: number?) or 0, t + GearConfig.SMOKE_SECONDS)
+		)
 		Registry.Steal.burst(player, GearConfig.SMOKE_SECONDS, GearConfig.SMOKE_SPEED)
 		Registry.Ui.fxAll("smoke", player.UserId, r.Position)
 	elseif key == "TumbleweedBomb" then
@@ -193,15 +201,34 @@ local function use(player: Player, key: string)
 		local flat = r.CFrame.LookVector * Vector3.new(1, 0, 1)
 		local back = if flat.Magnitude > 0.1 then -flat.Unit else Vector3.new(0, 0, 1)
 		local center = r.Position + back * 7
+		-- Only out in the heist zones and the desert, never in town (platform, ranches, Main Street).
+		if not HeistConfig.insideAnyZone(center.X, center.Z, 30) then
+			Registry.Ui.toast(player, "Cactus Walls only grow out in the heist zones.")
+			return
+		end
 		local wall =
 			CFrame.lookAt(Vector3.new(center.X, 0, center.Z), Vector3.new(center.X, 0, center.Z) + back)
 		local parts = {}
+		local blockers = OverlapParams.new()
+		blockers.FilterType = Enum.RaycastFilterType.Include
+		local characters = {}
+		for _, other in Players:GetPlayers() do
+			if other.Character then
+				table.insert(characters, other.Character)
+			end
+		end
+		blockers.FilterDescendantsInstances = characters
 		for i = -2, 2 do
+			local spot = wall * CFrame.new(i * 3, 3.5, 0)
+			-- Never grow a cactus inside someone (it would fling or trap them).
+			if #Workspace:GetPartBoundsInBox(spot, Vector3.new(3, 7, 3), blockers) > 0 then
+				continue
+			end
 			local cactus = Instance.new("Part")
 			cactus.Name = "CactusWall"
 			cactus.Anchored = true
 			cactus.Size = Vector3.new(2.6, 7, 2.6)
-			cactus.CFrame = wall * CFrame.new(i * 3, 3.5, 0)
+			cactus.CFrame = spot
 			cactus.Color = Color3.fromRGB(78, 154, 75)
 			cactus.Material = Enum.Material.Grass
 			cactus.Parent = Workspace
@@ -218,7 +245,10 @@ local function use(player: Player, key: string)
 		Registry.Steal.burst(player, GearConfig.STAMPEDE_STUN, GearConfig.STAMPEDE_SPEED)
 		Registry.Ui.fxAll("stampede", player.UserId, r.Position)
 	elseif key == "GhostLantern" then
-		player:SetAttribute("HiddenUntil", t + GearConfig.GHOST_SECONDS)
+		player:SetAttribute(
+			"HiddenUntil",
+			math.max((player:GetAttribute("HiddenUntil") :: number?) or 0, t + GearConfig.GHOST_SECONDS)
+		)
 		Registry.Steal.burst(player, GearConfig.GHOST_SECONDS, GearConfig.GHOST_SPEED)
 		Registry.Ui.fxAll("ghost", player.UserId, r.Position)
 	else

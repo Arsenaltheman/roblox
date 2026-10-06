@@ -26,8 +26,8 @@ local localPlayer = Players.LocalPlayer
 -- Day cycle ------------------------------------------------------------------------------------
 
 local CYCLE_SECONDS = 20 * 60
-local CLOCK_MID = 17.25
-local CLOCK_SWING = 1.25 -- 16.0 (warm afternoon) .. 18.5 (sun just under the horizon)
+local CLOCK_MID = 17.0
+local CLOCK_SWING = 1.0 -- 16.0 (warm afternoon) .. 18.0 (sunset; never too dark on phones)
 
 local function clockAt(serverTime: number): number
 	return CLOCK_MID - CLOCK_SWING * math.cos(serverTime / CYCLE_SECONDS * math.pi * 2)

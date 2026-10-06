@@ -9,6 +9,7 @@ local TweenService = game:GetService("TweenService")
 local Workspace = game:GetService("Workspace")
 
 local Cosmetics = require("@game/ReplicatedStorage/Shared/Config/Cosmetics")
+local GearConfig = require("@game/ReplicatedStorage/Shared/Config/Gear")
 local Mutations = require("@game/ReplicatedStorage/Shared/Config/Mutations")
 local Palette = require("@game/ReplicatedStorage/Shared/Config/Palette")
 local Rarities = require("@game/ReplicatedStorage/Shared/Config/Rarities")
@@ -626,7 +627,7 @@ local function onFx(kind: string, value: number, position: Vector3?)
 					d.LocalTransparencyModifier = 0.7
 				end
 			end
-			task.delay(8, function()
+			task.delay(GearConfig.GHOST_SECONDS, function()
 				local hatOn = ((who :: Player):GetAttribute("Equip_hat") or "") ~= ""
 				for _, d in ghostly:GetDescendants() do
 					if d:IsA("BasePart") then
