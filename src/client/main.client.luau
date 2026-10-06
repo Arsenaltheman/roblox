@@ -58,9 +58,11 @@ local function syncPlayerAttributes()
 end
 localPlayer.AttributeChanged:Connect(syncPlayerAttributes)
 syncPlayerAttributes()
-Workspace:GetAttributeChangedSignal("GoldenCycle"):Connect(function()
+local function syncGolden()
 	Store.goldenCycle((Workspace:GetAttribute("GoldenCycle") :: number?) or -1)
-end)
+end
+Workspace:GetAttributeChangedSignal("GoldenCycle"):Connect(syncGolden)
+syncGolden() -- late joiners see an already-announced Golden Express
 
 -- UI
 App.mount()

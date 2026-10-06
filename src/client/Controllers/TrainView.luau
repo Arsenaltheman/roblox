@@ -106,6 +106,8 @@ local function buildLocomotive(): Model
 	m.Name = "Locomotive"
 	local base = part(m, "Base", Vector3.new(6, 1, 13), CFrame.new(0, 2.6, 0), C("iron"), Enum.Material.Metal)
 	m.PrimaryPart = base
+	-- Pivot at the model's ground level (the Base part sits 2.6 studs up), so PivotTo puts wheels on rails.
+	base.PivotOffset = CFrame.new(0, -2.6, 0)
 	part(
 		m,
 		"Boiler",
@@ -316,6 +318,8 @@ local function buildCar(index: number): Model
 		Enum.Material.WoodPlanks
 	)
 	m.PrimaryPart = base
+	-- Pivot at the model's ground level (the Base part sits 2.6 studs up), so PivotTo puts wheels on rails.
+	base.PivotOffset = CFrame.new(0, -2.6, 0)
 	part(m, "Trim", Vector3.new(6.2, 0.4, 13.7), CFrame.new(0, 3.2, 0), C("red"))
 	wheels(m, 13.5)
 	-- Two cages per car (rear = first id, front = second id), facing the platform (+Z side in world;
@@ -396,7 +400,9 @@ end
 
 local function placeAt(model: Model, s: number)
 	local p, dir = Layout.trackPoint(s)
-	local pos = Vector3.new(p.x, 0, p.z)
+	-- Rail tops are at y = 1.05 (World builds sleepers at 0.4 + rails 0.4 up, 0.5 tall); the model's
+	-- pivot is its wheel bottoms.
+	local pos = Vector3.new(p.x, 1.05, p.z)
 	local look = Vector3.new(dir.x, 0, dir.z)
 	model:PivotTo(CFrame.lookAt(pos, pos + look))
 end
@@ -474,6 +480,8 @@ local function fillCages(cycle: number)
 	-- Strongbox rides on the last car on strongbox trains.
 	if manifest and manifest.strongbox then
 		strongbox.Parent = cars[#cars]
+		-- The strongbox was built with its box 5.2 studs above the car's ground pivot.
+		strongbox:PivotTo(cars[#cars]:GetPivot() * CFrame.new(0, 5.2, 0))
 	else
 		strongbox.Parent = nil
 	end

@@ -39,7 +39,10 @@ local function refresh(entry: Entry)
 	end
 	if key ~= "" then
 		local model = CritterRig.build(species :: string, tier, mutation, Store.quality(), 2.6)
-		model:PivotTo(pad.CFrame)
+		-- Pads are cylinders lying on their side, so build an upright frame instead of copying theirs.
+		-- Far-away critters are never re-posed, so this first placement has to be right.
+		local r = (model:GetAttribute("Radius") :: number?) or 1
+		model:PivotTo(CritterRig.pose(CFrame.new(pad.Position + Vector3.new(0, 0.2, 0)), 0, entry.seed, r))
 		model.Parent = pad
 		entry.model = model
 		-- Branded (Robux) critters wear a gold ring so thieves know not to bother.
@@ -55,7 +58,11 @@ local function refresh(entry: Entry)
 			ring.CanCollide = false
 			ring.CanQuery = false
 			ring.CFrame = pad.CFrame * CFrame.new(0.25, 0, 0)
-			ring.Parent = model
+			-- Parented to the pad (not the critter), so it doesn't spin with the idle animation.
+			ring.Parent = pad
+			model.Destroying:Once(function()
+				ring:Destroy()
+			end)
 		end
 	end
 end

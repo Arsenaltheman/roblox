@@ -309,6 +309,7 @@ function Vfx.start()
 		player:GetAttributeChangedSignal("Wanted"):Connect(function()
 			updateWanted(player)
 		end)
+		updateWanted(player)
 	end
 	Players.PlayerAdded:Connect(function(player)
 		player:GetAttributeChangedSignal("Wanted"):Connect(function()
@@ -326,9 +327,11 @@ function Vfx.start()
 		setWeather((Workspace:GetAttribute("Weather") :: string?) or "")
 	end)
 	setWeather((Workspace:GetAttribute("Weather") :: string?) or "")
-	Workspace:GetAttributeChangedSignal("ServerLuck"):Connect(function()
+	local function syncLuck()
 		Store.serverLuck((Workspace:GetAttribute("ServerLuck") :: number?) or 1)
-	end)
+	end
+	Workspace:GetAttributeChangedSignal("ServerLuck"):Connect(syncLuck)
+	syncLuck()
 	-- Weather particles follow the camera.
 	RunService.RenderStepped:Connect(function()
 		local camera = Workspace.CurrentCamera
