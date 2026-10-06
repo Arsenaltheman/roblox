@@ -19,6 +19,7 @@ local ProgressionService = {}
 type Pending = {
 	offline: number,
 	streakSlot: number?,
+	raids: { any }?,
 }
 
 local pending: { [Player]: Pending } = {}
@@ -124,6 +125,7 @@ function ProgressionService.pendingView(player: Player): { any }
 	return {
 		offline = if p then p.offline else 0,
 		streakSlot = if p then p.streakSlot else nil,
+		raids = if p then p.raids else nil,
 	}
 end
 
@@ -221,6 +223,11 @@ local function claim(player: Player, what: string, index: number)
 				"golden"
 			)
 		end
+	elseif what == "report" then
+		local p = pending[player]
+		if p then
+			p.raids = nil
+		end
 	elseif what == "offline" then
 		local p = pending[player]
 		if not p or p.offline <= 0 then
@@ -278,6 +285,21 @@ function ProgressionService.playerReady(player: Player)
 			local income = Registry.Ranch.income(player)
 			p.offline = Economy.offlineEarnings(income, away, d.Frontier)
 		end
+	end
+	-- Sheriff's Report: robberies since the last visit (and drop entries older than a week).
+	local kept = {}
+	local raids = {}
+	for _, entry in d.RaidLog do
+		if os.time() - entry.t < 7 * 86400 then
+			table.insert(kept, entry)
+			if d.LastSeen > 0 and entry.t >= d.LastSeen then
+				table.insert(raids, entry)
+			end
+		end
+	end
+	d.RaidLog = kept
+	if #raids > 0 then
+		p.raids = raids
 	end
 	-- Login streak.
 	local result = Streak.login(d.Streak, os.time())

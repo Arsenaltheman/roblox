@@ -188,6 +188,9 @@ local function use(player: Player, key: string)
 		placeTrap(player, r.Position)
 		Registry.Ui.fx(player, "trapSet", 0)
 		Registry.Ui.toast(player, "Bear trap set! The next thief who grabs from you gets caught.")
+	elseif key == "TinStar" then
+		player:SetAttribute("GuardUntil", t + GearConfig.GUARD_SECONDS)
+		Registry.Ui.fxAll("tinStar", player.UserId, r.Position)
 	elseif key == "GrappleHook" then
 		-- The client owns its character's physics, so the dash impulse is applied there.
 		Registry.Session.grantDash(player, 2)

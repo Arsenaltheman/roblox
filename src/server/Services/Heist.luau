@@ -529,7 +529,7 @@ function Heist.decoy(position: Vector3, radius: number, seconds: number): number
 end
 
 -- Every heist nest refills now, `boost` tiers richer than normal (server event).
-function Heist.restockAll(boost: number)
+function Heist.restockAll(boost: number, mutation: string?)
 	for zoneId, zoneNests in nests do
 		if zoneId == BONUS_ZONE then
 			continue
@@ -537,6 +537,9 @@ function Heist.restockAll(boost: number)
 		for _, nest in zoneNests do
 			local zone = HeistConfig.zone(nest.zone) :: HeistConfig.Zone
 			local crate = rollCrate(zone)
+			if mutation then
+				crate.mutation = mutation -- event-only mutation (Lightning Storm)
+			end
 			-- Never above the top non-secret tier (Secrets come from the train only).
 			crate.tier = math.min(38, crate.tier + boost)
 			crate.species = (Species.byTier[crate.tier] or Species.byTier[zone.maxTier]).id
@@ -634,6 +637,15 @@ local function updateGuard(guard: Guard, t: number)
 			Registry.Ui.fxAll("guardAlert", guard.zone, guard.root.Position)
 		end
 		if bestDist <= HeistConfig.TACKLE_RANGE and carrying[best] then
+			if ((best:GetAttribute("GuardUntil") :: number?) or 0) > t then
+				-- Tin Star: the badge bounces one tackle.
+				best:SetAttribute("GuardUntil", nil)
+				Registry.Ui.fxAll("guardPop", best.UserId, br.Position)
+				Registry.Ui.toast(best, "Your Tin Star bounced a tackle!")
+				guard.target = nil
+				guard.nextWander = t + 2
+				return
+			end
 			dropCarry(best, "tackled")
 			Registry.Steal.stun(best, HeistConfig.STUN_SECONDS)
 			Registry.Ui.fxAll("tackle", best.UserId, br.Position)

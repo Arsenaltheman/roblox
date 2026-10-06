@@ -17,6 +17,7 @@ local Species = require("@game/ReplicatedStorage/Shared/Config/Species")
 local HeistConfig = require("@game/ReplicatedStorage/Shared/Config/Heist")
 local BanditClock = require("@game/ReplicatedStorage/Shared/Sim/BanditClock")
 local Economy = require("@game/ReplicatedStorage/Shared/Sim/Economy")
+local NumberFormat = require("@game/ReplicatedStorage/Shared/Sim/NumberFormat")
 local StealRules = require("@game/ReplicatedStorage/Shared/Sim/StealRules")
 local Stamina = require("@game/ReplicatedStorage/Shared/Sim/Stamina")
 local Net = require("@game/ReplicatedStorage/Shared/Net/Net")
@@ -47,6 +48,9 @@ local grabbing: { [Player]: number } = {}
 local stunnedUntil: { [Player]: number } = {}
 local lassoReadyAt: { [Player]: number } = {}
 local banditReadyAt: { [Player]: number } = {}
+
+-- Revenge bounty marks (see postBounty below): thief -> who posted it and until when.
+local bountyMark: { [Player]: { by: number, untilT: number } } = {}
 
 local function now(): number
 	return Workspace:GetServerTimeNow()
@@ -303,11 +307,29 @@ local function deliver(thief: Player)
 	Registry.Ui.reveal(thief, { kind = "stolen", species = taken.s, tier = taken.tier, mutation = taken.m })
 	Registry.Progression.questEvent(thief, "steal", 1)
 	Registry.Progression.onboard(thief, "FirstSteal")
-	if Rarities.indexOf(Rarities.forTier(taken.tier).id) >= 5 then
-		Registry.Ui.announce(
-			`{thief.DisplayName} stole a {Rarities.forTier(taken.tier).name} {name} from {carry.owner.DisplayName}!`,
-			"steal"
-		)
+	-- Kill feed: every steal is news in a server of eight.
+	Registry.Ui.announce(
+		`{thief.DisplayName} rustled {carry.owner.DisplayName}'s {Rarities.forTier(taken.tier).name} {name}!`,
+		"steal"
+	)
+	-- Sheriff's Report: the victim sees who did it next time they log in.
+	if od then
+		table.insert(od.RaidLog, {
+			t = os.time(),
+			by = thief.UserId,
+			byName = thief.DisplayName,
+			species = taken.s,
+			tier = taken.tier,
+			kind = "steal",
+		})
+		while #od.RaidLog > 12 do
+			table.remove(od.RaidLog, 1)
+		end
+	end
+	-- Revenge bounty paid? (the victim posted one on this thief earlier)
+	local mark = bountyMark[thief]
+	if mark and mark.by == carry.owner.UserId then
+		Registry.Ui.toast(carry.owner, `{thief.DisplayName} struck again. Your bounty on them still stands.`)
 	end
 end
 
@@ -631,6 +653,89 @@ local function lassoTutorialBandit(player: Player)
 	Registry.Progression.onboard(player, "FirstLasso")
 end
 
+-- Revenge bounties (Sheriff's Report): a robbed player marks the thief for BOUNTY_SECONDS whenever
+-- they share a server in the next 7 days; catching them with the lasso pays double.
+local BOUNTY_SECONDS = 10 * 60
+
+local function clearBounty(target: Player)
+	bountyMark[target] = nil
+	target:SetAttribute("Bounty", nil)
+	for _, p in Players:GetPlayers() do
+		local d = Registry.Data.get(p)
+		if d then
+			d.Bounties[tostring(target.UserId)] = nil
+		end
+	end
+end
+
+local function markBounty(victim: Player, thief: Player)
+	bountyMark[thief] = { by = victim.UserId, untilT = now() + BOUNTY_SECONDS }
+	thief:SetAttribute("Bounty", victim.UserId)
+	Registry.Ui.toast(
+		thief,
+		`{victim.DisplayName} posted a BOUNTY on you! Their lasso pays double for 10 minutes.`
+	)
+	Registry.Ui.toast(
+		victim,
+		`Bounty active: lasso {thief.DisplayName} while they're carrying for double cash.`
+	)
+	task.delay(BOUNTY_SECONDS, function()
+		local mark = bountyMark[thief]
+		if mark and now() >= mark.untilT then
+			bountyMark[thief] = nil
+			thief:SetAttribute("Bounty", nil)
+		end
+	end)
+end
+
+-- Apply saved bounties between players who are both here now.
+local function applySavedBounties(newcomer: Player)
+	local nd = Registry.Data.get(newcomer)
+	for _, other in Players:GetPlayers() do
+		if other ~= newcomer then
+			local od = Registry.Data.get(other)
+			if
+				od
+				and (od.Bounties[tostring(newcomer.UserId)] or 0) > os.time()
+				and not bountyMark[newcomer]
+			then
+				markBounty(other, newcomer)
+			end
+			if nd and (nd.Bounties[tostring(other.UserId)] or 0) > os.time() and not bountyMark[other] then
+				markBounty(newcomer, other)
+			end
+		end
+	end
+end
+
+local function postBounty(player: Player, thiefId: number)
+	local d = Registry.Data.get(player)
+	if not d or thiefId == player.UserId or thiefId <= 0 then
+		return
+	end
+	-- Only on someone who actually robbed you (it's in your Sheriff's Report).
+	local robbedBy = false
+	for _, entry in d.RaidLog do
+		if entry.by == thiefId then
+			robbedBy = true
+		end
+	end
+	if not robbedBy then
+		return
+	end
+	d.Bounties[tostring(thiefId)] = os.time() + 7 * 86400
+	local thief = Players:GetPlayerByUserId(thiefId)
+	if thief and not bountyMark[thief] then
+		markBounty(player, thief)
+	else
+		Registry.Ui.toast(
+			player,
+			"Bounty posted! It activates the next time you share a server with them (7 days)."
+		)
+	end
+	Registry.Ui.pushState(player)
+end
+
 local function lasso(player: Player, targetUserId: number)
 	if not Registry.LiveConfig.enabled("ff.lasso") then
 		return
@@ -655,6 +760,20 @@ local function lasso(player: Player, targetUserId: number)
 	if Registry.Posse.sameGroup(player, target) then
 		Registry.Ui.toast(player, "That's your posse mate!")
 		return
+	end
+	-- Tin Star: the badge bounces one lasso.
+	if
+		((target:GetAttribute("GuardUntil") :: number?) or 0) > t
+		and (carrying[target] or Registry.Heist.isCarrying(target))
+	then
+		local tr = root(target)
+		if tr and near(player, tr.Position, LASSO_RANGE * 1.5) then
+			target:SetAttribute("GuardUntil", nil)
+			Registry.Ui.fxAll("guardPop", target.UserId, tr.Position)
+			Registry.Ui.toast(player, `{target.DisplayName}'s Tin Star bounced your lasso!`)
+			Registry.Ui.toast(target, "Your Tin Star bounced a lasso!")
+			return
+		end
 	end
 	-- Lassoing someone running a heist crate home snatches the crate.
 	if Registry.Heist.isCarrying(target) then
@@ -699,6 +818,7 @@ local function lasso(player: Player, targetUserId: number)
 	d.Stats.Lassos = (d.Stats.Lassos or 0) + 1
 	Registry.Progression.questEvent(player, "lasso", 1)
 	Registry.Progression.onboard(player, "FirstLasso")
+	local critterName = Species.byId[critter.s] and Species.byId[critter.s].name or "critter"
 	if outcome == "intercept" then
 		carrying[target] = nil
 		setCarryAttributes(target, nil)
@@ -708,9 +828,29 @@ local function lasso(player: Player, targetUserId: number)
 		Registry.Ui.toast(target, `{player.DisplayName} lassoed you and grabbed the critter!`)
 		Registry.Ui.toast(player, "You grabbed it! Get it to your ranch!")
 		Registry.Ui.fxAll("wanted", player.UserId)
+		Registry.Ui.announce(
+			`{player.DisplayName} snatched the {critterName} off {target.DisplayName}!`,
+			"lasso"
+		)
 	else
 		returnCarry(target, "lassoed")
 		Registry.Ui.toast(target, `{player.DisplayName} lassoed you!`)
+		Registry.Ui.announce(
+			`{player.DisplayName} lassoed {target.DisplayName}: the {critterName} ran home!`,
+			"lasso"
+		)
+	end
+	-- Revenge bounty: the victim who posted it gets paid double when they catch the thief.
+	local mark = bountyMark[target]
+	if mark and mark.by == player.UserId then
+		local reward = math.max(500, Economy.price(critter.tier) * 0.2)
+		Registry.Wallet.addCash(player, reward, "Bounty")
+		Registry.Ui.announce(
+			`{player.DisplayName} collected the BOUNTY on {target.DisplayName}! +{NumberFormat.cash(reward)}`,
+			"golden"
+		)
+		Registry.Ui.fx(player, "collect", reward)
+		clearBounty(target)
 	end
 	applySpeed(target)
 end
@@ -749,6 +889,10 @@ function Steal.start()
 	Net.on("Lasso", lasso)
 	Net.on("Lockpick", lockpick)
 	Net.on("PrivateSteal", privateSteal)
+	Net.on("PostBounty", postBounty)
+	Registry.Data.loaded:Connect(function(player: Player)
+		applySavedBounties(player)
+	end)
 	Net.on("Sprint", sprint)
 
 	local function onCharacter(player: Player)
@@ -792,6 +936,7 @@ function Steal.start()
 		lassoReadyAt[player] = nil
 		banditReadyAt[player] = nil
 		burstUntil[player] = nil
+		bountyMark[player] = nil
 	end)
 
 	-- 10 Hz: deliveries, timeouts and sprint drain.

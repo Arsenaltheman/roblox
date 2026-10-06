@@ -690,6 +690,17 @@ local function onFx(kind: string, value: number, position: Vector3?)
 			Vfx.fireworks(root.Position, C("sky"), 4)
 			Vfx.floatText(root.Position + Vector3.new(0, 5, 0), "POSSE BOUNTY!", C("sky"))
 		end
+	elseif kind == "tinStar" and position then
+		Vfx.ring(position, C("gold"), 8)
+		Vfx.burst(position + Vector3.new(0, 3, 0), C("gold"), 30, 1.2, 14)
+		if value == localPlayer.UserId then
+			Sound.play("lock")
+			Vfx.floatText(position + Vector3.new(0, 5, 0), "TIN STAR!", C("gold"))
+		end
+	elseif kind == "guardPop" and position then
+		Vfx.burst(position + Vector3.new(0, 3, 0), C("gold"), 60, 1.6, 26)
+		Vfx.floatText(position + Vector3.new(0, 6, 0), "BLOCKED!", C("gold"))
+		Sound.play("lassoCatch")
 	elseif kind == "spinEarned" then
 		Sound.play("giftReady")
 		if root then

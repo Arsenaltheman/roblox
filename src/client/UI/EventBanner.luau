@@ -75,7 +75,7 @@ function EventBanner.build(): Instance
 	return create("Frame")({
 		Name = "EventBanner",
 		Size = function()
-			return if hot() then UDim2.fromOffset(330, 92) else UDim2.fromOffset(230, 44)
+			return if hot() then UDim2.fromOffset(330, 92) else UDim2.fromOffset(330, 44)
 		end,
 		-- Left side, under the Trail tracker (the right side holds badges and the action button).
 		Position = UDim2.new(0, 112, 0, 340),
@@ -129,7 +129,20 @@ function EventBanner.build(): Instance
 				if hot() and e then
 					return e.name
 				end
-				return `NEXT EVENT {NumberFormat.clock(secondsToNext())}`
+				local sheriffAt = attr("SheriffHourAt")
+				local sheriffUntil = attr("SheriffHourUntil")
+				if type(sheriffUntil) == "number" and sheriffUntil > now() then
+					return `SHERIFF HOUR · {NumberFormat.clock(sheriffUntil - now())} left`
+				end
+				local toSheriff = if type(sheriffAt) == "number"
+					then math.max(0, sheriffAt - now())
+					else math.huge
+				local sheriffText = if toSheriff < math.huge
+					then ` · SHERIFF HOUR {if toSheriff >= 3600
+						then `{math.floor(toSheriff / 3600)}h{math.floor(toSheriff % 3600 / 60)}m`
+						else NumberFormat.clock(toSheriff)}`
+					else ""
+				return `NEXT EVENT {NumberFormat.clock(secondsToNext())}{sheriffText}`
 			end,
 			Components.textStroke(2.5),
 		}),

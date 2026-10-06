@@ -72,6 +72,17 @@ local function raid(player: Player, d: any): boolean
 		`Bandit Bart robbed {player.DisplayName}'s ranch while they were AFK. The {name} is at the Bandit Camp!`,
 		"steal"
 	)
+	table.insert(d.RaidLog, {
+		t = os.time(),
+		by = 0,
+		byName = "Bandit Bart",
+		species = critter.s,
+		tier = critter.tier,
+		kind = "afk",
+	})
+	while #d.RaidLog > 12 do
+		table.remove(d.RaidLog, 1)
+	end
 	Registry.Telemetry.custom(player, "AfkRaid", critter.tier)
 	Registry.Data.saveNow(player)
 	return true

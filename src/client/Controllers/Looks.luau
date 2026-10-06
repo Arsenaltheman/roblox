@@ -38,7 +38,8 @@ local function nameTag(player: Player, character: Model)
 	end
 	local titleId = player:GetAttribute("Equip_title") :: string?
 	local cosmetic = titleId and Cosmetics.byId[titleId]
-	if not cosmetic then
+	local bountyBy = player:GetAttribute("Bounty") :: number?
+	if not cosmetic and not bountyBy then
 		humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.Viewer
 		return
 	end
@@ -64,7 +65,19 @@ local function nameTag(player: Player, character: Model)
 		stroke.Parent = l
 		l.Parent = gui
 	end
-	label(string.upper(cosmetic.name), 0, 0.42, Color3.fromHex(cosmetic.color), Enum.Font.LuckiestGuy)
+	if bountyBy then
+		-- Revenge bounty: red for the one who posted it, orange for everyone else.
+		local mine = bountyBy == Players.LocalPlayer.UserId
+		label(
+			if mine then "★ YOUR BOUNTY ★" else "WANTED: BOUNTY",
+			0,
+			0.42,
+			if mine then Color3.fromRGB(255, 80, 70) else Color3.fromRGB(255, 170, 60),
+			Enum.Font.LuckiestGuy
+		)
+	elseif cosmetic then
+		label(string.upper(cosmetic.name), 0, 0.42, Color3.fromHex(cosmetic.color), Enum.Font.LuckiestGuy)
+	end
 	label(player.DisplayName, 0.44, 0.56, Color3.new(1, 1, 1), Enum.Font.FredokaOne)
 	gui.Parent = head
 end
@@ -264,7 +277,7 @@ local function watchPlayer(player: Player)
 		refresh()
 	end)
 	player.AttributeChanged:Connect(function(name)
-		if name == "Equip_title" or name == "Equip_hat" then
+		if name == "Equip_title" or name == "Equip_hat" or name == "Bounty" then
 			refresh()
 		elseif name == "Equip_ranchTheme" then
 			pcall(refreshRanches)

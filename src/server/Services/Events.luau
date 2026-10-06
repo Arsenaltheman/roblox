@@ -51,6 +51,8 @@ local function run(event: EventsConfig.Event)
 		crateRain()
 	elseif event.id == "JackpotRestock" then
 		Registry.Heist.restockAll(EventsConfig.RESTOCK_BOOST)
+	elseif event.id == "LightningStorm" then
+		Registry.Heist.restockAll(0, "Electric")
 	elseif event.id == "BanditKing" then
 		Registry.Boss.spawn(event.duration)
 	elseif event.id == "GoldRush" then
@@ -77,11 +79,62 @@ local function run(event: EventsConfig.Event)
 	end
 end
 
+-- Next Sheriff Hour start (unix) from the weekly UTC schedule.
+local function nextSheriffHour(unix: number): number
+	local best = math.huge
+	for _, slot in EventsConfig.SHERIFF_HOUR do
+		local date = os.date("!*t", unix)
+		-- Start of this UTC day, then walk to the slot's weekday/hour (0..6 days ahead).
+		local dayStart = unix - (date.hour * 3600 + date.min * 60 + date.sec)
+		for ahead = 0, 7 do
+			local candidate = dayStart + ahead * 86400 + slot.hour * 3600
+			local wday = os.date("!*t", candidate).wday
+			if wday == slot.weekday and candidate + EventsConfig.SHERIFF_HOUR_SECONDS > unix then
+				best = math.min(best, candidate)
+				break
+			end
+		end
+	end
+	return best
+end
+
+local function runSheriffHour()
+	local ends = now() + EventsConfig.SHERIFF_HOUR_SECONDS
+	Workspace:SetAttribute("SheriffHourUntil", ends)
+	Registry.Ui.announce(
+		"SHERIFF HOUR! Server Luck x2 for everyone and crates raining every 5 minutes!",
+		"golden"
+	)
+	Registry.Ui.fxAll("eventStart", 0, nil)
+	local n = 0
+	while now() < ends do
+		if n % 3 == 0 then
+			Registry.Train.addServerLuck(EventsConfig.SHERIFF_HOUR_LUCK)
+		end
+		crateRain()
+		n += 1
+		task.wait(5 * 60)
+	end
+	Workspace:SetAttribute("SheriffHourUntil", 0)
+	Registry.Ui.announce("Sheriff Hour is over. See you next time, partner!", "info")
+end
+
 function Events.init()
 	Workspace:SetAttribute("EventId", "")
+	Workspace:SetAttribute("SheriffHourUntil", 0)
 end
 
 function Events.start()
+	-- Sheriff Hour on the fixed weekly clock (in Studio the first one comes after 2 minutes for testing).
+	task.spawn(function()
+		while true do
+			local startUnix = if RunService:IsStudio() then os.time() + 120 else nextSheriffHour(os.time())
+			Workspace:SetAttribute("SheriffHourAt", now() + math.max(0, startUnix - os.time()))
+			task.wait(math.max(0, startUnix - os.time()))
+			pcall(runSheriffHour)
+			task.wait(60)
+		end
+	end)
 	task.spawn(function()
 		-- In Studio the first event comes quickly so it can be tested.
 		local first = if RunService:IsStudio() then 45 else EventsConfig.FIRST_DELAY

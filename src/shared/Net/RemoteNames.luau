@@ -36,6 +36,7 @@ return {
 		"PosseInvite",
 		"PosseRespond",
 		"PosseLeave",
+		"PostBounty",
 		"Sprint",
 		"TradeInvite",
 		"TradeRespond",

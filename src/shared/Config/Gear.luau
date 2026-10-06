@@ -49,6 +49,17 @@ local list: { GearItem } = {
 		keybind = "Three",
 	},
 	{
+		key = "TinStar",
+		name = "Tin Star",
+		description = "Flash the badge: for 15 seconds the next lasso or tackle on you bounces off.",
+		glyph = "✦",
+		icon = "sheriffstar",
+		price = 1500000,
+		frontier = 1,
+		cooldown = 45,
+		keybind = "Nine",
+	},
+	{
 		key = "GrappleHook",
 		name = "Grapple Hook",
 		description = "Hook the horizon and DASH forward. Great for escaping guards.",
@@ -129,7 +140,9 @@ return {
 		Six = "6",
 		Seven = "7",
 		Eight = "8",
+		Nine = "9",
 	} :: { [string]: string },
+	GUARD_SECONDS = 15,
 	DASH_SPEED = 95, -- studs/s burst the client applies
 	DECOY_SECONDS = 5,
 	DECOY_RANGE = 70,

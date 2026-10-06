@@ -45,6 +45,10 @@ export type Data = {
 	Quests: { Day: number, Progress: { [string]: number }, Claimed: { [string]: boolean } },
 	-- Bounty Trail campaign (Config/Trail): current chapter/quest and its objective counters.
 	Trail: { Chapter: number, Quest: number, Progress: { [string]: number }, Notified: boolean },
+	-- Sheriff's Report: who robbed you (steals and AFK raids), newest last.
+	RaidLog: { { t: number, by: number, byName: string, species: string, tier: number, kind: string } },
+	-- Revenge bounties you posted: thief userId (string) -> expiry (unix).
+	Bounties: { [string]: number },
 	-- Weekly bounties: progress by pool index for the current week.
 	Weekly: { Week: number, Progress: { [string]: number }, Claimed: { [string]: boolean }, Bonus: boolean },
 	Streak: { count: number, lastDay: number, graceUsed: boolean },
@@ -75,7 +79,7 @@ export type Data = {
 local Profile = {}
 
 Profile.CURRENT_VERSION = 1
-Profile.CURRENT_MINOR = 1
+Profile.CURRENT_MINOR = 2
 Profile.MAX_RECEIPTS = 100
 
 function Profile.template(): Data
@@ -92,6 +96,8 @@ function Profile.template(): Data
 		Almanac = {},
 		Quests = { Day = -1, Progress = {}, Claimed = {} },
 		Trail = { Chapter = 1, Quest = 1, Progress = {}, Notified = false },
+		RaidLog = {},
+		Bounties = {},
 		Weekly = { Week = -1, Progress = {}, Claimed = {}, Bonus = false },
 		Streak = { count = 0, lastDay = -1, graceUsed = false },
 		Gifts = { Day = -1, Seconds = 0, Claimed = 0 },

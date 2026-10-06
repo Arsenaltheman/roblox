@@ -32,6 +32,7 @@ local COLOR: { [string]: Color3 } = {
 	CactusWall = Theme.color.green,
 	StampedeCall = Theme.color.yellow,
 	GhostLantern = Theme.color.purple,
+	TinStar = Theme.color.yellow,
 }
 
 local function use(key: string)

@@ -117,6 +117,7 @@ local GEAR_FX: { [string]: string } = {
 	CactusWall = "shield",
 	StampedeCall = "dust",
 	GhostLantern = "smoke",
+	TinStar = "shield",
 }
 
 -- Bumps whenever a player attribute changes, so "owned" badges update live.

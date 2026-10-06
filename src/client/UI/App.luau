@@ -1212,10 +1212,12 @@ local function welcome(): Instance
 	return Components.panel({
 		title = function()
 			local p = state().pending or {}
-			return if (p.offline or 0) > 0 then "WELCOME BACK!" else "DAILY REWARD!"
+			return if (p.offline or 0) > 0 or (p.raids ~= nil and #p.raids > 0)
+				then "WELCOME BACK!"
+				else "DAILY REWARD!"
 		end,
 		accent = Theme.color.gold,
-		size = UDim2.fromScale(0.5, 0.55),
+		size = UDim2.fromScale(0.56, 0.72),
 		onClose = function()
 			local p = state().pending or {}
 			if p.offline and p.offline > 0 then
@@ -1224,9 +1226,89 @@ local function welcome(): Instance
 			if p.streakSlot then
 				Net.request("Claim", "streak", 0)
 			end
+			if p.raids then
+				Net.request("Claim", "report", 0)
+			end
 		end,
 		children = {
 			list({
+				-- Sheriff's Report: who robbed you while you were away, with one-tap revenge bounties.
+				show(function()
+					local p = state().pending or {}
+					return p.raids ~= nil and #p.raids > 0
+				end, function()
+					local p = state().pending or {}
+					local raids = p.raids or {}
+					local rows = {}
+					local seen: { [number]: boolean } = {}
+					for i = #raids, math.max(1, #raids - 3), -1 do
+						local r = raids[i]
+						local species = Species.byId[r.species]
+						local who = if r.by == 0 then "Bandit Bart (you were AFK)" else r.byName
+						local isPlayer = r.by ~= 0 and not seen[r.by]
+						seen[r.by] = true
+						table.insert(
+							rows,
+							create("Frame")({
+								Size = UDim2.new(1, 0, 0, 40),
+								LayoutOrder = i,
+								BackgroundTransparency = 1,
+								text({
+									Size = UDim2.new(if isPlayer then 0.62 else 1, 0, 1, 0),
+									TextXAlignment = Enum.TextXAlignment.Left,
+									TextColor3 = Theme.color.red,
+									FontFace = Theme.font.heading,
+									Text = `{who} took your {Rarities.forTier(r.tier).name} {if species
+										then species.name
+										else "critter"}`,
+								}),
+								(if isPlayer
+									then Components.button({
+										text = "POST BOUNTY",
+										color = Theme.color.red,
+										size = UDim2.fromOffset(150, 36),
+										position = UDim2.new(1, 0, 0.5, 0),
+										anchor = Vector2.new(1, 0.5),
+										textSize = 18,
+										onClick = function()
+											Sound.play("click")
+											Net.request("PostBounty", r.by)
+										end,
+									})
+									else nil) :: any,
+							})
+						)
+					end
+					return create("Frame")({
+						Size = UDim2.new(1, 0, 0, 0),
+						AutomaticSize = Enum.AutomaticSize.Y,
+						LayoutOrder = 0,
+						BackgroundTransparency = 1,
+						create("UIListLayout")({
+							Padding = UDim.new(0, 2),
+							SortOrder = Enum.SortOrder.LayoutOrder,
+						}),
+						text({
+							Size = UDim2.new(1, 0, 0, 30),
+							LayoutOrder = -1,
+							TextXAlignment = Enum.TextXAlignment.Left,
+							FontFace = Theme.font.title,
+							TextColor3 = Theme.color.white,
+							Text = "SHERIFF'S REPORT: while you were away...",
+							Components.textStroke(2),
+						}),
+						rows :: any,
+						text({
+							Size = UDim2.new(1, 0, 0, 24),
+							LayoutOrder = 999,
+							TextXAlignment = Enum.TextXAlignment.Left,
+							TextScaled = false,
+							TextSize = 15,
+							TextWrapped = true,
+							Text = "A bounty marks the thief for 10 minutes in any server you share within 7 days: lasso them while they carry for double cash.",
+						}),
+					})
+				end),
 				text({
 					Size = UDim2.new(1, 0, 0, 60),
 					LayoutOrder = 1,
@@ -1272,6 +1354,9 @@ local function welcome(): Instance
 						end
 						if p.streakSlot then
 							Net.request("Claim", "streak", 0)
+						end
+						if p.raids then
+							Net.request("Claim", "report", 0)
 						end
 					end,
 				}),
@@ -1972,7 +2057,7 @@ function App.build(scale: () -> number): Instance
 				-- Waits until the tutorial is done (rewards are saved, nothing is lost).
 				return (state().tutorial or 0) >= 3
 					and p ~= nil
-					and ((p.offline or 0) > 0 or p.streakSlot ~= nil)
+					and ((p.offline or 0) > 0 or p.streakSlot ~= nil or (p.raids ~= nil and #p.raids > 0))
 			end, welcome),
 			show(function()
 				return Store.odds() ~= nil

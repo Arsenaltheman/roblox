@@ -40,6 +40,14 @@ local list: { Event } = {
 		weight = 25,
 	},
 	{
+		id = "LightningStorm",
+		name = "LIGHTNING STORM",
+		blurb = "Every heist nest just refilled with an ELECTRIC critter. 90 seconds!",
+		duration = 90,
+		color = "sky",
+		weight = 20,
+	},
+	{
 		id = "BanditKing",
 		name = "BANDIT KING",
 		blurb = "The Bandit King is raiding Ghost Town! Everyone lasso him for loot!",
@@ -101,4 +109,12 @@ return {
 	-- Main Street drop area (between the two ranch rows).
 	STREET = { minX = -105, maxX = 105, minZ = 71, maxZ = 79 },
 	RESTOCK_BOOST = 1,
+	-- Sheriff Hour: a fixed weekly appointment (UTC). 30 minutes of Server Luck x2 for everyone and a
+	-- Crate Rain every 5 minutes.
+	SHERIFF_HOUR = {
+		{ weekday = 3, hour = 22 }, -- Tuesday 22:00 UTC
+		{ weekday = 7, hour = 18 }, -- Saturday 18:00 UTC
+	},
+	SHERIFF_HOUR_SECONDS = 30 * 60,
+	SHERIFF_HOUR_LUCK = 2,
 }
