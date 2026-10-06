@@ -58,15 +58,17 @@ return function()
 			check.is_true(near(secret, 1.24))
 			check.is_true(near(Economy.companionBoost({ tier = 13, mutation = "Gold" }), 0.12))
 			check.equal(Economy.companionBoost(nil), 0)
-			-- Friends + event already hit the cap; the companion can't push past it.
-			local capped = Economy.multiplier({
+			-- Free boosts add together: friends +0.3, event +0.5, Secret mutated companion +0.27.
+			local stacked = Economy.multiplier({
 				frontier = 0,
 				passes = {},
 				friends = 3,
 				eventActive = true,
 				companion = { tier = 40, mutation = "Rainbow" },
 			})
-			check.is_true(near(capped, 2.3))
+			check.is_true(near(stacked, 2.07))
+			-- The shared cap still holds when everything stacks.
+			check.is_true(stacked <= 1 + 1.3 + 1e-9)
 		end)
 
 		test.case("ranch income sums critters with mutations", function()

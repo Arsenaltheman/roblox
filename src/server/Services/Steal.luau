@@ -228,6 +228,7 @@ local function returnCarry(thief: Player, reason: string)
 	local critter = ownerCritter(carry)
 	if critter then
 		critter.it = false
+		Registry.Shop.applyEquipped(carry.owner) -- a companion that was carried off comes back
 		Registry.Ranch.syncCritter(carry.owner, carry.cid)
 		Registry.Ui.pushState(carry.owner)
 		if carry.owner.Parent == Players then
@@ -531,6 +532,7 @@ local function stealStart(player: Player, ranchIndex: number, cid: string)
 			return
 		end
 		again.critter.it = true
+		Registry.Shop.applyEquipped(again.owner) -- a companion being carried off stops following
 		Registry.Ranch.syncCritter(again.owner, cid)
 		local carry = {
 			owner = again.owner,
