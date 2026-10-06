@@ -58,6 +58,7 @@ local ACTIVE_REMOTES = {
 	BuyCage = true,
 	Collect = true,
 	HeistGrab = true,
+	Fuse = true,
 	StealStart = true,
 	Lasso = true,
 	HitBoss = true,

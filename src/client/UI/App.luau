@@ -738,6 +738,54 @@ local function eggsMenu(): Instance
 						showOdds("egg")
 					end,
 				}),
+				-- Branding Iron: three of one species forge a Prize (x2 income). Duplicates become a goal.
+				indexes(function()
+					local groups: { [string]: { { cid: string, t: number, m: string? } } } = {}
+					for cid, c in (state().critters or {}) :: { [string]: any } do
+						if not c.br and not c.it and not c.pz then
+							local same = groups[c.s] or {}
+							table.insert(same, { cid = cid, t = c.t, m = c.m })
+							groups[c.s] = same
+						end
+					end
+					local out = {}
+					for speciesId, same in groups do
+						if #same >= 3 then
+							table.sort(same, function(a, b)
+								return a.t > b.t
+							end)
+							table.insert(
+								out,
+								{ species = speciesId, picks = { same[1], same[2], same[3] }, count = #same }
+							)
+						end
+					end
+					table.sort(out, function(a, b)
+						return a.picks[1].t > b.picks[1].t
+					end)
+					return out
+				end, function(group, i)
+					return card({
+						order = 100 + i,
+						title = function()
+							local g = group()
+							local species = Species.byId[g.species]
+							return `BRANDING IRON: {g.count}× {if species then species.name else "?"}`
+						end,
+						sub = function()
+							local g = group()
+							return `Forge 3 into one PRIZE {Rarities.forTier(g.picks[1].t).name} (x2 income, glow). Rarest mutation survives.`
+						end,
+						color = Theme.color.pink,
+						button = "FORGE",
+						glyph = "✶",
+						onClick = function()
+							local g = group()
+							Sound.play("click")
+							Net.request("Fuse", g.picks[1].cid, g.picks[2].cid, g.picks[3].cid)
+						end,
+					})
+				end),
 				indexes(function()
 					return state().eggs or {}
 				end, function(egg, i)
@@ -1229,9 +1277,60 @@ local function welcome(): Instance
 			if p.raids then
 				Net.request("Claim", "report", 0)
 			end
+			if (p.broken or 0) > 0 then
+				Net.request("Claim", "saver", 0)
+			end
 		end,
 		children = {
 			list({
+				-- Streak Saver: the streak that just broke, one tap to restore (free once a month).
+				show(function()
+					return ((state().pending or {}).broken or 0) > 0
+				end, function()
+					local function p(): any
+						return state().pending or {}
+					end
+					return create("Frame")({
+						Size = UDim2.new(1, 0, 0, 58),
+						LayoutOrder = -1,
+						BackgroundColor3 = Color3.new(1, 1, 1),
+						Components.corner(UDim.new(0, 14)),
+						Components.stroke(3),
+						Components.gradient(Theme.lighten(Theme.color.red, 0.7)),
+						text({
+							Size = UDim2.new(0.56, -10, 1, -10),
+							Position = UDim2.fromOffset(12, 5),
+							TextXAlignment = Enum.TextXAlignment.Left,
+							TextWrapped = true,
+							TextScaled = false,
+							TextSize = 17,
+							FontFace = Theme.font.heading,
+							TextColor3 = Theme.darken(Theme.color.red, 0.3),
+							Text = function()
+								return `Your {p().broken or 0}-day login streak broke! Restore it and keep your rewards.`
+							end,
+						}),
+						Components.button({
+							text = function()
+								return if p().freeSaver then "RESTORE FREE" else "RESTORE R$29"
+							end,
+							color = Theme.color.green,
+							size = UDim2.fromOffset(170, 42),
+							position = UDim2.new(1, -10, 0.5, 0),
+							anchor = Vector2.new(1, 0.5),
+							textSize = 18,
+							shine = true,
+							onClick = function()
+								Sound.play("click")
+								if p().freeSaver then
+									Net.request("Claim", "saver", 1)
+								else
+									Net.request("ShopBuy", "StreakSaver", 1)
+								end
+							end,
+						}),
+					})
+				end),
 				-- Sheriff's Report: who robbed you while you were away, with one-tap revenge bounties.
 				show(function()
 					local p = state().pending or {}
@@ -1357,6 +1456,9 @@ local function welcome(): Instance
 						end
 						if p.raids then
 							Net.request("Claim", "report", 0)
+						end
+						if (p.broken or 0) > 0 then
+							Net.request("Claim", "saver", 0)
 						end
 					end,
 				}),
@@ -2057,7 +2159,12 @@ function App.build(scale: () -> number): Instance
 				-- Waits until the tutorial is done (rewards are saved, nothing is lost).
 				return (state().tutorial or 0) >= 3
 					and p ~= nil
-					and ((p.offline or 0) > 0 or p.streakSlot ~= nil or (p.raids ~= nil and #p.raids > 0))
+					and (
+						(p.offline or 0) > 0
+						or p.streakSlot ~= nil
+						or (p.raids ~= nil and #p.raids > 0)
+						or (p.broken or 0) > 0
+					)
 			end, welcome),
 			show(function()
 				return Store.odds() ~= nil

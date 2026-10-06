@@ -214,6 +214,7 @@ local function execute(ref: Ref)
 				mutation = critter.m,
 				src = "trade",
 				originalOwner = critter.uid,
+				prize = critter.pz,
 			}
 			if not Registry.Ranch.addCritter(receiver, new) then
 				-- Room was checked above, so this shouldn't happen; never lose a critter.

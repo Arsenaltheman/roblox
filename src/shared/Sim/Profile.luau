@@ -28,6 +28,8 @@ export type Critter = {
 	br: boolean,
 	-- currently being carried by a thief (still owned by this profile)
 	it: boolean,
+	-- Prize: forged at the Branding Iron from three of the species (x2 income, glow)
+	pz: boolean?,
 	born: number,
 }
 
@@ -92,7 +94,7 @@ export type Data = {
 local Profile = {}
 
 Profile.CURRENT_VERSION = 1
-Profile.CURRENT_MINOR = 4
+Profile.CURRENT_MINOR = 5
 Profile.MAX_RECEIPTS = 100
 
 function Profile.template(): Data

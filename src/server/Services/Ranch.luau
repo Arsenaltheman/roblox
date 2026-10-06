@@ -12,6 +12,7 @@ local Almanac = require("@game/ReplicatedStorage/Shared/Sim/Almanac")
 local EconomyConfig = require("@game/ReplicatedStorage/Shared/Config/Economy")
 local Profile = require("@game/ReplicatedStorage/Shared/Sim/Profile")
 local Progression = require("@game/ReplicatedStorage/Shared/Config/Progression")
+local Rarities = require("@game/ReplicatedStorage/Shared/Config/Rarities")
 local Species = require("@game/ReplicatedStorage/Shared/Config/Species")
 local Mutations = require("@game/ReplicatedStorage/Shared/Config/Mutations")
 local Layout = require("@game/ReplicatedStorage/Shared/Config/Layout")
@@ -23,6 +24,8 @@ local PLATE_REACH = 9
 local LOCK_COOLDOWN = 10
 
 local Ranch = {}
+
+Ranch.PRIZE_MULTIPLIER = 2
 
 Ranch.critterAdded = Signal.new() :: Signal.Signal<Player, string>
 Ranch.frontierReached = Signal.new() :: Signal.Signal<Player, number>
@@ -167,7 +170,8 @@ function Ranch.income(player: Player): number
 			if Species.byId[critter.s].exclusive then
 				tier = Economy.exclusiveTier(critter.s, band)
 			end
-			base += Economy.critterIncome({ tier = tier, mutation = critter.m })
+			local one = Economy.critterIncome({ tier = tier, mutation = critter.m })
+			base += if critter.pz then one * Ranch.PRIZE_MULTIPLIER else one
 		end
 	end
 	return base * Economy.multiplier(Ranch.context(player))
@@ -197,6 +201,7 @@ local function syncPad(player: Player, pen: number)
 		pad:SetAttribute("Mutation", found.m or "")
 		pad:SetAttribute("Cid", foundId)
 		pad:SetAttribute("Branded", found.br)
+		pad:SetAttribute("Prize", found.pz == true)
 		pad:SetAttribute("InTransit", found.it)
 	else
 		pad:SetAttribute("Critter", "")
@@ -204,6 +209,7 @@ local function syncPad(player: Player, pen: number)
 		pad:SetAttribute("Mutation", "")
 		pad:SetAttribute("Cid", "")
 		pad:SetAttribute("Branded", false)
+		pad:SetAttribute("Prize", false)
 		pad:SetAttribute("InTransit", false)
 	end
 end
@@ -325,6 +331,7 @@ export type NewCritter = {
 	paidRandom: boolean?,
 	branded: boolean?,
 	originalOwner: number?,
+	prize: boolean?,
 }
 
 -- Adds a critter to the player's ranch. Replaces the weakest (50% refund) if pens are full.
@@ -367,6 +374,7 @@ function Ranch.addCritter(player: Player, new: NewCritter): string?
 		pr = new.paidRandom == true,
 		br = new.branded == true,
 		it = false,
+		pz = if new.prize then true else nil,
 		born = os.time(),
 	}
 	-- Almanac: bit 0 = plain, bit i = mutation i.
@@ -576,6 +584,77 @@ local function sell(player: Player, cid: string)
 	Registry.Progression.questEvent(player, "sell", 1)
 end
 
+-- Branding Iron: three unbranded critters of one species forge one Prize critter of that species
+-- (highest tier of the three, the rarest mutation survives) that earns x2. Duplicates become a goal.
+local function fuse(player: Player, a: string, b: string, c: string)
+	local d = Registry.Data.get(player)
+	if not d or a == b or b == c or a == c then
+		return
+	end
+	local parts = { d.Critters[a], d.Critters[b], d.Critters[c] }
+	local species: string? = nil
+	for _, critter in parts do
+		if not critter or critter.br or critter.it or critter.pz then
+			Registry.Ui.toast(player, "Only three plain, unbranded critters of one species can be forged.")
+			return
+		end
+		if species and critter.s ~= species then
+			Registry.Ui.toast(player, "All three have to be the same species.")
+			return
+		end
+		species = critter.s
+	end
+	if not species or Species.byId[species].exclusive then
+		return
+	end
+	local tier = 0
+	local bestMutation: string? = nil
+	local bestRank = 0
+	for _, critter in parts do
+		tier = math.max(tier, critter.tier)
+		if critter.m then
+			for i, mutation in Mutations.list do
+				if mutation.id == critter.m and i > bestRank then
+					bestRank = i
+					bestMutation = mutation.id
+				end
+			end
+		end
+	end
+	for _, cid in { a, b, c } do
+		Ranch.removeCritter(player, cid)
+	end
+	local cid = Ranch.addCritter(player, {
+		species = species,
+		tier = tier,
+		mutation = bestMutation,
+		src = "fuse",
+		prize = true,
+	})
+	if not cid then
+		-- Can't happen (three pens just freed), but never lose a critter.
+		Ranch.addCritter(player, { species = species, tier = tier, mutation = bestMutation, src = "fuse" })
+		return
+	end
+	local name = Species.byId[species].name
+	Registry.Ui.toast(player, `PRIZE {name}! It earns x{Ranch.PRIZE_MULTIPLIER} and glows.`)
+	Registry.Ui.reveal(player, { kind = "fuse", species = species, tier = tier, mutation = bestMutation })
+	Registry.Ui.fxAll(
+		"fuse",
+		player.UserId,
+		Vector3.new(Layout.landmarks.hatchery.x, 3, Layout.landmarks.hatchery.z)
+	)
+	Registry.Progression.questEvent(player, "fuse", 1)
+	if Rarities.indexOf(Rarities.forTier(tier).id) >= 5 then
+		Registry.Ui.announce(
+			`{player.DisplayName} forged a PRIZE {Rarities.forTier(tier).name} {name}!`,
+			"golden"
+		)
+	end
+	Registry.Data.saveNow(player)
+	Registry.Telemetry.custom(player, "Fuse", tier)
+end
+
 local function place(player: Player, cid: string, pen: number)
 	local d = Registry.Data.get(player)
 	local critter = d and d.Critters[cid]
@@ -777,6 +856,7 @@ function Ranch.start()
 	end)
 	Net.on("Lock", lock)
 	Net.on("Sell", sell)
+	Net.on("Fuse", fuse)
 	Net.on("Place", place)
 	Net.on("Frontier", frontier)
 

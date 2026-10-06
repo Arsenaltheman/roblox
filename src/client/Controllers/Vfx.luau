@@ -690,6 +690,13 @@ local function onFx(kind: string, value: number, position: Vector3?)
 			Vfx.fireworks(root.Position, C("sky"), 4)
 			Vfx.floatText(root.Position + Vector3.new(0, 5, 0), "POSSE BOUNTY!", C("sky"))
 		end
+	elseif kind == "fuse" and position then
+		Vfx.fireworks(position, Color3.fromRGB(255, 95, 210), 4)
+		Vfx.ring(position, Color3.fromRGB(255, 95, 210), 10)
+		if value == localPlayer.UserId then
+			Sound.play("frontier")
+			Vfx.shake(0.6, 0.5)
+		end
 	elseif kind == "skillUp" then
 		Sound.play("giftReady")
 		if root then

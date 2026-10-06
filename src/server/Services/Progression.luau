@@ -21,6 +21,8 @@ type Pending = {
 	offline: number,
 	streakSlot: number?,
 	raids: { any }?,
+	-- Streak Saver offer: the streak length that just broke (within the last 3 days).
+	broken: number?,
 }
 
 local pending: { [Player]: Pending } = {}
@@ -123,12 +125,65 @@ function ProgressionService.giftView(player: Player): { any }
 	return view
 end
 
+ProgressionService.SAVER_DAYS = 3
+ProgressionService.FREE_SAVER_EVERY = 30 * 86400
+
+-- One free Streak Saver every 30 days.
+function ProgressionService.freeSaverReady(player: Player): boolean
+	local d = Registry.Data.get(player)
+	return d ~= nil and os.time() - (d.Stats.FreeSaverAt or 0) >= ProgressionService.FREE_SAVER_EVERY
+end
+
+-- A streak broke in the last SAVER_DAYS days and hasn't been restored.
+function ProgressionService.brokenStreak(player: Player): number
+	local d = Registry.Data.get(player)
+	if not d then
+		return 0
+	end
+	local broken = d.Stats.BrokenStreak or 0
+	if broken > 0 and os.time() - (d.Stats.BrokenAt or 0) <= ProgressionService.SAVER_DAYS * 86400 then
+		return broken
+	end
+	return 0
+end
+
+-- Restores the broken streak (Streak Saver product, or the free one). Today counts as the next day.
+function ProgressionService.restoreStreak(player: Player, free: boolean): boolean
+	local d = Registry.Data.get(player)
+	local broken = ProgressionService.brokenStreak(player)
+	if not d or broken == 0 then
+		return false
+	end
+	if free then
+		if not ProgressionService.freeSaverReady(player) then
+			return false
+		end
+		d.Stats.FreeSaverAt = os.time()
+	end
+	d.Streak.count = broken + 1
+	d.Stats.BrokenStreak = 0
+	local p = pending[player]
+	if p then
+		p.broken = nil
+		p.streakSlot = Streak.slotFor(d.Streak.count)
+		d.Stats.PendingStreakSlot = p.streakSlot :: number
+	end
+	Registry.Ui.toast(player, `Streak restored! Day {d.Streak.count}. Your reward is waiting.`)
+	Registry.Ui.fx(player, "boost", 0)
+	Registry.Telemetry.custom(player, if free then "StreakSaverFree" else "StreakSaver", broken)
+	Registry.Data.saveNow(player)
+	Registry.Ui.pushState(player)
+	return true
+end
+
 function ProgressionService.pendingView(player: Player): { any }
 	local p = pending[player]
 	return {
 		offline = if p then p.offline else 0,
 		streakSlot = if p then p.streakSlot else nil,
 		raids = if p then p.raids else nil,
+		broken = if p then p.broken else nil,
+		freeSaver = if p then ProgressionService.freeSaverReady(player) else false,
 	}
 end
 
@@ -231,6 +286,16 @@ local function claim(player: Player, what: string, index: number)
 		if p then
 			p.raids = nil
 		end
+	elseif what == "saver" then
+		-- index 1 = use the free saver, 0 = dismiss the offer for this session
+		if index == 1 then
+			ProgressionService.restoreStreak(player, true)
+		else
+			local p = pending[player]
+			if p then
+				p.broken = nil
+			end
+		end
 	elseif what == "offline" then
 		local p = pending[player]
 		if not p or p.offline <= 0 then
@@ -306,10 +371,19 @@ function ProgressionService.playerReady(player: Player)
 		p.raids = raids
 	end
 	-- Login streak.
+	local previousStreak = d.Streak.count
 	local result = Streak.login(d.Streak, os.time())
 	d.Streak = result.state
 	if result.reward then
 		p.streakSlot = result.slot
+	end
+	-- Streak Saver: remember a streak worth saving (3+ days) for 3 days.
+	if result.broke and previousStreak >= 3 then
+		d.Stats.BrokenStreak = previousStreak
+		d.Stats.BrokenAt = os.time()
+	end
+	if ProgressionService.brokenStreak(player) > 0 then
+		p.broken = ProgressionService.brokenStreak(player)
 	end
 	-- Unclaimed rewards from a previous visit are saved, so leaving or a crash never loses them.
 	p.offline += d.Stats.PendingOffline or 0

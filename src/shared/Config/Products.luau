@@ -241,6 +241,16 @@ local list: { Product } = {
 	},
 
 	{
+		key = "StreakSaver",
+		category = "boosts",
+		icon = "ticket",
+		fx = "gold",
+		kind = "product",
+		price = 29,
+		name = "Streak Saver",
+		description = "Restore a login streak that broke in the last 3 days. (One free saver every 30 days.)",
+	},
+	{
 		key = "InstantHatch",
 		category = "boosts",
 		icon = "egg",

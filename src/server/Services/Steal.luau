@@ -289,6 +289,7 @@ local function deliver(thief: Player)
 		src = "steal",
 		paidRandom = taken.pr,
 		originalOwner = taken.uid,
+		prize = taken.pz,
 	})
 	setCarryAttributes(thief, nil)
 	Registry.Data.saveNow(thief)

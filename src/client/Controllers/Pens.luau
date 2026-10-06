@@ -98,6 +98,29 @@ local function refresh(entry: Entry)
 		model.Parent = pad
 		decorate(pad, model, tier, mutation)
 		entry.model = model
+		-- Prize (forged) critters get a slow-spinning magenta halo above the pedestal.
+		if pad:GetAttribute("Prize") then
+			local halo = Instance.new("Part")
+			halo.Name = "Prize"
+			halo.Shape = Enum.PartType.Cylinder
+			halo.Size = Vector3.new(0.15, 4.6, 4.6)
+			halo.Color = Color3.fromRGB(255, 95, 210)
+			halo.Material = Enum.Material.Neon
+			halo.Transparency = 0.25
+			halo.Anchored = true
+			halo.CanCollide = false
+			halo.CanQuery = false
+			halo.CFrame = pad.CFrame * CFrame.new(pad.Size.X / 2 + 4.2, 0, 0)
+			halo.Parent = pad
+			local light = Instance.new("PointLight")
+			light.Color = halo.Color
+			light.Range = 10
+			light.Brightness = 1.2
+			light.Parent = halo
+			model.Destroying:Once(function()
+				halo:Destroy()
+			end)
+		end
 		-- Branded (Robux) critters wear a gold ring so thieves know not to bother.
 		if pad:GetAttribute("Branded") then
 			local ring = Instance.new("Part")

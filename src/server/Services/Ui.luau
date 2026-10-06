@@ -57,6 +57,7 @@ local function snapshot(player: Player): { [string]: any }?
 			br = critter.br,
 			pr = critter.pr,
 			it = critter.it,
+			pz = critter.pz,
 		}
 	end
 	return {

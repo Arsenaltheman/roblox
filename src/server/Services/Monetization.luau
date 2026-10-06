@@ -127,6 +127,9 @@ function Monetization.canOffer(player: Player, key: string): (boolean, string?)
 	if key == "InstantHatch" and not Registry.Eggs.hasUnready(player) then
 		return false, "No egg is waiting to hatch."
 	end
+	if key == "StreakSaver" and Registry.Progression.brokenStreak(player) == 0 then
+		return false, "No broken streak to restore."
+	end
 	if key == "RailPass" and Registry.Season.hasPremium(player) then
 		return false, "You already have the Rail Pass for this season."
 	end
@@ -223,6 +226,8 @@ local function grant(player: Player, product: Products.Product): boolean
 		return true
 	elseif key == "InstantHatch" then
 		return Registry.Eggs.readyNow(player)
+	elseif key == "StreakSaver" then
+		return Registry.Progression.restoreStreak(player, false)
 	elseif key == "Lockpick" then
 		d.Stats.Lockpicks = (d.Stats.Lockpicks or 0) + 1
 		return true

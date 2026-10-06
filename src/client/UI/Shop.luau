@@ -99,6 +99,7 @@ local GLYPH: { [string]: string } = {
 	CashBag6h = "$$$",
 	CashBag24h = "$$$$",
 	InstantHatch = "◯",
+	StreakSaver = "↻",
 	SheriffClub = "✪",
 }
 

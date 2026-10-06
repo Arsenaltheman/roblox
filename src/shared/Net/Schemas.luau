@@ -56,7 +56,10 @@ local Schemas: { [string]: { Validator } } = {
 	Lasso = { V.int(-1e12, 1e12) }, -- target userId (negative in Studio test servers)
 	CrackStart = { V.int(0, 1e7) }, -- train cycle
 	Hatch = { V.int(1, 16) }, -- egg slot
-	Claim = { V.oneOf({ "gift", "streak", "quest", "offline", "trail", "weekly", "report" }), V.int(0, 64) },
+	Claim = {
+		V.oneOf({ "gift", "streak", "quest", "offline", "trail", "weekly", "report", "saver" }),
+		V.int(0, 64),
+	},
 	Frontier = {},
 	ShopBuy = { V.str(32), V.int(1, 10) },
 	Equip = {
@@ -88,6 +91,7 @@ local Schemas: { [string]: { Validator } } = {
 	PosseRespond = { V.int(-1e12, 1e12), V.bool() },
 	PosseLeave = {},
 	PostBounty = { V.int(1, 1e12) },
+	Fuse = { critterId, critterId, critterId },
 	Sprint = { V.bool() }, -- held on / let go
 	TradeInvite = { V.int(-1e12, 1e12) }, -- target userId
 	TradeRespond = { V.int(-1e12, 1e12), V.bool() }, -- inviter userId, accept

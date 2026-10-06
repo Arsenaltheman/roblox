@@ -285,6 +285,9 @@ local function play(data: any)
 			.. string.upper(species and species.name or "?")
 		if data.kind == "stolen" then
 			caption = "STOLEN! It's yours now."
+		elseif data.kind == "fuse" then
+			title = "PRIZE " .. title
+			caption = "FORGED at the Branding Iron: earns x2 and glows"
 		elseif data.kind == "exclusive" then
 			caption = "BRANDED: can't be stolen, kept through Frontiers"
 		elseif data.kept == false then

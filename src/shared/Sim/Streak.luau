@@ -33,6 +33,8 @@ local function slotFor(count: number): number
 	return math.min(count, n)
 end
 
+Streak.slotFor = slotFor
+
 function Streak.login(state: State, unixSeconds: number): Result
 	local today = Streak.dayOf(unixSeconds)
 	if today == state.lastDay then

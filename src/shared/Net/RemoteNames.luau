@@ -37,6 +37,7 @@ return {
 		"PosseRespond",
 		"PosseLeave",
 		"PostBounty",
+		"Fuse",
 		"Sprint",
 		"TradeInvite",
 		"TradeRespond",
