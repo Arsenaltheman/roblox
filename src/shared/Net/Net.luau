@@ -9,7 +9,8 @@ local RemoteNames = require("./RemoteNames")
 local Schemas = require("./Schemas")
 
 local FOLDER_NAME = "Remotes"
-local UNRELIABLE = { Fx = true, ClientLog = true }
+-- Fx stays reliable: some effects carry gameplay (the Grapple dash, grab/caught state, tutorial).
+local UNRELIABLE = { ClientLog = true }
 
 local Net = {}
 

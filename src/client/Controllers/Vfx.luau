@@ -627,13 +627,30 @@ local function onFx(kind: string, value: number, position: Vector3?)
 				end
 			end
 			task.delay(8, function()
+				local hatOn = ((who :: Player):GetAttribute("Equip_hat") or "") ~= ""
 				for _, d in ghostly:GetDescendants() do
 					if d:IsA("BasePart") then
-						d.LocalTransparencyModifier = 0
+						-- Keep avatar hats hidden under a cosmetic hat (Controllers/Looks).
+						local accessory = d.Parent
+						local hiddenHat = hatOn
+							and accessory ~= nil
+							and accessory:IsA("Accessory")
+							and accessory.AccessoryType == Enum.AccessoryType.Hat
+						d.LocalTransparencyModifier = if hiddenHat then 1 else 0
 					end
 				end
 			end)
 		end
+	elseif kind == "tradeDone" then
+		Sound.play("collect")
+		if root then
+			Vfx.burst(root.Position + Vector3.new(0, 3, 0), C("gold"), 40, 1.3, 18)
+			Vfx.floatText(root.Position + Vector3.new(0, 5, 0), "TRADED!", C("gold"))
+		end
+	elseif kind == "tutorialBandit" then
+		Sound.play("alarm")
+		Vfx.alarm()
+		Store.toast("Bandit Bart is stealing from your ranch! Follow the red arrow and LASSO him!")
 	elseif kind == "spinEarned" then
 		Sound.play("giftReady")
 		if root then

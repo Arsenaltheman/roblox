@@ -23,6 +23,7 @@ local ORDER = {
 	"Movement",
 	"Looks",
 	"Ambience",
+	"BanditCampView",
 	"Intro",
 }
 local loaded = {}
@@ -118,6 +119,9 @@ local reported = 0
 ScriptContext.Error:Connect(function(message: string, trace: string)
 	if reported < 5 then
 		reported += 1
-		Net.request("ClientLog", 3, string.sub(message .. " | " .. string.gsub(trace, "\n", " / "), 1, 160))
+		-- Cut by characters, not bytes, so the text stays valid UTF-8 for the server's validator.
+		local full = message .. " | " .. string.gsub(trace, "\n", " / ")
+		local cut = utf8.offset(full, 161)
+		Net.request("ClientLog", 3, if cut then string.sub(full, 1, cut - 1) else full)
 	end
 end)

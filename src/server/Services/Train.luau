@@ -331,8 +331,12 @@ local function getOdds(player: Player, kind: string): any
 		local luck = Train.personalLuck(player)
 		local base = Luck.personal({ activeMinutes = Registry.Session.activeMinutes(player) })
 		return {
-			rows = Odds.reserved(Registry.Ranch.band(player), luck),
-			withoutPaidLuck = Odds.reserved(Registry.Ranch.band(player), base),
+			rows = Odds.reserved(Registry.Ranch.band(player), luck, Registry.Session.activeMinutes(player)),
+			withoutPaidLuck = Odds.reserved(
+				Registry.Ranch.band(player),
+				base,
+				Registry.Session.activeMinutes(player)
+			),
 			note = Odds.ROUNDING_NOTE,
 		}
 	elseif kind == "mutations" then

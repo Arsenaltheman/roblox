@@ -43,16 +43,40 @@ function Quality.init()
 	Store.quality(initialTier())
 end
 
+local FIXED = { low = 1, medium = 2, high = 3 }
+
+local function chosen(): string
+	local state = Store.state()
+	return (state and state.settings and state.settings.Quality) or "auto"
+end
+
 function Quality.start()
-	-- Frame-time governor: if the average frame is slower than 25 FPS for 5 seconds, drop a tier.
+	-- The player's saved choice wins; "auto" uses the device guess plus the governor below.
+	local applied = "auto"
+	local autoTier = Store.quality()
 	local window, frames = 0, 0
+	local started = os.clock()
 	RunService.Heartbeat:Connect(function(dt)
+		local choice = chosen()
+		if choice ~= applied then
+			applied = choice
+			Store.quality(FIXED[choice] or autoTier)
+		end
+		if FIXED[choice] then
+			return
+		end
+		-- Frame-time governor: if frames average under 25 FPS for 5 s, drop a tier. The first 10 s are
+		-- ignored (loading hitches).
+		if os.clock() - started < 10 then
+			return
+		end
 		window += dt
 		frames += 1
 		if window >= 5 then
 			local avg = window / frames
 			if avg > 1 / 25 and Store.quality() > 1 then
-				Store.quality(Store.quality() - 1)
+				autoTier = Store.quality() - 1
+				Store.quality(autoTier)
 			end
 			window, frames = 0, 0
 		end

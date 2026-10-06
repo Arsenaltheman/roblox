@@ -20,7 +20,8 @@ local function wire(source: Instance, target: Instance)
 	local w = Instance.new("Wire")
 	w.SourceInstance = source
 	w.TargetInstance = target
-	w.Parent = target
+	-- Parent to the source so the wire goes away with a finished AudioPlayer (buses live forever).
+	w.Parent = source
 end
 
 function Sound.init()

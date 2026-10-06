@@ -113,12 +113,25 @@ end
 
 -- The reserved cage's possible tiers for a band tier at a given personal luck.
 -- Deltas that would fall outside 1..maxTier fold into the nearest valid tier.
-function Odds.reserved(bandTier: number, luck: number): { Row }
+-- Highest tier a player's reserved cage can hold for how long they've been active here (matches
+-- Manifest.maxTierForActivity, so the shown odds are exactly what can happen).
+local function activityCap(activeMinutes: number): number
+	local allowed = 1
+	for _, rarity in Rarities.list do
+		if activeMinutes >= rarity.minActiveMinutes then
+			allowed = rarity.maxTier
+		end
+	end
+	return allowed
+end
+
+function Odds.reserved(bandTier: number, luck: number, activeMinutes: number?): { Row }
+	local cap = math.min(activityCap(activeMinutes or math.huge), Rarities.maxTier)
 	local weights = Odds.normalise(Luck.reservedDeltaWeights(luck))
 	local byTier: { [number]: number } = {}
 	local order: { number } = {}
 	for i, delta in Train.reservedDeltas do
-		local tier = math.clamp(bandTier + delta, 1, Rarities.maxTier)
+		local tier = math.clamp(bandTier + delta, 1, cap)
 		if byTier[tier] == nil then
 			byTier[tier] = 0
 			table.insert(order, tier)

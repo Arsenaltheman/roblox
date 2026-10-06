@@ -133,7 +133,22 @@ local function slam(gui: ScreenGui)
 		)
 		:Play()
 	Sound.play("revealLegendary")
-	Vfx.shake(1.2, 0.4)
+	-- The camera is Scriptable here, so shake its CFrame directly (Vfx.shake uses CameraOffset).
+	local camera = Workspace.CurrentCamera
+	if camera and not Quality.reducedMotion() then
+		task.spawn(function()
+			local base = camera.CFrame
+			local started = os.clock()
+			while os.clock() - started < 0.4 and camera.CameraType == Enum.CameraType.Scriptable do
+				local k = 1 - (os.clock() - started) / 0.4
+				camera.CFrame = base * CFrame.new((math.random() - 0.5) * k, (math.random() - 0.5) * k, 0)
+				task.wait()
+			end
+			if camera.CameraType == Enum.CameraType.Scriptable then
+				camera.CFrame = base
+			end
+		end)
+	end
 	task.delay(0.35, function()
 		sub.Visible = true
 		local s = Instance.new("UIScale")

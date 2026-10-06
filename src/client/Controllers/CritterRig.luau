@@ -669,15 +669,27 @@ function CritterRig.pose(base: CFrame, t: number, seed: number, radius: number):
 end
 
 -- Rainbow parts cycle hue.
+local rainbowParts: { [Model]: { BasePart } } = setmetatable({}, { __mode = "k" }) :: any
+
 function CritterRig.updateRainbow(model: Model, t: number)
 	if model:GetAttribute("Mutation") ~= "Rainbow" then
 		return
 	end
 	local hue = (t * 0.25) % 1
-	for _, d in model:GetDescendants() do
-		if d:IsA("BasePart") and d:GetAttribute("Rainbow") then
-			d.Color = Color3.fromHSV(hue, 0.75, 1)
+	-- The rainbow parts are found once per model and cached (this runs every frame).
+	local parts = rainbowParts[model]
+	if not parts then
+		local found: { BasePart } = {}
+		for _, d in model:GetDescendants() do
+			if d:IsA("BasePart") and d:GetAttribute("Rainbow") then
+				table.insert(found, d)
+			end
 		end
+		rainbowParts[model] = found
+		parts = found
+	end
+	for _, p in parts :: { BasePart } do
+		p.Color = Color3.fromHSV(hue, 0.75, 1)
 	end
 end
 

@@ -134,7 +134,7 @@ local function refresh(entry: Entry)
 	model:PivotTo(CritterRig.pose(CFrame.new(pad.Position + Vector3.new(0, 0.3, 0)), 0, entry.seed, r))
 	model.Parent = pad
 	entry.model = model
-	local rarity = Rarities.forTier(tier)
+	local rarity = Rarities.forTier(math.max(1, tier))
 	if Rarities.indexOf(rarity.id) >= 3 then
 		makeBeam(entry, Palette.color(rarity.color))
 	end

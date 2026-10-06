@@ -2,6 +2,7 @@ local frktest = require("@frktest/frktest")
 local test = frktest.test
 local check = frktest.assert.check
 
+local Species = require("../../src/shared/Config/Species")
 local Odds = require("../../src/shared/Sim/Odds")
 
 local function sumPercent(rows): number
@@ -62,6 +63,15 @@ return function()
 			local top = Odds.reserved(40, 3)
 			check.equal(#top, 2)
 			check.is_true(exactly100(top))
+		end)
+
+		test.case("reserved odds respect the activity cap, like the manifest", function()
+			local Manifest = require("../../src/shared/Sim/Manifest")
+			local cap = Manifest.maxTierForActivity(0)
+			for _, row in Odds.reserved(cap, 3, 0) do
+				check.is_true(Species.byId[row.id].tier <= cap)
+			end
+			check.is_true(exactly100(Odds.reserved(cap, 3, 0)))
 		end)
 
 		test.case("mutation table includes none and totals 100%", function()

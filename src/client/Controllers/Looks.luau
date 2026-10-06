@@ -166,19 +166,20 @@ local function hat(player: Player, character: Model)
 		old:Destroy()
 	end
 	local id = player:GetAttribute("Equip_hat") :: string?
-	if not id or id == "" then
-		return
-	end
-	-- Hide accessories worn on the head so hats don't clip through.
+	local wearing = id ~= nil and id ~= ""
+	-- Hide the avatar's own hats while a cosmetic hat is on (so they don't clip), show them otherwise.
 	for _, accessory in character:GetChildren() do
 		if accessory:IsA("Accessory") and accessory.AccessoryType == Enum.AccessoryType.Hat then
 			local handle = accessory:FindFirstChild("Handle") :: BasePart?
 			if handle then
-				handle.LocalTransparencyModifier = 1
+				handle.LocalTransparencyModifier = if wearing then 1 else 0
 			end
 		end
 	end
-	local model = buildHat(id, head)
+	if not wearing then
+		return
+	end
+	local model = buildHat(id :: string, head)
 	if model then
 		model.Parent = character
 	end

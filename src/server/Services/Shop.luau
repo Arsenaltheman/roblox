@@ -143,6 +143,9 @@ local function setting(player: Player, key: string, value: any)
 	if current == nil or typeof(current) ~= typeof(value) then
 		return
 	end
+	if key == "Quality" and not table.find({ "auto", "low", "medium", "high" }, value) then
+		return
+	end
 	settings[key] = value
 	Registry.Ui.pushState(player)
 end

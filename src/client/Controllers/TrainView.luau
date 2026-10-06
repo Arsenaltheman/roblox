@@ -518,6 +518,9 @@ function TrainView.init()
 	strongbox = buildStrongbox()
 end
 
+-- The locomotive smoke emitter, found once (looked up every frame otherwise).
+local smokeCache: ParticleEmitter? = nil
+
 function TrainView.start()
 	Net.listen(
 		"TrainManifest",
@@ -589,7 +592,8 @@ function TrainView.start()
 				CritterRig.updateRainbow(critter, t)
 			end
 		end
-		local smoke = locomotive:FindFirstChild("Smoke", true) :: ParticleEmitter?
+		smokeCache = smokeCache or locomotive:FindFirstChild("Smoke", true) :: ParticleEmitter?
+		local smoke = smokeCache
 		if smoke then
 			smoke.Rate = if state.phase == "dwelling" then 6 else 18
 		end

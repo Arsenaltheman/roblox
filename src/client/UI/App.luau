@@ -998,6 +998,24 @@ local function settingsMenu(): Instance
 						Store.menu("wardrobe")
 					end,
 				}),
+				card({
+					order = 1,
+					title = function()
+						return "Graphics quality"
+					end,
+					sub = function()
+						local q = (state().settings or {}).Quality or "auto"
+						return if q == "auto" then "Auto (adjusts to your device)" else string.upper(q)
+					end,
+					color = Theme.color.sky,
+					button = "Change",
+					onClick = function()
+						local order = { "auto", "low", "medium", "high" }
+						local q = (state().settings or {}).Quality or "auto"
+						local i = table.find(order, q) or 1
+						Net.request("Setting", "Quality", order[i % #order + 1])
+					end,
+				}),
 				volume(1, "Music", "Music volume"),
 				volume(2, "Sfx", "Sound effects"),
 				volume(3, "Voice", "Critter voices"),

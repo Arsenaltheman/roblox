@@ -103,14 +103,15 @@ local function refresh(entry: Entry)
 			local ring = Instance.new("Part")
 			ring.Name = "Brand"
 			ring.Shape = Enum.PartType.Cylinder
-			ring.Size = Vector3.new(0.2, 4.8, 4.8)
+			ring.Size = Vector3.new(0.2, 5.8, 5.8)
 			ring.Color = Color3.fromRGB(255, 200, 61)
 			ring.Material = Enum.Material.Neon
 			ring.Transparency = 0.3
 			ring.Anchored = true
 			ring.CanCollide = false
 			ring.CanQuery = false
-			ring.CFrame = pad.CFrame * CFrame.new(0.25, 0, 0)
+			-- Just above the pedestal top (the pad's local X is its height), wider than the pedestal.
+			ring.CFrame = pad.CFrame * CFrame.new(pad.Size.X / 2 + 0.1, 0, 0)
 			-- Parented to the pad (not the critter), so it doesn't spin with the idle animation.
 			ring.Parent = pad
 			model.Destroying:Once(function()
