@@ -104,7 +104,16 @@ local CRITTER_OF: { [string]: string } = {
 	DiamondDesperado = "DiamondDesperado",
 }
 
-local GEAR_FX: { [string]: string } = { SmokeBomb = "smoke", TumbleweedBomb = "dust", BearTrap = "trap" }
+local GEAR_FX: { [string]: string } = {
+	SmokeBomb = "smoke",
+	TumbleweedBomb = "dust",
+	BearTrap = "trap",
+	GrappleHook = "speed",
+	DynamiteDecoy = "snap",
+	CactusWall = "shield",
+	StampedeCall = "dust",
+	GhostLantern = "smoke",
+}
 
 -- Bumps whenever a player attribute changes, so "owned" badges update live.
 local attrTick = source(0)
@@ -198,11 +207,7 @@ local function gearItems(): { Item }
 			{
 				id = gear.key,
 				name = gear.name,
-				description = `{gear.description} Cooldown {gear.cooldown}s. Hotbar key {if gear.keybind
-						== "One"
-					then "1"
-					elseif gear.keybind == "Two" then "2"
-					else "3"}.`,
+				description = `{gear.description} Cooldown {gear.cooldown}s. Hotbar key {GearConfig.KEY_LABEL[gear.keybind] or "?"}.`,
 				tab = "gear",
 				icon = gear.icon,
 				glyph = gear.glyph,

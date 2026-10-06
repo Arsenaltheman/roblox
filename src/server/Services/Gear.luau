@@ -62,7 +62,7 @@ local function buy(player: Player, key: string)
 	Registry.Ui.fx(player, "gearBought", 0)
 	Registry.Ui.toast(
 		player,
-		`{item.name} unlocked! Use it from your hotbar ({item.keybind == "One" and "1" or item.keybind == "Two" and "2" or "3"}).`
+		`{item.name} unlocked! Use it from your hotbar ({GearConfig.KEY_LABEL[item.keybind] or "?"}).`
 	)
 	Registry.Ui.pushState(player)
 	Registry.Data.saveNow(player)
@@ -175,6 +175,52 @@ local function use(player: Player, key: string)
 		placeTrap(player, r.Position)
 		Registry.Ui.fx(player, "trapSet", 0)
 		Registry.Ui.toast(player, "Bear trap set! The next thief who grabs from you gets caught.")
+	elseif key == "GrappleHook" then
+		-- The client owns its character's physics, so the dash impulse is applied there.
+		Registry.Ui.fx(player, "dash", GearConfig.DASH_SPEED)
+		Registry.Ui.fxAll("dashTrail", player.UserId, r.Position)
+	elseif key == "DynamiteDecoy" then
+		local look = r.CFrame.LookVector * Vector3.new(1, 0, 1)
+		local spot = r.Position + (if look.Magnitude > 0.1 then look.Unit else Vector3.new(0, 0, -1)) * 14
+		spot = Vector3.new(spot.X, 0.5, spot.Z)
+		Registry.Heist.decoy(spot, GearConfig.DECOY_RANGE, GearConfig.DECOY_SECONDS)
+		Registry.Ui.fxAll("decoy", GearConfig.DECOY_SECONDS, spot)
+		task.delay(GearConfig.DECOY_SECONDS, function()
+			Registry.Heist.stunGuardsNear(spot, 16, GearConfig.DECOY_STUN)
+			Registry.Ui.fxAll("tumbleweed", 0, spot)
+		end)
+	elseif key == "CactusWall" then
+		local flat = r.CFrame.LookVector * Vector3.new(1, 0, 1)
+		local back = if flat.Magnitude > 0.1 then -flat.Unit else Vector3.new(0, 0, 1)
+		local center = r.Position + back * 7
+		local wall =
+			CFrame.lookAt(Vector3.new(center.X, 0, center.Z), Vector3.new(center.X, 0, center.Z) + back)
+		local parts = {}
+		for i = -2, 2 do
+			local cactus = Instance.new("Part")
+			cactus.Name = "CactusWall"
+			cactus.Anchored = true
+			cactus.Size = Vector3.new(2.6, 7, 2.6)
+			cactus.CFrame = wall * CFrame.new(i * 3, 3.5, 0)
+			cactus.Color = Color3.fromRGB(78, 154, 75)
+			cactus.Material = Enum.Material.Grass
+			cactus.Parent = Workspace
+			table.insert(parts, cactus)
+		end
+		Registry.Ui.fxAll("cactusWall", 0, center)
+		task.delay(GearConfig.WALL_SECONDS, function()
+			for _, p in parts do
+				p:Destroy()
+			end
+		end)
+	elseif key == "StampedeCall" then
+		Registry.Heist.stunGuardsNear(r.Position, GearConfig.STAMPEDE_RANGE, GearConfig.STAMPEDE_STUN)
+		Registry.Steal.burst(player, GearConfig.STAMPEDE_STUN, GearConfig.STAMPEDE_SPEED)
+		Registry.Ui.fxAll("stampede", player.UserId, r.Position)
+	elseif key == "GhostLantern" then
+		player:SetAttribute("HiddenUntil", t + GearConfig.GHOST_SECONDS)
+		Registry.Steal.burst(player, GearConfig.GHOST_SECONDS, GearConfig.GHOST_SPEED)
+		Registry.Ui.fxAll("ghost", player.UserId, r.Position)
 	else
 		return
 	end

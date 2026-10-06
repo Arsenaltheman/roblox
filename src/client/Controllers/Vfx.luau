@@ -520,6 +520,74 @@ local function onFx(kind: string, value: number, position: Vector3?)
 		if root then
 			Vfx.fireworks(root.Position, C("gold"), 3)
 		end
+	elseif kind == "dash" then
+		-- Grapple Hook: the server approved it; we own our character, so push it here.
+		if root then
+			local flat = root.CFrame.LookVector * Vector3.new(1, 0, 1)
+			local dir = if flat.Magnitude > 0.1 then flat.Unit else Vector3.new(0, 0, -1)
+			root.AssemblyLinearVelocity = dir * value + Vector3.new(0, 28, 0)
+			Vfx.shake(0.6, 0.25)
+			Sound.play("lassoThrow")
+		end
+	elseif kind == "dashTrail" and position then
+		Vfx.burst(position, Color3.fromRGB(230, 210, 170), 30, 1.4, 18)
+		local who = playerRoot(value)
+		if who then
+			local hookAt = who.Position + who.CFrame.LookVector * 30 + Vector3.new(0, 6, 0)
+			Vfx.lasso(who.Position, hookAt, C("brass"))
+		end
+	elseif kind == "decoy" and position then
+		-- A lit stick of dynamite with a sparking fuse until it blows.
+		local stick = anchoredPart(
+			Vector3.new(0.8, 2.4, 0.8),
+			CFrame.new(position + Vector3.new(0, 1.2, 0)) * CFrame.Angles(0, 0, math.rad(15)),
+			C("red"),
+			Enum.Material.SmoothPlastic
+		)
+		local spark = Instance.new("Sparkles")
+		spark.SparkleColor = Color3.fromRGB(255, 200, 80)
+		spark.Parent = stick
+		local light = Instance.new("PointLight")
+		light.Color = Color3.fromRGB(255, 160, 60)
+		light.Range = 12
+		light.Parent = stick
+		Sound.play("alarm", 0.2)
+		task.delay(math.max(0.5, value), function()
+			stick:Destroy()
+		end)
+	elseif kind == "cactusWall" and position then
+		Vfx.burst(position, C("cactus"), 50, 1.6, 20)
+		Vfx.ring(position, Color3.fromRGB(214, 170, 110), 12)
+		Sound.play("doors")
+		if root and (root.Position - position).Magnitude < 50 then
+			Vfx.shake(0.8, 0.3)
+		end
+	elseif kind == "stampede" and position then
+		Vfx.ring(position, Color3.fromRGB(214, 170, 110), 60)
+		Vfx.burst(position, Color3.fromRGB(214, 170, 110), 120, 2.2, 36)
+		Vfx.floatText(position + Vector3.new(0, 6, 0), "STAMPEDE!", C("gold"))
+		Sound.play("whistle")
+		if root and (root.Position - position).Magnitude < 90 then
+			Vfx.shake(2.4, 1.2)
+		end
+	elseif kind == "ghost" and position then
+		Vfx.burst(position, Color3.fromRGB(180, 255, 230), 50, 1.6, 14)
+		local who = Players:GetPlayerByUserId(value)
+		local ghostly = who and who.Character
+		if ghostly then
+			for _, d in ghostly:GetDescendants() do
+				if d:IsA("BasePart") then
+					d.LocalTransparencyModifier = 0.7
+				end
+			end
+			task.delay(8, function()
+				for _, d in ghostly:GetDescendants() do
+					if d:IsA("BasePart") then
+						d.LocalTransparencyModifier = 0
+					end
+				end
+			end)
+		end
 	elseif kind == "spinEarned" then
 		Sound.play("giftReady")
 		if root then

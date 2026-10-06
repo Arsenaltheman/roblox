@@ -35,6 +35,9 @@ type Guard = {
 	target: Player?,
 	nextWander: number,
 	stunnedUntil: number,
+	-- Dynamite Decoy: chase this spot instead of players until decoyUntil.
+	decoyUntil: number?,
+	decoyPos: Vector3?,
 }
 
 local nests: { [number]: { Nest } } = {}
@@ -504,6 +507,20 @@ function Heist.stunGuardsNear(position: Vector3, radius: number, seconds: number
 	return count
 end
 
+-- Dynamite Decoy: guards within `radius` chase `position` for `seconds`. Returns how many.
+function Heist.decoy(position: Vector3, radius: number, seconds: number): number
+	local count = 0
+	for _, guard in guards do
+		if (guard.root.Position - position).Magnitude <= radius then
+			guard.decoyUntil = now() + seconds
+			guard.decoyPos = position
+			guard.target = nil
+			count += 1
+		end
+	end
+	return count
+end
+
 -- Every heist nest refills now, `boost` tiers richer than normal (server event).
 function Heist.restockAll(boost: number)
 	for zoneId, zoneNests in nests do
@@ -563,6 +580,13 @@ local function updateGuard(guard: Guard, t: number)
 	local pos = guard.root.Position
 	if t < guard.stunnedUntil then
 		guard.alert.Enabled = false
+		return
+	end
+	if guard.decoyUntil and t < guard.decoyUntil and guard.decoyPos then
+		guard.target = nil
+		guard.alert.Enabled = true
+		guard.humanoid.WalkSpeed = zone.chaseSpeed
+		guard.humanoid:MoveTo(guard.decoyPos)
 		return
 	end
 

@@ -22,11 +22,16 @@ local localPlayer = Players.LocalPlayer
 
 local Hotbar = {}
 
-local KEY_LABEL: { [string]: string } = { One = "1", Two = "2", Three = "3" }
+local KEY_LABEL = GearConfig.KEY_LABEL
 local COLOR: { [string]: Color3 } = {
 	SmokeBomb = Color3.fromRGB(120, 130, 150),
 	TumbleweedBomb = Theme.color.orange,
 	BearTrap = Theme.color.red,
+	GrappleHook = Theme.color.blue,
+	DynamiteDecoy = Theme.color.orange,
+	CactusWall = Theme.color.green,
+	StampedeCall = Theme.color.yellow,
+	GhostLantern = Theme.color.purple,
 }
 
 local function use(key: string)
@@ -135,7 +140,7 @@ function Hotbar.build(): Instance
 
 	return create("Frame")({
 		Name = "Hotbar",
-		Size = UDim2.fromOffset(260, 80),
+		Size = UDim2.fromOffset(700, 80),
 		Position = UDim2.new(0.5, 0, 1, -18),
 		AnchorPoint = Vector2.new(0.5, 1),
 		BackgroundTransparency = 1,
