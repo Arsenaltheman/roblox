@@ -48,6 +48,8 @@ local function howToGet(cosmetic: Cosmetics.Cosmetic): string
 		return `{cosmetic.nuggets} Nuggets in the Trading Post`
 	elseif string.sub(cosmetic.id, 1, 6) == "title_" then
 		return "Earned on the Bounty Trail"
+	elseif cosmetic.id == "hat_premium" then
+		return "Roblox Premium members"
 	elseif cosmetic.id == "trail_gold" then
 		return "Sheriff's Badge (VIP)"
 	end

@@ -21,6 +21,7 @@ local list: { Cosmetic } = {
 	{ id = "hat_cactus", slot = "hat", name = "Cactus Cap", nuggets = 80, color = "#4E9A4B" },
 	{ id = "hat_flower", slot = "hat", name = "Flower Hat", nuggets = 150, color = "#FF8FB1" },
 	{ id = "hat_sheriff", slot = "hat", name = "Sheriff Hat", nuggets = 300, color = "#E2A93B" },
+	{ id = "hat_premium", slot = "hat", name = "Premium Top Hat", color = "#2B1D14" },
 	{ id = "poster_classic", slot = "poster", name = "Classic Wanted", nuggets = 30, color = "#F3E2C0" },
 	{ id = "poster_gold", slot = "poster", name = "Golden Bounty", nuggets = 200, color = "#FFC83D" },
 	{ id = "poster_neon", slot = "poster", name = "Neon Outlaw", nuggets = 350, color = "#3FB7B0" },

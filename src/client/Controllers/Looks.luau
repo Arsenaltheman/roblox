@@ -127,6 +127,24 @@ local function buildHat(id: string, head: BasePart): Model?
 		hatPart(hat, Vector3.new(1, 1.6, 1), top * CFrame.new(0, 0.8, 0), green)
 		hatPart(hat, Vector3.new(0.5, 0.9, 0.5), top * CFrame.new(0.6, 0.9, 0), green)
 		hatPart(hat, Vector3.new(0.5, 0.7, 0.5), top * CFrame.new(-0.6, 0.6, 0), green)
+	elseif id == "hat_premium" then
+		local black = Color3.fromRGB(43, 29, 20)
+		hatPart(
+			hat,
+			Vector3.new(0.18, 2.8, 2.8),
+			top * CFrame.new(0, 0.1, 0) * flat,
+			black,
+			Enum.PartType.Cylinder
+		)
+		hatPart(hat, Vector3.new(1.6, 1.8, 1.6), top * CFrame.new(0, 1.0, 0), black)
+		hatPart(
+			hat,
+			Vector3.new(1.65, 0.3, 1.65),
+			top * CFrame.new(0, 0.4, 0),
+			Color3.fromRGB(255, 200, 61),
+			nil,
+			Enum.Material.Neon
+		)
 	elseif id == "hat_flower" then
 		hatPart(
 			hat,

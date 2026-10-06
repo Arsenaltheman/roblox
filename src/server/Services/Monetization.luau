@@ -47,8 +47,13 @@ function Monetization.owns(player: Player, key: string): boolean
 end
 
 -- The Economy.Passes table used by every formula.
+function Monetization.isPremium(player: Player): boolean
+	return player.MembershipType == Enum.MembershipType.Premium
+end
+
 function Monetization.passes(player: Player): Economy.Passes
 	return {
+		Premium = Monetization.isPremium(player),
 		DoubleCash = Monetization.owns(player, "DoubleCash"),
 		VIP = Monetization.owns(player, "VIP"),
 		IronLock = Monetization.owns(player, "IronLock"),

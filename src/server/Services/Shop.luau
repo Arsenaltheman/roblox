@@ -157,8 +157,21 @@ end
 function Shop.start()
 	Net.on("Equip", equip)
 	Net.on("Setting", setting)
+	local function premiumPerks(player: Player)
+		local d = Registry.Data.get(player)
+		if d and Registry.Monetization.isPremium(player) and not d.Owned.hat_premium then
+			d.Owned.hat_premium = true
+			Registry.Ui.toast(player, "Roblox Premium perks: +10% income and the Premium Top Hat (Wardrobe)!")
+			Registry.Ui.pushState(player)
+		end
+	end
 	Registry.Data.loaded:Connect(function(player)
 		Shop.applyEquipped(player)
+		premiumPerks(player)
+	end)
+	Players.PlayerMembershipChanged:Connect(function(player)
+		premiumPerks(player)
+		Registry.Ui.pushState(player)
 	end)
 	Registry.Monetization.passChanged:Connect(function(player)
 		Shop.applyEquipped(player)

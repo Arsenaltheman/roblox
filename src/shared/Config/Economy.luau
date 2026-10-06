@@ -25,6 +25,8 @@ return {
 	paidMultipliers = {
 		DoubleCash = 2,
 		VIP = 1.5,
+		-- Roblox Premium members (Roblox's own subscription) get a small perk.
+		Premium = 1.1,
 	},
 
 	-- Frontier (rebirth) n needs frontierCostMultiplier * price(T) cash plus owning a critter of tier >= T,

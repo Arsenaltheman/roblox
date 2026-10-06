@@ -9,6 +9,7 @@ local Train = require("../Config/Train")
 local Economy = {}
 
 export type Passes = {
+	Premium: boolean?,
 	DoubleCash: boolean?,
 	VIP: boolean?,
 	IronLock: boolean?,
@@ -78,6 +79,9 @@ function Economy.multiplier(ctx: IncomeContext): number
 	end
 	if ctx.passes.VIP then
 		paid *= Config.paidMultipliers.VIP
+	end
+	if ctx.passes.Premium then
+		paid *= Config.paidMultipliers.Premium
 	end
 
 	local almanac = 1 + (ctx.almanacSets or 0) * Config.almanacSetBonus

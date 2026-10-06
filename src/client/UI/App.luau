@@ -3,6 +3,7 @@
 -- HUD starts minimal; buttons pop in as the tutorial unlocks systems.
 
 local Players = game:GetService("Players")
+local SocialService = game:GetService("SocialService")
 local Workspace = game:GetService("Workspace")
 
 local Vide = require("@game/ReplicatedStorage/Packages/Vide")
@@ -32,6 +33,7 @@ local SprintButton = require("./SprintButton")
 local EventBanner = require("./EventBanner")
 local Quests = require("./Quests")
 local Wardrobe = require("./Wardrobe")
+local Offer = require("./Offer")
 local Theme = require("./Theme")
 
 local create = Vide.create :: any
@@ -1022,6 +1024,33 @@ local function settingsMenu(): Instance
 						Net.request("Setting", "Quality", order[i % #order + 1])
 					end,
 				}),
+				card({
+					order = 0,
+					title = function()
+						return "Invite friends"
+					end,
+					sub = function()
+						return "+10% income for every friend in your server (up to +30%)"
+					end,
+					color = Theme.color.green,
+					button = "INVITE",
+					glyph = "☺",
+					onClick = function()
+						Sound.play("click")
+						task.spawn(function()
+							local ok, can = pcall(function()
+								return SocialService:CanSendGameInviteAsync(localPlayer)
+							end)
+							if ok and can then
+								pcall(function()
+									SocialService:PromptGameInvite(localPlayer)
+								end)
+							else
+								Store.toast("Invites aren't available on this account right now.")
+							end
+						end)
+					end,
+				}),
 				volume(1, "Music", "Music volume"),
 				volume(2, "Sfx", "Sound effects"),
 				volume(3, "Voice", "Critter voices"),
@@ -1645,6 +1674,14 @@ function App.mount()
 	Vide.mount(function()
 		return App.build(scale)
 	end, playerGui)
+	-- The Starter Pack offer waits for a calm moment after the tutorial (once per session).
+	task.spawn(function()
+		task.wait(90)
+		while true do
+			Offer.maybeShow()
+			task.wait(15)
+		end
+	end)
 end
 
 function App.build(scale: () -> number): Instance
@@ -1692,6 +1729,13 @@ function App.build(scale: () -> number): Instance
 			show(function()
 				return Store.menu() == "eggs"
 			end, eggsMenu),
+			show(function()
+				return Store.menu() == "offer"
+			end, function()
+				return Offer.panel(function()
+					Store.menu("")
+				end)
+			end),
 			show(function()
 				return Store.menu() == "wardrobe"
 			end, function()
