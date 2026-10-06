@@ -1,0 +1,51 @@
+name: CI
+
+# Runs scripts/check.sh: format, lint, unit tests, registry check, economy simulator gates,
+# Rojo build and strict type checking. Needs no secrets.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      ROJO_VERSION: 7.7.1
+      SELENE_VERSION: 0.31.0
+      STYLUA_VERSION: 2.5.2
+      LUNE_VERSION: 0.10.5
+      LUAU_LSP_VERSION: 1.70.1
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache tools
+        id: tools
+        uses: actions/cache@v4
+        with:
+          path: ~/tools
+          key: tools-${{ runner.os }}-rojo${{ env.ROJO_VERSION }}-selene${{ env.SELENE_VERSION }}-stylua${{ env.STYLUA_VERSION }}-lune${{ env.LUNE_VERSION }}-lsp${{ env.LUAU_LSP_VERSION }}
+
+      - name: Install tools
+        if: steps.tools.outputs.cache-hit != 'true'
+        run: |
+          cargo install --locked --root ~/tools rojo --version "$ROJO_VERSION"
+          cargo install --locked --root ~/tools selene --version "$SELENE_VERSION"
+          cargo install --locked --root ~/tools stylua --version "$STYLUA_VERSION"
+          cargo install --locked --root ~/tools lune --version "$LUNE_VERSION"
+
+      # If this download ever breaks, scripts/check.sh skips the type check instead of failing.
+      - name: Install luau-lsp
+        if: steps.tools.outputs.cache-hit != 'true'
+        continue-on-error: true
+        run: |
+          curl -sSfL -o /tmp/luau-lsp.zip \
+            "https://github.com/JohnnyMorganz/luau-lsp/releases/download/$LUAU_LSP_VERSION/luau-lsp-linux-x86_64.zip"
+          unzip -o /tmp/luau-lsp.zip -d ~/tools/bin
+          chmod +x ~/tools/bin/luau-lsp
+
+      - name: Run checks
+        run: |
+          export PATH="$HOME/tools/bin:$PATH"
+          bash scripts/check.sh
