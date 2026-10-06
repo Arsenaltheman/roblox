@@ -137,23 +137,23 @@ local function respond(player: Player, fromId: number, accept: boolean)
 		Registry.Ui.toast(player, "That invite expired.")
 		return
 	end
+	local group: Group = g or { leader = from, members = { from }, heists = 0 }
 	if not g then
-		g = { leader = from, members = { from }, heists = 0 }
-		groups[from] = g
-		memberOf[from] = g
+		groups[from] = group
+		memberOf[from] = group
 	end
-	if #g.members >= Posse.MAX then
+	if #group.members >= Posse.MAX then
 		Registry.Ui.toast(player, "That posse is full.")
 		return
 	end
-	table.insert(g.members, player)
-	memberOf[player] = g
-	publish(g)
-	for _, member in g.members do
-		Registry.Ui.toast(member, `{player.DisplayName} joined the posse! ({#g.members}/{Posse.MAX})`)
+	table.insert(group.members, player)
+	memberOf[player] = group
+	publish(group)
+	for _, member in group.members do
+		Registry.Ui.toast(member, `{player.DisplayName} joined the posse! ({#group.members}/{Posse.MAX})`)
 		Registry.Ui.fx(member, "posseJoin", 0)
 	end
-	if #g.members == 2 then
+	if #group.members == 2 then
 		Registry.Ui.announce(`{from.DisplayName} and {player.DisplayName} formed a posse!`, "info")
 	end
 end
