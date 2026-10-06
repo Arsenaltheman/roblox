@@ -25,14 +25,14 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/tools
-          key: tools-${{ runner.os }}-rojo${{ env.ROJO_VERSION }}-selene${{ env.SELENE_VERSION }}-stylua${{ env.STYLUA_VERSION }}-lune${{ env.LUNE_VERSION }}-lsp${{ env.LUAU_LSP_VERSION }}
+          key: tools-${{ runner.os }}-rojo${{ env.ROJO_VERSION }}-selene${{ env.SELENE_VERSION }}-stylua${{ env.STYLUA_VERSION }}-lune${{ env.LUNE_VERSION }}-lsp${{ env.LUAU_LSP_VERSION }}-luau1
 
       - name: Install tools
         if: steps.tools.outputs.cache-hit != 'true'
         run: |
           cargo install --locked --root ~/tools rojo --version "$ROJO_VERSION"
           cargo install --locked --root ~/tools selene --version "$SELENE_VERSION"
-          cargo install --locked --root ~/tools stylua --version "$STYLUA_VERSION"
+          cargo install --locked --root ~/tools stylua --version "$STYLUA_VERSION" --features luau
           cargo install --locked --root ~/tools lune --version "$LUNE_VERSION"
 
       # If this download ever breaks, scripts/check.sh skips the type check instead of failing.

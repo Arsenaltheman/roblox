@@ -66,8 +66,28 @@ return function()
 
 		test.case("best tier ignores critters being carried away", function()
 			local data = Profile.template()
-			data.Critters["1"] = { s = "x", tier = 5, p = 1, src = "cage", uid = 1, pr = false, br = false, it = false, born = 0 }
-			data.Critters["2"] = { s = "y", tier = 9, p = 2, src = "cage", uid = 1, pr = false, br = false, it = true, born = 0 }
+			data.Critters["1"] = {
+				s = "x",
+				tier = 5,
+				p = 1,
+				src = "cage",
+				uid = 1,
+				pr = false,
+				br = false,
+				it = false,
+				born = 0,
+			}
+			data.Critters["2"] = {
+				s = "y",
+				tier = 9,
+				p = 2,
+				src = "cage",
+				uid = 1,
+				pr = false,
+				br = false,
+				it = true,
+				born = 0,
+			}
 			check.equal(Profile.bestTier(data), 5)
 		end)
 	end)

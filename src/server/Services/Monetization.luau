@@ -128,7 +128,11 @@ local function grant(player: Player, product: Products.Product): boolean
 	elseif key == "StarterPack" then
 		if d.StarterPack then
 			-- Already granted (e.g. re-purchase): still a valid receipt; give cash instead of a duplicate.
-			return Registry.Wallet.addCash(player, Economy.cashBag(3600, Registry.Ranch.income(player)), "Robux:StarterPackRepeat")
+			return Registry.Wallet.addCash(
+				player,
+				Economy.cashBag(3600, Registry.Ranch.income(player)),
+				"Robux:StarterPackRepeat"
+			)
 		end
 		d.StarterPack = true
 		d.Boosts.DoubleCash = math.max(d.Boosts.DoubleCash or 0, os.time()) + 30 * 60

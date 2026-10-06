@@ -7,7 +7,14 @@ local out = {}
 for _, list in { Species.list, Species.exclusives } do
 	for _, s in list do
 		local look = Looks[s.id]
-		out[s.id] = { tier = s.tier, rig = s.rig, body = look.body, accent = look.accent, features = look.features, shape = look.shape or { 1, 1, 1 } }
+		out[s.id] = {
+			tier = s.tier,
+			rig = s.rig,
+			body = look.body,
+			accent = look.accent,
+			features = look.features,
+			shape = look.shape or { 1, 1, 1 },
+		}
 	end
 end
 fs.writeFile("tools/blender/out/looks.json", serde.encode("json", out, true))

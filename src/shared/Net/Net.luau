@@ -79,7 +79,10 @@ function Net.initServer()
 	end
 end
 
-function Net.setGuard(fn: (player: Player, name: string) -> boolean, invalid: (player: Player, name: string) -> ())
+function Net.setGuard(
+	fn: (player: Player, name: string) -> boolean,
+	invalid: (player: Player, name: string) -> ()
+)
 	guard = fn
 	onInvalid = invalid
 end

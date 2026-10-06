@@ -81,7 +81,8 @@ local function cactus(parent: Instance, at: Vector3, height: number)
 		part({
 			name = "Arm",
 			size = Vector3.new(height * 0.35, 1.5, 1.5),
-			cframe = CFrame.new(at + Vector3.new(side * 1.8, height * 0.62, 0)) * CFrame.Angles(0, 0, math.rad(90)),
+			cframe = CFrame.new(at + Vector3.new(side * 1.8, height * 0.62, 0))
+				* CFrame.Angles(0, 0, math.rad(90)),
 			color = "cactusDark",
 			shape = Enum.PartType.Cylinder,
 			parent = parent,
@@ -100,7 +101,14 @@ local function rock(parent: Instance, at: Vector3, size: number, seed: number)
 	})
 end
 
-local function building(parent: Instance, name: string, title: string, at: Vector3, size: Vector3, wall: string)
+local function building(
+	parent: Instance,
+	name: string,
+	title: string,
+	at: Vector3,
+	size: Vector3,
+	wall: string
+)
 	local model = Instance.new("Model")
 	model.Name = name
 	local body = part({
@@ -393,7 +401,8 @@ local function buildLandmarks(root: Instance)
 		part({
 			name = "Tent",
 			size = Vector3.new(8, 7, 8),
-			cframe = CFrame.new(c + Vector3.new(math.cos(angle) * 12, 3.5, math.sin(angle) * 12)) * CFrame.Angles(0, angle, 0),
+			cframe = CFrame.new(c + Vector3.new(math.cos(angle) * 12, 3.5, math.sin(angle) * 12))
+				* CFrame.Angles(0, angle, 0),
 			color = "paper",
 			material = Enum.Material.Fabric,
 			parent = camp,
@@ -419,7 +428,8 @@ local function buildLandmarks(root: Instance)
 		local pad = part({
 			name = "LootPen" .. i,
 			size = Vector3.new(0.4, 5, 5),
-			cframe = CFrame.new(c + Vector3.new(math.cos(angle) * 6, 0.3, math.sin(angle) * 6)) * CFrame.Angles(0, 0, math.rad(90)),
+			cframe = CFrame.new(c + Vector3.new(math.cos(angle) * 6, 0.3, math.sin(angle) * 6))
+				* CFrame.Angles(0, 0, math.rad(90)),
 			color = "woodLight",
 			shape = Enum.PartType.Cylinder,
 			parent = pens,

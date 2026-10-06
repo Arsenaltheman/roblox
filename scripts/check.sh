@@ -5,6 +5,12 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 echo "== format (StyLua)"
+# A StyLua built without the "luau" feature silently skips .luau files when given folders, so first
+# make sure it can actually parse one.
+stylua --check src/server/main.server.luau > /dev/null || {
+	echo "StyLua can't read Luau. Reinstall with: cargo install stylua --features luau"
+	exit 1
+}
 stylua --check src tests tools
 
 echo "== lint (selene)"
@@ -26,7 +32,7 @@ rojo build default.project.json -o build/CritterExpress.rbxl
 if command -v luau-lsp > /dev/null; then
 	echo "== types (luau-lsp, strict)"
 	rojo sourcemap default.project.json -o sourcemap.json > /dev/null
-	out=$(luau-lsp analyze --sourcemap=sourcemap.json --definitions=types/globalTypes.d.luau --ignore="vendor/**" src 2>&1 | grep -v '^\[INFO\]\|^\[WARN\]' || true)
+	out=$(luau-lsp analyze --sourcemap=sourcemap.json --definitions=types/globalTypes.d.luau --ignore="vendor/**" src tests/cloud 2>&1 | grep -v '^\[INFO\]\|^\[WARN\]' || true)
 	if [ -n "$out" ]; then
 		echo "$out"
 		exit 1

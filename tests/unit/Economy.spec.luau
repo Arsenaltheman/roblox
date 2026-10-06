@@ -41,7 +41,9 @@ return function()
 			local base = { frontier = 0, passes = {} }
 			check.equal(Economy.multiplier(base), 1)
 			check.is_true(near(Economy.multiplier({ frontier = 0, passes = {}, friends = 5 }), 1.3))
-			check.is_true(near(Economy.multiplier({ frontier = 0, passes = {}, friends = 3, eventActive = true }), 2.3))
+			check.is_true(
+				near(Economy.multiplier({ frontier = 0, passes = {}, friends = 3, eventActive = true }), 2.3)
+			)
 			check.equal(Economy.multiplier({ frontier = 0, passes = { DoubleCash = true } }), 2)
 			check.equal(Economy.multiplier({ frontier = 0, passes = { DoubleCash = true, VIP = true } }), 3)
 			check.equal(Economy.multiplier({ frontier = 2, passes = { DoubleCash = true, VIP = true } }), 9)
@@ -69,7 +71,11 @@ return function()
 			check.equal(Economy.frontierTargetTier(9), 38)
 			check.equal(Economy.frontierTargetTier(10), 40)
 			check.equal(Economy.frontierTargetTier(12), 40)
-			local f9, f10, f11, f12 = Economy.frontierCost(9), Economy.frontierCost(10), Economy.frontierCost(11), Economy.frontierCost(12)
+			local f9, f10, f11, f12 =
+				Economy.frontierCost(9),
+				Economy.frontierCost(10),
+				Economy.frontierCost(11),
+				Economy.frontierCost(12)
 			check.is_true(f10 > f9 and f11 > f10 and f12 > f11)
 			check.is_true(near(f11 / f10, 4))
 		end)

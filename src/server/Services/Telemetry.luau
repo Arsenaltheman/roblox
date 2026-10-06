@@ -51,13 +51,23 @@ function Telemetry.economy(player: Player, currency: string, amount: number, bal
 	if amount == 0 then
 		return
 	end
-	local flow = if amount > 0 then Enum.AnalyticsEconomyFlowType.Source else Enum.AnalyticsEconomyFlowType.Sink
+	local flow = if amount > 0
+		then Enum.AnalyticsEconomyFlowType.Source
+		else Enum.AnalyticsEconomyFlowType.Sink
 	local transaction = if string.sub(reason, 1, 6) == "Robux:"
 		then Enum.AnalyticsEconomyTransactionType.IAP.Name
 		elseif amount > 0 then Enum.AnalyticsEconomyTransactionType.Gameplay.Name
 		else Enum.AnalyticsEconomyTransactionType.Shop.Name
 	safe(function()
-		AnalyticsService:LogEconomyEvent(player, flow, currency, math.abs(amount), balance, transaction, reason)
+		AnalyticsService:LogEconomyEvent(
+			player,
+			flow,
+			currency,
+			math.abs(amount),
+			balance,
+			transaction,
+			reason
+		)
 	end)
 end
 

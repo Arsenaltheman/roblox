@@ -364,7 +364,8 @@ local function simulate(persona: Persona, seed: number): Result
 				horseshoe = passes.LuckyHorseshoe,
 				serverLuck = persona.serverLuck,
 			})
-			local slots = { { userId = 1, bandTier = band, personalLuck = personal, activeMinutes = activeMinutes } }
+			local slots =
+				{ { userId = 1, bandTier = band, personalLuck = personal, activeMinutes = activeMinutes } }
 			for i = 1, MODEL.otherPlayers do
 				table.insert(slots, { userId = i + 1, bandTier = band, personalLuck = 1, activeMinutes = 0 })
 			end
@@ -377,7 +378,11 @@ local function simulate(persona: Persona, seed: number): Result
 			for _, cage in manifest.cages do
 				if cage.owner == 1 then
 					table.insert(options, cage)
-				elseif cage.owner == 0 and not rng:chance(MODEL.wildTakenByOthers) and rng:chance(persona.wildInterest) then
+				elseif
+					cage.owner == 0
+					and not rng:chance(MODEL.wildTakenByOthers)
+					and rng:chance(persona.wildInterest)
+				then
 					if Luck.canBuyRarity(cage.rarity, activeMinutes) then
 						table.insert(options, cage)
 					end
@@ -585,7 +590,11 @@ for _, persona in PERSONAS do
 	for n = 1, 14 do
 		local st = frontierStats(n)
 		if st.count > 0 then
-			out(`| F{n} | {math.floor(st.count / SEEDS * 100)}% | {minutes(st.p10)} | {minutes(st.p50)} | {minutes(st.p90)} |`)
+			out(
+				`| F{n} | {math.floor(st.count / SEEDS * 100)}% | {minutes(st.p10)} | {minutes(st.p50)} | {minutes(
+					st.p90
+				)} |`
+			)
 		end
 	end
 	out("")
@@ -608,7 +617,12 @@ for _, persona in PERSONAS do
 	end
 	local gapP90 = quantile(gaps, 0.9)
 	out(`Reward gap in the first 15 min: p90 {string.format("%.0f", gapP90)} s`)
-	out(`Gold Nuggets: earned {nuggetsIn}, spent {nuggetsOut} (spent/earned {string.format("%.2f", if nuggetsIn > 0 then nuggetsOut / nuggetsIn else 0)})`)
+	out(
+		`Gold Nuggets: earned {nuggetsIn}, spent {nuggetsOut} (spent/earned {string.format(
+			"%.2f",
+			if nuggetsIn > 0 then nuggetsOut / nuggetsIn else 0
+		)})`
+	)
 	out(`Broken runs (NaN/inf): {broken}; highest cash seen: {NumberFormat.cash(maxCash)}`)
 	out("")
 
@@ -632,10 +646,22 @@ end
 local tapper = summary.Tapper
 local optimizer = summary.Optimizer
 local whale = summary.Whale
-gate("Free player (Tapper) reaches F1 in 25–40 min", tapper.f1 >= 25 * 60 and tapper.f1 <= 40 * 60, minutes(tapper.f1))
-gate("Free player (Tapper) reaches F3 in 1.5–2.5 h", tapper.f3 >= 90 * 60 and tapper.f3 <= 150 * 60, minutes(tapper.f3))
+gate(
+	"Free player (Tapper) reaches F1 in 25–40 min",
+	tapper.f1 >= 25 * 60 and tapper.f1 <= 40 * 60,
+	minutes(tapper.f1)
+)
+gate(
+	"Free player (Tapper) reaches F3 in 1.5–2.5 h",
+	tapper.f3 >= 90 * 60 and tapper.f3 <= 150 * 60,
+	minutes(tapper.f3)
+)
 gate("Optimizer is not absurdly fast (F1 ≥ 18 min)", optimizer.f1 >= 18 * 60, minutes(optimizer.f1))
-gate("Reward every < 60 s in the first 15 min (p90)", tapper.gapP90 < 60, `{string.format("%.0f", tapper.gapP90)} s`)
+gate(
+	"Reward every < 60 s in the first 15 min (p90)",
+	tapper.gapP90 < 60,
+	`{string.format("%.0f", tapper.gapP90)} s`
+)
 gate(
 	"Pay-to-win: whale reaches F3 at least 2.5x faster than a free player",
 	whale.f3 * 2.5 <= tapper.f3,

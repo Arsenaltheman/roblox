@@ -80,7 +80,9 @@ function Train.callGoldenExpress(byName: string?)
 	goldenCycle = state.cycle + (if state.inCycle >= rollAheadAt - 0.5 then 2 else 1)
 	Workspace:SetAttribute("GoldenCycle", goldenCycle)
 	Registry.Ui.announce(
-		if byName then `Sheriff {byName} called the GOLDEN EXPRESS! Next train!` else "The GOLDEN EXPRESS is coming! Next train!",
+		if byName
+			then `Sheriff {byName} called the GOLDEN EXPRESS! Next train!`
+			else "The GOLDEN EXPRESS is coming! Next train!",
 		"golden"
 	)
 end
@@ -151,8 +153,7 @@ local function rollTrain(cycle: number)
 			end
 		end
 	end
-	local golden = cycle == goldenCycle
-		and Registry.LiveConfig.enabled("ff.goldenExpress")
+	local golden = cycle == goldenCycle and Registry.LiveConfig.enabled("ff.goldenExpress")
 	local manifest = Manifest.roll(serverSeed, cycle, slots, {
 		sharedLuck = Train.serverLuck() * eventLuck(),
 		weatherMutation = Registry.Weather.current(),
@@ -250,7 +251,10 @@ local function buyCage(player: Player, cycle: number, cageId: number)
 	end
 	local rarityIndex = Rarities.indexOf(cage.rarity)
 	if rarityIndex >= 6 then
-		Registry.Ui.announce(`{player.DisplayName} lassoed a {string.upper(cage.rarity)} {Species.byId[cage.speciesId].name}!`, cage.rarity)
+		Registry.Ui.announce(
+			`{player.DisplayName} lassoed a {string.upper(cage.rarity)} {Species.byId[cage.speciesId].name}!`,
+			cage.rarity
+		)
 	end
 end
 

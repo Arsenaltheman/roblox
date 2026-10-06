@@ -76,7 +76,13 @@ function Manifest.maxTierForActivity(activeMinutes: number): number
 	return allowed
 end
 
-local function makeCage(id: number, tier: number, owner: number, mutation: string?, goldenTicket: boolean): Cage
+local function makeCage(
+	id: number,
+	tier: number,
+	owner: number,
+	mutation: string?,
+	goldenTicket: boolean
+): Cage
 	local species = Species.byTier[tier]
 	return {
 		id = id,

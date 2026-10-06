@@ -35,7 +35,14 @@ local function weld(part: BasePart, root: BasePart)
 	w.Parent = part
 end
 
-local function piece(ctx: Ctx, name: string, size: Vector3, offset: CFrame, color: Color3, kind: string?): BasePart
+local function piece(
+	ctx: Ctx,
+	name: string,
+	size: Vector3,
+	offset: CFrame,
+	color: Color3,
+	kind: string?
+): BasePart
 	local p = Instance.new("Part")
 	p.Name = name
 	p.Size = size
@@ -72,12 +79,34 @@ local function eyes(ctx: Ctx)
 	for side = -1, 1, 2 do
 		local base = CFrame.new(side * r * 0.38 * s[1], r * 0.28 * s[2], -r * 0.82 * s[3])
 		piece(ctx, "Eye", Vector3.new(r * 0.46, r * 0.52, r * 0.3), base, Color3.new(1, 1, 1), "sphere")
-		piece(ctx, "Pupil", Vector3.new(r * 0.24, r * 0.3, r * 0.2), base * CFrame.new(0, -r * 0.04, -r * 0.1), C("ink"), "sphere")
-		piece(ctx, "Shine", Vector3.new(r * 0.08, r * 0.08, r * 0.05), base * CFrame.new(-side * r * 0.05, r * 0.06, -r * 0.2), Color3.new(1, 1, 1), "sphere")
+		piece(
+			ctx,
+			"Pupil",
+			Vector3.new(r * 0.24, r * 0.3, r * 0.2),
+			base * CFrame.new(0, -r * 0.04, -r * 0.1),
+			C("ink"),
+			"sphere"
+		)
+		piece(
+			ctx,
+			"Shine",
+			Vector3.new(r * 0.08, r * 0.08, r * 0.05),
+			base * CFrame.new(-side * r * 0.05, r * 0.06, -r * 0.2),
+			Color3.new(1, 1, 1),
+			"sphere"
+		)
 	end
 	-- Rosy cheeks sell the cuteness.
 	for side = -1, 1, 2 do
-		piece(ctx, "Cheek", Vector3.new(r * 0.22, r * 0.12, r * 0.1), CFrame.new(side * r * 0.62 * s[1], r * 0.0, -r * 0.78 * s[3]), Color3.fromRGB(255, 140, 140), "sphere").Transparency = 0.25
+		piece(
+			ctx,
+			"Cheek",
+			Vector3.new(r * 0.22, r * 0.12, r * 0.1),
+			CFrame.new(side * r * 0.62 * s[1], r * 0.0, -r * 0.78 * s[3]),
+			Color3.fromRGB(255, 140, 140),
+			"sphere"
+		).Transparency =
+			0.25
 	end
 end
 
@@ -89,7 +118,14 @@ local function feet(ctx: Ctx, rig: string)
 		elseif rig == "biped" then { { -0.38, 0 }, { 0.38, 0 } }
 		else {}
 	for _, spot in spots do
-		piece(ctx, "Foot", Vector3.new(r * 0.36, r * 0.3, r * 0.42), CFrame.new(spot[1] * r * s[1], -r * 0.92 * s[2], spot[2] * r * s[3]), dark, "sphere")
+		piece(
+			ctx,
+			"Foot",
+			Vector3.new(r * 0.36, r * 0.3, r * 0.42),
+			CFrame.new(spot[1] * r * s[1], -r * 0.92 * s[2], spot[2] * r * s[3]),
+			dark,
+			"sphere"
+		)
 	end
 end
 
@@ -98,14 +134,43 @@ local FEATURES: { [string]: (Ctx) -> () } = {
 		local r, s = ctx.r, ctx.shape
 		local top = r * 0.92 * s[2]
 		local brimColor = ctx.accent:Lerp(C("woodDark"), 0.4)
-		piece(ctx, "HatBrim", Vector3.new(r * 0.12, r * 1.7, r * 1.7), CFrame.new(0, top, 0) * CFrame.Angles(0, 0, math.rad(90)), brimColor, "cylinder")
-		piece(ctx, "HatCrown", Vector3.new(r * 0.55, r * 0.95, r * 0.95), CFrame.new(0, top + r * 0.3, 0) * CFrame.Angles(0, 0, math.rad(90)), brimColor:Lerp(Color3.new(1, 1, 1), 0.08), "cylinder")
-		piece(ctx, "HatBand", Vector3.new(r * 0.14, r * 0.98, r * 0.98), CFrame.new(0, top + r * 0.1, 0) * CFrame.Angles(0, 0, math.rad(90)), C("red"), "cylinder")
+		piece(
+			ctx,
+			"HatBrim",
+			Vector3.new(r * 0.12, r * 1.7, r * 1.7),
+			CFrame.new(0, top, 0) * CFrame.Angles(0, 0, math.rad(90)),
+			brimColor,
+			"cylinder"
+		)
+		piece(
+			ctx,
+			"HatCrown",
+			Vector3.new(r * 0.55, r * 0.95, r * 0.95),
+			CFrame.new(0, top + r * 0.3, 0) * CFrame.Angles(0, 0, math.rad(90)),
+			brimColor:Lerp(Color3.new(1, 1, 1), 0.08),
+			"cylinder"
+		)
+		piece(
+			ctx,
+			"HatBand",
+			Vector3.new(r * 0.14, r * 0.98, r * 0.98),
+			CFrame.new(0, top + r * 0.1, 0) * CFrame.Angles(0, 0, math.rad(90)),
+			C("red"),
+			"cylinder"
+		)
 	end,
 	mustache = function(ctx)
 		local r, s = ctx.r, ctx.shape
 		for side = -1, 1, 2 do
-			piece(ctx, "Mustache", Vector3.new(r * 0.5, r * 0.16, r * 0.18), CFrame.new(side * r * 0.24, -r * 0.08 * s[2], -r * 0.93 * s[3]) * CFrame.Angles(0, 0, math.rad(side * -14)), C("ink"), "sphere")
+			piece(
+				ctx,
+				"Mustache",
+				Vector3.new(r * 0.5, r * 0.16, r * 0.18),
+				CFrame.new(side * r * 0.24, -r * 0.08 * s[2], -r * 0.93 * s[3])
+					* CFrame.Angles(0, 0, math.rad(side * -14)),
+				C("ink"),
+				"sphere"
+			)
 		end
 	end,
 	spikes = function(ctx)
@@ -113,53 +178,133 @@ local FEATURES: { [string]: (Ctx) -> () } = {
 		for i = 1, 7 do
 			local a = i / 7 * math.pi * 2
 			local dir = Vector3.new(math.cos(a) * s[1], 0.35, math.sin(a) * s[3]).Unit
-			piece(ctx, "Spike", Vector3.new(r * 0.1, r * 0.1, r * 0.34), CFrame.lookAt(Vector3.zero, dir) * CFrame.new(0, 0, -r * 1.02), ctx.body:Lerp(Color3.new(1, 1, 1), 0.45), "sphere")
+			piece(
+				ctx,
+				"Spike",
+				Vector3.new(r * 0.1, r * 0.1, r * 0.34),
+				CFrame.lookAt(Vector3.zero, dir) * CFrame.new(0, 0, -r * 1.02),
+				ctx.body:Lerp(Color3.new(1, 1, 1), 0.45),
+				"sphere"
+			)
 		end
 	end,
 	ears = function(ctx)
 		local r, s = ctx.r, ctx.shape
 		for side = -1, 1, 2 do
-			piece(ctx, "Ear", Vector3.new(r * 0.28, r * 0.7, r * 0.2), CFrame.new(side * r * 0.45 * s[1], r * 0.95 * s[2], -r * 0.1) * CFrame.Angles(0, 0, math.rad(side * -18)), ctx.body, "sphere")
+			piece(
+				ctx,
+				"Ear",
+				Vector3.new(r * 0.28, r * 0.7, r * 0.2),
+				CFrame.new(side * r * 0.45 * s[1], r * 0.95 * s[2], -r * 0.1)
+					* CFrame.Angles(0, 0, math.rad(side * -18)),
+				ctx.body,
+				"sphere"
+			)
 		end
 	end,
 	tail = function(ctx)
 		local r, s = ctx.r, ctx.shape
-		piece(ctx, "Tail", Vector3.new(r * 0.3, r * 0.3, r * 0.75), CFrame.new(0, r * 0.1, r * 1.0 * s[3]) * CFrame.Angles(math.rad(-25), 0, 0), ctx.accent, "sphere")
+		piece(
+			ctx,
+			"Tail",
+			Vector3.new(r * 0.3, r * 0.3, r * 0.75),
+			CFrame.new(0, r * 0.1, r * 1.0 * s[3]) * CFrame.Angles(math.rad(-25), 0, 0),
+			ctx.accent,
+			"sphere"
+		)
 	end,
 	bandana = function(ctx)
 		local r, s = ctx.r, ctx.shape
-		piece(ctx, "Bandana", Vector3.new(r * 0.22, r * 1.55 * s[1], r * 1.55 * s[3]), CFrame.new(0, -r * 0.42 * s[2], 0) * CFrame.Angles(0, 0, math.rad(90)), C("red"), "cylinder")
-		piece(ctx, "BandanaKnot", Vector3.new(r * 0.5, r * 0.4, r * 0.15), CFrame.new(0, -r * 0.55 * s[2], -r * 0.8 * s[3]) * CFrame.Angles(0, 0, math.rad(180)), C("red"), "wedge")
+		piece(
+			ctx,
+			"Bandana",
+			Vector3.new(r * 0.22, r * 1.55 * s[1], r * 1.55 * s[3]),
+			CFrame.new(0, -r * 0.42 * s[2], 0) * CFrame.Angles(0, 0, math.rad(90)),
+			C("red"),
+			"cylinder"
+		)
+		piece(
+			ctx,
+			"BandanaKnot",
+			Vector3.new(r * 0.5, r * 0.4, r * 0.15),
+			CFrame.new(0, -r * 0.55 * s[2], -r * 0.8 * s[3]) * CFrame.Angles(0, 0, math.rad(180)),
+			C("red"),
+			"wedge"
+		)
 	end,
 	boots = function(ctx)
 		local r, s = ctx.r, ctx.shape
 		for side = -1, 1, 2 do
-			piece(ctx, "Boot", Vector3.new(r * 0.38, r * 0.4, r * 0.4), CFrame.new(side * r * 0.38 * s[1], -r * 0.8 * s[2], 0) * CFrame.Angles(0, 0, math.rad(90)), C("woodDark"), "cylinder")
+			piece(
+				ctx,
+				"Boot",
+				Vector3.new(r * 0.38, r * 0.4, r * 0.4),
+				CFrame.new(side * r * 0.38 * s[1], -r * 0.8 * s[2], 0) * CFrame.Angles(0, 0, math.rad(90)),
+				C("woodDark"),
+				"cylinder"
+			)
 		end
 	end,
 	badge = function(ctx)
 		local r, s = ctx.r, ctx.shape
-		piece(ctx, "Badge", Vector3.new(r * 0.06, r * 0.36, r * 0.36), CFrame.new(r * 0.3, -r * 0.3 * s[2], -r * 0.9 * s[3]) * CFrame.Angles(0, math.rad(90), 0), C("gold"), "cylinder").Material =
+		piece(
+			ctx,
+			"Badge",
+			Vector3.new(r * 0.06, r * 0.36, r * 0.36),
+			CFrame.new(r * 0.3, -r * 0.3 * s[2], -r * 0.9 * s[3]) * CFrame.Angles(0, math.rad(90), 0),
+			C("gold"),
+			"cylinder"
+		).Material =
 			Enum.Material.Metal
 	end,
 	horns = function(ctx)
 		local r, s = ctx.r, ctx.shape
 		for side = -1, 1, 2 do
-			piece(ctx, "Horn", Vector3.new(r * 0.6, r * 0.18, r * 0.18), CFrame.new(side * r * 0.6 * s[1], r * 0.75 * s[2], -r * 0.2) * CFrame.Angles(0, 0, math.rad(side * 35)), C("cream"), "cylinder")
+			piece(
+				ctx,
+				"Horn",
+				Vector3.new(r * 0.6, r * 0.18, r * 0.18),
+				CFrame.new(side * r * 0.6 * s[1], r * 0.75 * s[2], -r * 0.2)
+					* CFrame.Angles(0, 0, math.rad(side * 35)),
+				C("cream"),
+				"cylinder"
+			)
 		end
 	end,
 	shell = function(ctx)
 		local r, s = ctx.r, ctx.shape
-		piece(ctx, "Shell", Vector3.new(r * 1.5 * s[1], r * 1.3 * s[2], r * 1.3 * s[3]), CFrame.new(0, r * 0.35 * s[2], r * 0.35 * s[3]), ctx.accent, "sphere")
+		piece(
+			ctx,
+			"Shell",
+			Vector3.new(r * 1.5 * s[1], r * 1.3 * s[2], r * 1.3 * s[3]),
+			CFrame.new(0, r * 0.35 * s[2], r * 0.35 * s[3]),
+			ctx.accent,
+			"sphere"
+		)
 	end,
 	beak = function(ctx)
 		local r, s = ctx.r, ctx.shape
-		piece(ctx, "Beak", Vector3.new(r * 0.4, r * 0.24, r * 0.45), CFrame.new(0, -r * 0.05, -r * 1.02 * s[3]) * CFrame.Angles(math.rad(-90), 0, 0), Color3.fromRGB(255, 160, 40), "wedge")
+		piece(
+			ctx,
+			"Beak",
+			Vector3.new(r * 0.4, r * 0.24, r * 0.45),
+			CFrame.new(0, -r * 0.05, -r * 1.02 * s[3]) * CFrame.Angles(math.rad(-90), 0, 0),
+			Color3.fromRGB(255, 160, 40),
+			"wedge"
+		)
 	end,
 	wings = function(ctx)
 		local r, s = ctx.r, ctx.shape
 		for side = -1, 1, 2 do
-			piece(ctx, "Wing", Vector3.new(r * 0.2, r * 0.8, r * 1.0), CFrame.new(side * r * 0.98 * s[1], r * 0.1, r * 0.1) * CFrame.Angles(0, 0, math.rad(side * 20)), ctx.accent, "sphere")
+			piece(
+				ctx,
+				"Wing",
+				Vector3.new(r * 0.2, r * 0.8, r * 1.0),
+				CFrame.new(side * r * 0.98 * s[1], r * 0.1, r * 0.1)
+					* CFrame.Angles(0, 0, math.rad(side * 20)),
+				ctx.accent,
+				"sphere"
+			)
 		end
 	end,
 	flame = function(ctx)
@@ -172,7 +317,14 @@ local FEATURES: { [string]: (Ctx) -> () } = {
 	end,
 	crown = function(ctx)
 		local r, s = ctx.r, ctx.shape
-		local crown = piece(ctx, "Crown", Vector3.new(r * 0.35, r * 0.8, r * 0.8), CFrame.new(0, r * 1.05 * s[2], 0) * CFrame.Angles(0, 0, math.rad(90)), C("gold"), "cylinder")
+		local crown = piece(
+			ctx,
+			"Crown",
+			Vector3.new(r * 0.35, r * 0.8, r * 0.8),
+			CFrame.new(0, r * 1.05 * s[2], 0) * CFrame.Angles(0, 0, math.rad(90)),
+			C("gold"),
+			"cylinder"
+		)
 		crown.Material = Enum.Material.Metal
 	end,
 	glow = function(ctx)
@@ -185,13 +337,33 @@ local FEATURES: { [string]: (Ctx) -> () } = {
 	stack = function(ctx)
 		local r = ctx.r
 		for i = 1, 3 do
-			piece(ctx, "Pancake", Vector3.new(r * 0.25, r * 1.9, r * 1.9), CFrame.new(0, -r * 0.55 + i * r * 0.28, 0) * CFrame.Angles(0, 0, math.rad(90)), C("#E9B26A"):Lerp(C("#8A4E1F"), i * 0.1), "cylinder")
+			piece(
+				ctx,
+				"Pancake",
+				Vector3.new(r * 0.25, r * 1.9, r * 1.9),
+				CFrame.new(0, -r * 0.55 + i * r * 0.28, 0) * CFrame.Angles(0, 0, math.rad(90)),
+				C("#E9B26A"):Lerp(C("#8A4E1F"), i * 0.1),
+				"cylinder"
+			)
 		end
-		piece(ctx, "Butter", Vector3.new(r * 0.35, r * 0.15, r * 0.35), CFrame.new(0, r * 0.4, 0), Color3.fromRGB(255, 236, 140))
+		piece(
+			ctx,
+			"Butter",
+			Vector3.new(r * 0.35, r * 0.15, r * 0.35),
+			CFrame.new(0, r * 0.4, 0),
+			Color3.fromRGB(255, 236, 140)
+		)
 	end,
 	lantern = function(ctx)
 		local r, s = ctx.r, ctx.shape
-		local bulb = piece(ctx, "Lantern", Vector3.new(r * 0.55, r * 0.7, r * 0.55), CFrame.new(0, r * 1.1 * s[2], 0), Color3.fromRGB(255, 210, 110), "sphere")
+		local bulb = piece(
+			ctx,
+			"Lantern",
+			Vector3.new(r * 0.55, r * 0.7, r * 0.55),
+			CFrame.new(0, r * 1.1 * s[2], 0),
+			Color3.fromRGB(255, 210, 110),
+			"sphere"
+		)
 		bulb.Material = Enum.Material.Neon
 		local light = Instance.new("PointLight")
 		light.Color = Color3.fromRGB(255, 200, 120)
@@ -201,7 +373,14 @@ local FEATURES: { [string]: (Ctx) -> () } = {
 	wheels = function(ctx)
 		local r, s = ctx.r, ctx.shape
 		for side = -1, 1, 2 do
-			piece(ctx, "Wheel", Vector3.new(r * 0.22, r * 1.1, r * 1.1), CFrame.new(side * r * 0.95 * s[1], -r * 0.45 * s[2], 0), C("woodDark"), "cylinder")
+			piece(
+				ctx,
+				"Wheel",
+				Vector3.new(r * 0.22, r * 1.1, r * 1.1),
+				CFrame.new(side * r * 0.95 * s[1], -r * 0.45 * s[2], 0),
+				C("woodDark"),
+				"cylinder"
+			)
 		end
 	end,
 }
@@ -266,8 +445,10 @@ local function aura(ctx: Ctx, rarityIndex: number, mutation: string?, quality: n
 	emitter.Texture = SPARKLE
 	emitter.Color = ColorSequence.new(color)
 	emitter.LightEmission = 1
-	emitter.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, ctx.r * 0.35), NumberSequenceKeypoint.new(1, 0) })
-	emitter.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.1), NumberSequenceKeypoint.new(1, 1) })
+	emitter.Size =
+		NumberSequence.new({ NumberSequenceKeypoint.new(0, ctx.r * 0.35), NumberSequenceKeypoint.new(1, 0) })
+	emitter.Transparency =
+		NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.1), NumberSequenceKeypoint.new(1, 1) })
 	emitter.Lifetime = NumberRange.new(0.8, 1.4)
 	emitter.Speed = NumberRange.new(0.6, 1.6)
 	emitter.SpreadAngle = Vector2.new(180, 180)
@@ -287,7 +468,10 @@ local function aura(ctx: Ctx, rarityIndex: number, mutation: string?, quality: n
 		flames.Texture = FIRE
 		flames.Color = ColorSequence.new(color)
 		flames.LightEmission = 0.8
-		flames.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, ctx.r * 0.6), NumberSequenceKeypoint.new(1, 0) })
+		flames.Size = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, ctx.r * 0.6),
+			NumberSequenceKeypoint.new(1, 0),
+		})
 		flames.Lifetime = NumberRange.new(0.5, 0.9)
 		flames.Speed = NumberRange.new(1, 2)
 		flames.Rate = 10
@@ -296,7 +480,13 @@ local function aura(ctx: Ctx, rarityIndex: number, mutation: string?, quality: n
 end
 
 -- Builds a critter. `size` is the body diameter in studs before tier scaling.
-function CritterRig.build(speciesId: string, tier: number, mutation: string?, quality: number?, size: number?): Model
+function CritterRig.build(
+	speciesId: string,
+	tier: number,
+	mutation: string?,
+	quality: number?,
+	size: number?
+): Model
 	local q = quality or 2
 	local assets = ReplicatedStorage:FindFirstChild("Assets")
 	local meshes = assets and assets:FindFirstChild("Critters")
@@ -342,10 +532,24 @@ function CritterRig.build(speciesId: string, tier: number, mutation: string?, qu
 		clone.Parent = model
 	else
 		local s = ctx.shape
-		local body = piece(ctx, "Body", Vector3.new(r * 2 * s[1], r * 2 * s[2], r * 2 * s[3]), CFrame.new(), ctx.body, "sphere")
+		local body = piece(
+			ctx,
+			"Body",
+			Vector3.new(r * 2 * s[1], r * 2 * s[2], r * 2 * s[3]),
+			CFrame.new(),
+			ctx.body,
+			"sphere"
+		)
 		table.insert(ctx.bodyParts, body)
 		-- Lighter belly patch.
-		piece(ctx, "Belly", Vector3.new(r * 1.2 * s[1], r * 1.1 * s[2], r * 0.4), CFrame.new(0, -r * 0.2 * s[2], -r * 0.7 * s[3]), ctx.body:Lerp(Color3.new(1, 1, 1), 0.35), "sphere")
+		piece(
+			ctx,
+			"Belly",
+			Vector3.new(r * 1.2 * s[1], r * 1.1 * s[2], r * 0.4),
+			CFrame.new(0, -r * 0.2 * s[2], -r * 0.7 * s[3]),
+			ctx.body:Lerp(Color3.new(1, 1, 1), 0.35),
+			"sphere"
+		)
 		eyes(ctx)
 		feet(ctx, if species then species.rig else "blob")
 		for _, feature in look.features do

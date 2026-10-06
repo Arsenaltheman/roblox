@@ -38,8 +38,18 @@ local REVEAL_SOUND = {
 -- Seconds of build-up by rarity index (Common .. Secret).
 local DURATION = { 1.2, 1.4, 2.5, 3, 4, 5, 6, 7 }
 
-local function tween(instance: Instance, seconds: number, props: { [string]: any }, style: Enum.EasingStyle?, dir: Enum.EasingDirection?)
-	local t = TweenService:Create(instance, TweenInfo.new(seconds, style or Enum.EasingStyle.Quad, dir or Enum.EasingDirection.Out), props)
+local function tween(
+	instance: Instance,
+	seconds: number,
+	props: { [string]: any },
+	style: Enum.EasingStyle?,
+	dir: Enum.EasingDirection?
+)
+	local t = TweenService:Create(
+		instance,
+		TweenInfo.new(seconds, style or Enum.EasingStyle.Quad, dir or Enum.EasingDirection.Out),
+		props
+	)
 	t:Play()
 	return t
 end
@@ -62,7 +72,14 @@ local function make(className: string, props: { [string]: any }, parent: Instanc
 	return inst
 end
 
-local function label(parent: Instance, text: string, font: Font, color: Color3, size: UDim2, pos: UDim2): TextLabel
+local function label(
+	parent: Instance,
+	text: string,
+	font: Font,
+	color: Color3,
+	size: UDim2,
+	pos: UDim2
+): TextLabel
 	local t = make("TextLabel", {
 		Size = size,
 		Position = pos,
@@ -97,7 +114,11 @@ local function rays(parent: Instance, color: Color3): Frame
 		}, holder)
 		make("UIGradient", {
 			Rotation = 90,
-			Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(0.6, 0.55), NumberSequenceKeypoint.new(1, 0.85) }),
+			Transparency = NumberSequence.new({
+				NumberSequenceKeypoint.new(0, 1),
+				NumberSequenceKeypoint.new(0.6, 0.55),
+				NumberSequenceKeypoint.new(1, 0.85),
+			}),
 		}, ray)
 	end
 	task.spawn(function()
@@ -109,7 +130,12 @@ local function rays(parent: Instance, color: Color3): Frame
 	return holder
 end
 
-local function critterViewport(parent: Instance, speciesId: string, tier: number, mutation: string?): ViewportFrame
+local function critterViewport(
+	parent: Instance,
+	speciesId: string,
+	tier: number,
+	mutation: string?
+): ViewportFrame
 	local vp = make("ViewportFrame", {
 		Size = UDim2.fromScale(0.42, 0.5),
 		Position = UDim2.fromScale(0.5, 0.42),
@@ -132,7 +158,10 @@ local function critterViewport(parent: Instance, speciesId: string, tier: number
 		local t0 = os.clock()
 		while vp.Parent do
 			local t = os.clock() - t0
-			model:PivotTo(CFrame.new(0, r + math.abs(math.sin(t * 3)) * r * 0.2, 0) * CFrame.Angles(0, math.pi + t * 1.2, 0))
+			model:PivotTo(
+				CFrame.new(0, r + math.abs(math.sin(t * 3)) * r * 0.2, 0)
+					* CFrame.Angles(0, math.pi + t * 1.2, 0)
+			)
 			CritterRig.updateRainbow(model, t)
 			task.wait()
 		end
@@ -176,7 +205,8 @@ local function play(data: any)
 	local rarity = Rarities.forTier(math.clamp(tier, 1, Rarities.maxTier))
 	local rarityIndex = Rarities.indexOf(rarity.id)
 	local color = Theme.rarityColor(rarity.id)
-	local isCritter = data.species ~= nil and (data.kind == "egg" or data.kind == "stolen" or data.kind == "exclusive")
+	local isCritter = data.species ~= nil
+		and (data.kind == "egg" or data.kind == "stolen" or data.kind == "exclusive")
 
 	local root = make("Frame", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, ZIndex = 50 }, gui)
 	local dim = make("TextButton", {
@@ -224,7 +254,11 @@ local function play(data: any)
 
 	-- Flash (max one per reveal, well under 3/s)
 	if not reduced then
-		local flash = make("Frame", { Size = UDim2.fromScale(1, 1), BackgroundColor3 = Color3.new(1, 1, 1), BackgroundTransparency = 0.1 }, root)
+		local flash = make("Frame", {
+			Size = UDim2.fromScale(1, 1),
+			BackgroundColor3 = Color3.new(1, 1, 1),
+			BackgroundTransparency = 0.1,
+		}, root)
 		tween(flash, 0.4, { BackgroundTransparency = 1 })
 		task.delay(0.45, function()
 			flash:Destroy()
@@ -241,7 +275,8 @@ local function play(data: any)
 	if isCritter then
 		local species = Species.byId[data.species]
 		critterViewport(root, data.species, tier, data.mutation)
-		title = (if data.mutation then string.upper(data.mutation) .. " " else "") .. string.upper(species and species.name or "?")
+		title = (if data.mutation then string.upper(data.mutation) .. " " else "")
+			.. string.upper(species and species.name or "?")
 		if data.kind == "stolen" then
 			caption = "STOLEN! It's yours now."
 		elseif data.kind == "exclusive" then
@@ -292,17 +327,49 @@ local function play(data: any)
 	make("UISizeConstraint", { MaxSize = Vector2.new(620, 110) }, card)
 	make("UICorner", { CornerRadius = UDim.new(0, 16) }, card)
 	make("UIStroke", { Thickness = 5, Color = Theme.color.ink }, card)
-	make("UIGradient", { Rotation = 90, Color = ColorSequence.new(Theme.lighten(color, 0.3), Theme.darken(color, 0.15)) }, card)
+	make(
+		"UIGradient",
+		{ Rotation = 90, Color = ColorSequence.new(Theme.lighten(color, 0.3), Theme.darken(color, 0.15)) },
+		card
+	)
 	local cardScale = make("UIScale", { Scale = 2.2 }, card)
 	tween(cardScale, 0.35, { Scale = 1 }, Enum.EasingStyle.Back)
-	label(card, title, Theme.font.title, Theme.color.white, UDim2.fromScale(0.94, 0.62), UDim2.fromScale(0.5, 0.38))
+	label(
+		card,
+		title,
+		Theme.font.title,
+		Theme.color.white,
+		UDim2.fromScale(0.94, 0.62),
+		UDim2.fromScale(0.5, 0.38)
+	)
 	if isCritter then
-		label(card, `{Theme.glyphFor(rarity.id)} {string.upper(rarity.name)}`, Theme.font.heading, Theme.color.white, UDim2.fromScale(0.9, 0.3), UDim2.fromScale(0.5, 0.82))
+		label(
+			card,
+			`{Theme.glyphFor(rarity.id)} {string.upper(rarity.name)}`,
+			Theme.font.heading,
+			Theme.color.white,
+			UDim2.fromScale(0.9, 0.3),
+			UDim2.fromScale(0.5, 0.82)
+		)
 	end
 	if caption ~= "" then
-		label(root, caption, Theme.font.heading, Theme.color.cream, UDim2.fromScale(0.6, 0.05), UDim2.fromScale(0.5, 0.86))
+		label(
+			root,
+			caption,
+			Theme.font.heading,
+			Theme.color.cream,
+			UDim2.fromScale(0.6, 0.05),
+			UDim2.fromScale(0.5, 0.86)
+		)
 	end
-	label(root, "tap to continue", Theme.font.body, Theme.color.paper, UDim2.fromScale(0.3, 0.03), UDim2.fromScale(0.5, 0.94))
+	label(
+		root,
+		"tap to continue",
+		Theme.font.body,
+		Theme.color.paper,
+		UDim2.fromScale(0.3, 0.03),
+		UDim2.fromScale(0.5, 0.94)
+	)
 
 	-- Hold, then exit (tap skips).
 	skip = false

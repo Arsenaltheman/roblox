@@ -24,7 +24,11 @@ local function refresh(entry: Entry)
 	local tier = (pad:GetAttribute("Tier") :: number?) or 0
 	local mutation = pad:GetAttribute("Mutation") :: string?
 	local inTransit = pad:GetAttribute("InTransit") == true
-	local key = if species and species ~= "" and not inTransit then `{species}:{tier}:{mutation or ""}` else ""
+	local key = if species
+			and species ~= ""
+			and not inTransit
+		then `{species}:{tier}:{mutation or ""}`
+		else ""
 	if key == entry.key then
 		return
 	end

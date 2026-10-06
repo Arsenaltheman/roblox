@@ -7,7 +7,10 @@ local Manifest = require("../../src/shared/Sim/Manifest")
 local function players(n: number, band: number?, minutes: number?)
 	local list = {}
 	for i = 1, n do
-		table.insert(list, { userId = i, bandTier = band or 5, personalLuck = 1, activeMinutes = minutes or 0 })
+		table.insert(
+			list,
+			{ userId = i, bandTier = band or 5, personalLuck = 1, activeMinutes = minutes or 0 }
+		)
 	end
 	return list
 end

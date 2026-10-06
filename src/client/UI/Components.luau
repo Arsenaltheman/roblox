@@ -85,7 +85,11 @@ function Components.shine(): Child
 		task.spawn(function()
 			while running and overlay.Parent do
 				gradient.Offset = Vector2.new(-1, 0)
-				local tween = TweenService:Create(gradient, TweenInfo.new(0.9, Enum.EasingStyle.Quad), { Offset = Vector2.new(1, 0) })
+				local tween = TweenService:Create(
+					gradient,
+					TweenInfo.new(0.9, Enum.EasingStyle.Quad),
+					{ Offset = Vector2.new(1, 0) }
+				)
 				tween:Play()
 				task.wait(2.6)
 			end
@@ -106,7 +110,11 @@ local function pressFeedback(): Child
 			TweenService:Create(scale, TweenInfo.new(0.08, Enum.EasingStyle.Quad), { Scale = 0.9 }):Play()
 		end)
 		local up = button.MouseButton1Up:Connect(function()
-			TweenService:Create(scale, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1 }):Play()
+			TweenService:Create(
+				scale,
+				TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+				{ Scale = 1 }
+			):Play()
 		end)
 		local leave = button.MouseLeave:Connect(function()
 			TweenService:Create(scale, TweenInfo.new(0.2), { Scale = 1 }):Play()

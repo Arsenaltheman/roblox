@@ -86,7 +86,11 @@ function Shop.grantRandomCosmetic(player: Player, rng: any): string?
 	end
 	local pick = buyable[rng:int(1, #buyable)]
 	if d.Owned[pick.id] then
-		Registry.Wallet.addNuggets(player, math.max(10, math.floor((pick.nuggets or 40) / 4)), "CosmeticDuplicate")
+		Registry.Wallet.addNuggets(
+			player,
+			math.max(10, math.floor((pick.nuggets or 40) / 4)),
+			"CosmeticDuplicate"
+		)
 		return nil
 	end
 	d.Owned[pick.id] = true

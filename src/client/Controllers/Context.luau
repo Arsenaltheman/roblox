@@ -196,7 +196,11 @@ local function stealAction(rootPos: Vector3): Action?
 			local pens = ranch:FindFirstChild("Pens")
 			if pens then
 				for _, pad in pens:GetChildren() do
-					if pad:IsA("BasePart") and (pad:GetAttribute("Critter") or "") ~= "" and not pad:GetAttribute("InTransit") then
+					if
+						pad:IsA("BasePart")
+						and (pad:GetAttribute("Critter") or "") ~= ""
+						and not pad:GetAttribute("InTransit")
+					then
 						local d = (pad.Position - rootPos).Magnitude
 						if d < bestDist then
 							best, bestRanch, bestDist = pad, index, d
@@ -217,7 +221,9 @@ local function stealAction(rootPos: Vector3): Action?
 	return {
 		kind = if protected then "protected" else "steal",
 		label = if protected then "BRANDED" else "STEAL",
-		sub = Rarities.forTier(tier).name .. " " .. (Species.byId[speciesId] and Species.byId[speciesId].name or ""),
+		sub = Rarities.forTier(tier).name
+			.. " "
+			.. (Species.byId[speciesId] and Species.byId[speciesId].name or ""),
 		run = function()
 			if protected then
 				Store.toast("Branded critters can't be stolen.")
@@ -279,7 +285,13 @@ local function plateAction(rootPos: Vector3): Action?
 			local index = other:GetAttribute("Index") :: number?
 			local gate = other:FindFirstChild("Gate") :: BasePart?
 			local lockedUntil = (other:GetAttribute("LockedUntil") :: number?) or 0
-			if index and index ~= mine and gate and Workspace:GetServerTimeNow() < lockedUntil and (gate.Position - rootPos).Magnitude < 14 then
+			if
+				index
+				and index ~= mine
+				and gate
+				and Workspace:GetServerTimeNow() < lockedUntil
+				and (gate.Position - rootPos).Magnitude < 14
+			then
 				return {
 					kind = "lockpick",
 					label = "PICK LOCK",
@@ -325,11 +337,22 @@ function Context.start()
 			return
 		end
 		local pos = root.Position
-		local action = lassoAction(pos) or cageAction(pos) or crackAction(pos) or stealAction(pos) or banditAction(pos) or plateAction(pos)
+		local action = lassoAction(pos)
+			or cageAction(pos)
+			or crackAction(pos)
+			or stealAction(pos)
+			or banditAction(pos)
+			or plateAction(pos)
 		current = action
 		local previous = Store.action()
-		local nextValue = if action then { kind = action.kind, label = action.label, sub = action.sub } else { kind = "", label = "", sub = "" }
-		if previous.kind ~= nextValue.kind or previous.label ~= nextValue.label or previous.sub ~= nextValue.sub then
+		local nextValue = if action
+			then { kind = action.kind, label = action.label, sub = action.sub }
+			else { kind = "", label = "", sub = "" }
+		if
+			previous.kind ~= nextValue.kind
+			or previous.label ~= nextValue.label
+			or previous.sub ~= nextValue.sub
+		then
 			Store.action(nextValue)
 		end
 		-- Grab progress ring finishes on its own.

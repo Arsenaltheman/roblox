@@ -49,7 +49,14 @@ local function snapshot(player: Player): { [string]: any }?
 	end
 	local critters = {}
 	for cid, critter in d.Critters do
-		critters[cid] = { s = critter.s, t = critter.tier, m = critter.m, p = critter.p, br = critter.br, it = critter.it }
+		critters[cid] = {
+			s = critter.s,
+			t = critter.tier,
+			m = critter.m,
+			p = critter.p,
+			br = critter.br,
+			it = critter.it,
+		}
 	end
 	return {
 		cash = d.Cash,

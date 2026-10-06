@@ -52,7 +52,10 @@ function Weather.start_(mutation: string, durationSeconds: number?)
 	activeUntil = now() + (durationSeconds or Progression.weather.durationSeconds)
 	Workspace:SetAttribute("Weather", mutation)
 	Workspace:SetAttribute("WeatherUntil", activeUntil)
-	Registry.Ui.announce(`{NAMES[mutation] or mutation}! {Mutations.byId[mutation].name} critters for 2 minutes!`, "weather")
+	Registry.Ui.announce(
+		`{NAMES[mutation] or mutation}! {Mutations.byId[mutation].name} critters for 2 minutes!`,
+		"weather"
+	)
 	-- Each placed critter rolls to catch the mutation.
 	for _, player in Players:GetPlayers() do
 		local d = Registry.Data.get(player)

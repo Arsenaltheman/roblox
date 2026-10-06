@@ -32,18 +32,24 @@ end
 
 Net.initServer()
 
+-- Failures are logged and recorded (the cloud smoke test reads BootFailures) but don't stop the boot.
+local failures: { string } = {}
 for _, name in ORDER do
 	local ok, err = pcall(Registry[name].init)
 	if not ok then
 		warn(`[Boot] {name}.init failed: {err}`)
+		table.insert(failures, name .. ".init")
 	end
 end
 for _, name in ORDER do
 	local ok, err = pcall(Registry[name].start)
 	if not ok then
 		warn(`[Boot] {name}.start failed: {err}`)
+		table.insert(failures, name .. ".start")
 	end
 end
 
-game:GetService("Workspace"):SetAttribute("ServerReady", true)
+local Workspace = game:GetService("Workspace")
+Workspace:SetAttribute("BootFailures", table.concat(failures, ","))
+Workspace:SetAttribute("ServerReady", true)
 print("[Boot] Critter Express server ready")

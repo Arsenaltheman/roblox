@@ -17,7 +17,10 @@ return function()
 			check.equal(Luck.personal({}), 1)
 			check.equal(Luck.personal({ horseshoe = true }), 1.5)
 			check.equal(Luck.personal({ horseshoe = true, serverLuck = 2 }), 3)
-			check.equal(Luck.personal({ activeMinutes = 1000, horseshoe = true, serverLuck = 5, eventLuck = 4 }), 40)
+			check.equal(
+				Luck.personal({ activeMinutes = 1000, horseshoe = true, serverLuck = 5, eventLuck = 4 }),
+				40
+			)
 		end)
 
 		test.case("luck only boosts Rare and up", function()

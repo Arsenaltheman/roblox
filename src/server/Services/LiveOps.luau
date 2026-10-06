@@ -54,7 +54,10 @@ local function sheriffPower(player: Player, power: string, arg: string)
 		return
 	end
 	sheriffReadyAt[player] = t + Products.sheriffPowers.cooldownSeconds
-	player:SetAttribute("SheriffReadyAt", Workspace:GetServerTimeNow() + Products.sheriffPowers.cooldownSeconds)
+	player:SetAttribute(
+		"SheriffReadyAt",
+		Workspace:GetServerTimeNow() + Products.sheriffPowers.cooldownSeconds
+	)
 end
 
 local function sticker(player: Player, id: number)

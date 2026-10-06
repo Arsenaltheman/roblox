@@ -47,7 +47,13 @@ return function()
 
 		test.case("carry limit, full hands, stun and own ranch", function()
 			check.not_nil(StealRules.canSteal(thief(), target({ critterTier = 15 }), 100))
-			check.falsy(StealRules.canSteal(thief({ passes = { HeavySaddlebag = true } }), target({ critterTier = 15 }), 100))
+			check.falsy(
+				StealRules.canSteal(
+					thief({ passes = { HeavySaddlebag = true } }),
+					target({ critterTier = 15 }),
+					100
+				)
+			)
 			check.not_nil(StealRules.canSteal(thief({ carrying = true }), target(), 100))
 			check.not_nil(StealRules.canSteal(thief({ stunnedUntil = 101 }), target(), 100))
 			check.not_nil(StealRules.canSteal(thief({ isOwner = true }), target(), 100))

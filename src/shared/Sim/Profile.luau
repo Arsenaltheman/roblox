@@ -152,7 +152,11 @@ function Profile.migrate(data: any, migrations: { [number]: (any) -> any }?, cur
 		local fromVersion = data.V
 		data = step(data)
 		if type(data) ~= "table" or data.V ~= fromVersion + 1 then
-			return { ok = false, data = data, reason = `migration from v{fromVersion} did not produce v{fromVersion + 1}` }
+			return {
+				ok = false,
+				data = data,
+				reason = `migration from v{fromVersion} did not produce v{fromVersion + 1}`,
+			}
 		end
 	end
 	return { ok = true, data = data }

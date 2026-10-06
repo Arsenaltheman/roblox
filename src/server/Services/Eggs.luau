@@ -29,11 +29,19 @@ function Eggs.give(player: Player, parentTier: number, source: string): boolean
 	end
 	if #d.Eggs >= HARD_CAP then
 		-- Too many waiting: turn it into cash so nothing is silently lost.
-		Registry.Wallet.addCash(player, Economy.price(math.clamp(parentTier, 1, Rarities.maxTier)) * 0.5, "EggOverflow")
+		Registry.Wallet.addCash(
+			player,
+			Economy.price(math.clamp(parentTier, 1, Rarities.maxTier)) * 0.5,
+			"EggOverflow"
+		)
 		return false
 	end
 	local now = os.time()
-	table.insert(d.Eggs, { tier = math.clamp(parentTier, 1, Rarities.maxTier), laidAt = now, hatchAt = now + Progression.eggs.hatchSeconds })
+	table.insert(d.Eggs, {
+		tier = math.clamp(parentTier, 1, Rarities.maxTier),
+		laidAt = now,
+		hatchAt = now + Progression.eggs.hatchSeconds,
+	})
 	Registry.Ui.fx(player, "egg", #d.Eggs)
 	Registry.Ui.pushState(player)
 	Registry.Telemetry.custom(player, "EggFrom:" .. source)
@@ -71,7 +79,10 @@ local function hatch(player: Player, slot: number)
 	Registry.Progression.questEvent(player, "hatch", 1)
 	Registry.Progression.onboard(player, "FirstEgg")
 	if Rarities.indexOf(reveal.rarity) >= 5 then
-		Registry.Ui.announce(`{player.DisplayName} hatched a {string.upper(reveal.rarity)} {species.name}!`, reveal.rarity)
+		Registry.Ui.announce(
+			`{player.DisplayName} hatched a {string.upper(reveal.rarity)} {species.name}!`,
+			reveal.rarity
+		)
 	end
 	Registry.Ui.pushState(player)
 end

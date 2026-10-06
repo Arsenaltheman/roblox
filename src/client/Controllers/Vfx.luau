@@ -48,8 +48,10 @@ function Vfx.burst(position: Vector3, color: Color3, count: number, size: number
 	emitter.Texture = SPARKLE
 	emitter.Color = ColorSequence.new(color)
 	emitter.LightEmission = 1
-	emitter.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, size or 1.2), NumberSequenceKeypoint.new(1, 0) })
-	emitter.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0), NumberSequenceKeypoint.new(1, 1) })
+	emitter.Size =
+		NumberSequence.new({ NumberSequenceKeypoint.new(0, size or 1.2), NumberSequenceKeypoint.new(1, 0) })
+	emitter.Transparency =
+		NumberSequence.new({ NumberSequenceKeypoint.new(0, 0), NumberSequenceKeypoint.new(1, 1) })
 	emitter.Lifetime = NumberRange.new(0.5, 1.1)
 	emitter.Speed = NumberRange.new((speed or 14) * 0.5, speed or 14)
 	emitter.SpreadAngle = Vector2.new(180, 180)
@@ -87,8 +89,14 @@ function Vfx.floatText(position: Vector3, text: string, color: Color3)
 	scale.Parent = label
 	label.Parent = gui
 	gui.Parent = holder
-	TweenService:Create(scale, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1 }):Play()
-	TweenService:Create(holder, TweenInfo.new(1.4, Enum.EasingStyle.Quad), { CFrame = holder.CFrame + Vector3.new(0, 6, 0) }):Play()
+	TweenService
+		:Create(scale, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1 })
+		:Play()
+	TweenService:Create(
+		holder,
+		TweenInfo.new(1.4, Enum.EasingStyle.Quad),
+		{ CFrame = holder.CFrame + Vector3.new(0, 6, 0) }
+	):Play()
 	task.delay(0.9, function()
 		TweenService:Create(label, TweenInfo.new(0.5), { TextTransparency = 1 }):Play()
 		TweenService:Create(stroke, TweenInfo.new(0.5), { Transparency = 1 }):Play()
@@ -120,7 +128,12 @@ function Vfx.lasso(from: Vector3, to: Vector3, color: Color3?)
 	beam.Segments = 20
 	beam.Parent = a
 	-- Loop at the target end
-	local loop = anchoredPart(Vector3.new(0.4, 4, 4), CFrame.new(to) * CFrame.Angles(0, 0, math.rad(90)), color or C("woodLight"), Enum.Material.Fabric)
+	local loop = anchoredPart(
+		Vector3.new(0.4, 4, 4),
+		CFrame.new(to) * CFrame.Angles(0, 0, math.rad(90)),
+		color or C("woodLight"),
+		Enum.Material.Fabric
+	)
 	loop.Shape = Enum.PartType.Cylinder
 	loop.Transparency = 0.2
 	Vfx.burst(to, C("cream"), 18, 1, 10)
@@ -144,7 +157,13 @@ function Vfx.alarm()
 		return
 	end
 	alarmCorrection.TintColor = Color3.fromRGB(255, 170, 160)
-	TweenService:Create(alarmCorrection, TweenInfo.new(0.9, Enum.EasingStyle.Quad), { TintColor = Color3.new(1, 1, 1) }):Play()
+	TweenService
+		:Create(
+			alarmCorrection,
+			TweenInfo.new(0.9, Enum.EasingStyle.Quad),
+			{ TintColor = Color3.new(1, 1, 1) }
+		)
+		:Play()
 	Sound.play("alarm")
 end
 
@@ -187,7 +206,11 @@ local function onFx(kind: string, value: number, position: Vector3?)
 	if kind == "collect" then
 		if root then
 			Vfx.burst(root.Position, C("gold"), 30, 1.2, 18)
-			Vfx.floatText(root.Position + Vector3.new(0, 4, 0), "+" .. NumberFormat.cash(value), Color3.fromRGB(140, 235, 100))
+			Vfx.floatText(
+				root.Position + Vector3.new(0, 4, 0),
+				"+" .. NumberFormat.cash(value),
+				Color3.fromRGB(140, 235, 100)
+			)
 		end
 		Sound.play("collect", 0.06)
 	elseif kind == "lasso" then

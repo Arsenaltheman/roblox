@@ -184,7 +184,10 @@ local function deliver(thief: Player)
 	Registry.Progression.questEvent(thief, "steal", 1)
 	Registry.Progression.onboard(thief, "FirstSteal")
 	if Rarities.indexOf(Rarities.forTier(taken.tier).id) >= 5 then
-		Registry.Ui.announce(`{thief.DisplayName} stole a {Rarities.forTier(taken.tier).name} {name} from {carry.owner.DisplayName}!`, "steal")
+		Registry.Ui.announce(
+			`{thief.DisplayName} stole a {Rarities.forTier(taken.tier).name} {name} from {carry.owner.DisplayName}!`,
+			"steal"
+		)
 	end
 end
 
@@ -337,7 +340,10 @@ local function stealStart(player: Player, ranchIndex: number, cid: string)
 		local carry = { owner = again.owner, ownerId = again.owner.UserId, cid = cid, started = now() }
 		carrying[player] = carry
 		setCarryAttributes(player, carry)
-		Registry.Ui.toast(again.owner, `{player.DisplayName} is stealing your {Species.byId[again.critter.s].name}! Lasso them!`)
+		Registry.Ui.toast(
+			again.owner,
+			`{player.DisplayName} is stealing your {Species.byId[again.critter.s].name}! Lasso them!`
+		)
 		Registry.Ui.fxAll("wanted", player.UserId)
 	end)
 end
@@ -358,7 +364,10 @@ local function spawnTutorialBandit(player: Player)
 		return
 	end
 	local ok, npc = pcall(function()
-		return Players:CreateHumanoidModelFromDescription(Instance.new("HumanoidDescription"), Enum.HumanoidRigType.R15)
+		return Players:CreateHumanoidModelFromDescription(
+			Instance.new("HumanoidDescription"),
+			Enum.HumanoidRigType.R15
+		)
 	end)
 	if not ok or not npc then
 		return

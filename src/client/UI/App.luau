@@ -144,7 +144,14 @@ local function goalPill(): Instance
 	})
 end
 
-local function menuButton(order: number, glyph: string, label: string, menu: string, visible: () -> boolean, badge: (() -> number)?): Instance
+local function menuButton(
+	order: number,
+	glyph: string,
+	label: string,
+	menu: string,
+	visible: () -> boolean,
+	badge: (() -> number)?
+): Instance
 	return create("TextButton")({
 		Name = label,
 		Size = UDim2.fromOffset(74, 74),
@@ -231,7 +238,11 @@ local function sideMenu(): Instance
 		Position = UDim2.new(0, 12, 0.5, 0),
 		AnchorPoint = Vector2.new(0, 0.5),
 		BackgroundTransparency = 1,
-		create("UIListLayout")({ Padding = UDim.new(0, 10), SortOrder = Enum.SortOrder.LayoutOrder, VerticalAlignment = Enum.VerticalAlignment.Center }),
+		create("UIListLayout")({
+			Padding = UDim.new(0, 10),
+			SortOrder = Enum.SortOrder.LayoutOrder,
+			VerticalAlignment = Enum.VerticalAlignment.Center,
+		}),
 		menuButton(1, "★", "SHOP", "shop", function()
 			return step() >= 1
 		end),
@@ -337,29 +348,53 @@ local function statusBadges(): Instance
 		Position = UDim2.new(1, -124, 0, 70),
 		AnchorPoint = Vector2.new(1, 0),
 		BackgroundTransparency = 1,
-		create("UIListLayout")({ Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder, HorizontalAlignment = Enum.HorizontalAlignment.Right }),
-		badge(1, function()
-			return `LUCK x{string.format("%.2f", Luck.active(Store.activeMinutes()))}`
-		end, Theme.color.green, function()
-			return true
-		end),
-		badge(2, function()
-			local w = Store.weather()
-			local m = Mutations.byId[w]
-			return if m then `{string.upper(m.name)} WEATHER` else ""
-		end, Theme.color.skyDeep, function()
-			return Store.weather() ~= ""
-		end),
-		badge(3, function()
-			return `SERVER LUCK x{Store.serverLuck()}`
-		end, Theme.color.brass, function()
-			return Store.serverLuck() > 1
-		end),
-		badge(4, function()
-			return "GOLDEN EXPRESS NEXT!"
-		end, Theme.color.gold, function()
-			return Store.goldenCycle() == Store.trainCycle() + 1
-		end),
+		create("UIListLayout")({
+			Padding = UDim.new(0, 6),
+			SortOrder = Enum.SortOrder.LayoutOrder,
+			HorizontalAlignment = Enum.HorizontalAlignment.Right,
+		}),
+		badge(
+			1,
+			function()
+				return `LUCK x{string.format("%.2f", Luck.active(Store.activeMinutes()))}`
+			end,
+			Theme.color.green,
+			function()
+				return true
+			end
+		),
+		badge(
+			2,
+			function()
+				local w = Store.weather()
+				local m = Mutations.byId[w]
+				return if m then `{string.upper(m.name)} WEATHER` else ""
+			end,
+			Theme.color.skyDeep,
+			function()
+				return Store.weather() ~= ""
+			end
+		),
+		badge(
+			3,
+			function()
+				return `SERVER LUCK x{Store.serverLuck()}`
+			end,
+			Theme.color.brass,
+			function()
+				return Store.serverLuck() > 1
+			end
+		),
+		badge(
+			4,
+			function()
+				return "GOLDEN EXPRESS NEXT!"
+			end,
+			Theme.color.gold,
+			function()
+				return Store.goldenCycle() == Store.trainCycle() + 1
+			end
+		),
 	})
 end
 
@@ -457,7 +492,11 @@ local function toasts(): Instance
 		Position = UDim2.new(0.5, 0, 1, -120),
 		AnchorPoint = Vector2.new(0.5, 1),
 		BackgroundTransparency = 1,
-		create("UIListLayout")({ Padding = UDim.new(0, 6), VerticalAlignment = Enum.VerticalAlignment.Bottom, HorizontalAlignment = Enum.HorizontalAlignment.Center }),
+		create("UIListLayout")({
+			Padding = UDim.new(0, 6),
+			VerticalAlignment = Enum.VerticalAlignment.Bottom,
+			HorizontalAlignment = Enum.HorizontalAlignment.Center,
+		}),
 		indexes(Store.toasts, function(toast)
 			return text({
 				Size = UDim2.fromOffset(540, 40),
@@ -482,7 +521,10 @@ local function announcements(): Instance
 		Position = UDim2.new(0.5, 0, 0, 112),
 		AnchorPoint = Vector2.new(0.5, 0),
 		BackgroundTransparency = 1,
-		create("UIListLayout")({ Padding = UDim.new(0, 6), HorizontalAlignment = Enum.HorizontalAlignment.Center }),
+		create("UIListLayout")({
+			Padding = UDim.new(0, 6),
+			HorizontalAlignment = Enum.HorizontalAlignment.Center,
+		}),
 		indexes(Store.announcements, function(item)
 			local kind = item().kind
 			local color = if Rarities.byId[kind]
@@ -516,7 +558,15 @@ end
 
 -- ---------------------------------------------------------------- Menus
 
-local function card(props: { title: () -> string, sub: () -> string, color: Color3, button: string | () -> string, onClick: () -> (), order: number?, extra: any }): Instance
+local function card(props: {
+	title: () -> string,
+	sub: () -> string,
+	color: Color3,
+	button: string | () -> string,
+	onClick: () -> (),
+	order: number?,
+	extra: any,
+}): Instance
 	return create("Frame")({
 		Size = UDim2.new(1, -8, 0, 82),
 		BackgroundColor3 = Theme.color.cream,
@@ -586,37 +636,40 @@ local function shopMenu(): Instance
 			local owned = function()
 				return product.kind == "pass" and localPlayer:GetAttribute("Pass_" .. product.key) == true
 			end
-			table.insert(robux, card({
-				order = i,
-				title = function()
-					return product.name
-				end,
-				sub = function()
-					return product.description
-				end,
-				color = if product.random then Theme.color.gold else Theme.color.sky,
-				button = function()
-					return if owned() then "OWNED" else "View Item"
-				end,
-				onClick = function()
-					if not owned() then
-						Net.request("ShopBuy", product.key, 1)
-					end
-				end,
-				extra = if product.random
-					then Components.button({
-						text = "Odds",
-						color = Theme.color.skyDeep,
-						size = UDim2.fromOffset(80, 36),
-						position = UDim2.new(0.62, 0, 0.5, 0),
-						anchor = Vector2.new(0, 0.5),
-						textSize = 18,
-						onClick = function()
-							showOdds("reserved")
-						end,
-					})
-					else nil,
-			}))
+			table.insert(
+				robux,
+				card({
+					order = i,
+					title = function()
+						return product.name
+					end,
+					sub = function()
+						return product.description
+					end,
+					color = if product.random then Theme.color.gold else Theme.color.sky,
+					button = function()
+						return if owned() then "OWNED" else "View Item"
+					end,
+					onClick = function()
+						if not owned() then
+							Net.request("ShopBuy", product.key, 1)
+						end
+					end,
+					extra = if product.random
+						then Components.button({
+							text = "Odds",
+							color = Theme.color.skyDeep,
+							size = UDim2.fromOffset(80, 36),
+							position = UDim2.new(0.62, 0, 0.5, 0),
+							anchor = Vector2.new(0, 0.5),
+							textSize = 18,
+							onClick = function()
+								showOdds("reserved")
+							end,
+						})
+						else nil,
+				})
+			)
 		end
 	end
 	local post = derive(function()
@@ -636,7 +689,10 @@ local function shopMenu(): Instance
 			create("Frame")({
 				Size = UDim2.new(1, 0, 0, 48),
 				BackgroundTransparency = 1,
-				create("UIListLayout")({ FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 10) }),
+				create("UIListLayout")({
+					FillDirection = Enum.FillDirection.Horizontal,
+					Padding = UDim.new(0, 10),
+				}),
 				Components.button({
 					text = "ROBUX",
 					color = function()
@@ -691,7 +747,9 @@ local function shopMenu(): Instance
 							FontFace = Theme.font.heading,
 							Text = function()
 								local shop = state().shop
-								local left = if shop then math.max(0, shop.restockAt - Workspace:GetServerTimeNow()) else 0
+								local left = if shop
+									then math.max(0, shop.restockAt - Workspace:GetServerTimeNow())
+									else 0
 								return `New stock in {NumberFormat.clock(left)}`
 							end,
 						}),
@@ -756,7 +814,9 @@ local function eggsMenu(): Instance
 						end,
 						sub = function()
 							local left = egg().hatchAt - clock()
-							return if left <= 0 then "Ready to hatch!" else `Hatches in {NumberFormat.clock(left)}`
+							return if left <= 0
+								then "Ready to hatch!"
+								else `Hatches in {NumberFormat.clock(left)}`
 						end,
 						color = Theme.rarityForTier(egg().tier),
 						button = function()
@@ -804,7 +864,10 @@ local function questsMenu(): Instance
 						end,
 						color = Theme.color.red,
 						button = function()
-							return if q().claimed then "DONE" elseif q().progress >= q().goal then "CLAIM" else "..."
+							return if q().claimed
+								then "DONE"
+								elseif q().progress >= q().goal then "CLAIM"
+								else "..."
 						end,
 						onClick = function()
 							Net.request("Claim", "quest", q().index)
@@ -819,43 +882,46 @@ end
 local function almanacMenu(): Instance
 	local cells = {}
 	for _, species in Species.list do
-		table.insert(cells, create("Frame")({
-			Size = UDim2.fromOffset(110, 110),
-			LayoutOrder = species.tier,
-			BackgroundColor3 = function()
-				local seen = (state().almanac or {})[species.id]
-				return if seen then Theme.rarityForTier(species.tier) else Theme.color.woodDark
-			end,
-			Components.corner(UDim.new(0, 12)),
-			Components.stroke(3),
-			text({
-				Size = UDim2.new(1, -8, 0.5, 0),
-				Position = UDim2.fromOffset(4, 6),
-				TextColor3 = Theme.color.white,
-				FontFace = Theme.font.heading,
-				Text = function()
-					return if (state().almanac or {})[species.id] then species.name else "???"
+		table.insert(
+			cells,
+			create("Frame")({
+				Size = UDim2.fromOffset(110, 110),
+				LayoutOrder = species.tier,
+				BackgroundColor3 = function()
+					local seen = (state().almanac or {})[species.id]
+					return if seen then Theme.rarityForTier(species.tier) else Theme.color.woodDark
 				end,
-				Components.textStroke(2),
-			}),
-			text({
-				Size = UDim2.new(1, -8, 0.3, 0),
-				Position = UDim2.new(0, 4, 0.62, 0),
-				TextColor3 = Theme.color.white,
-				FontFace = Theme.font.number,
-				Text = function()
-					local mask = (state().almanac or {})[species.id] or 0
-					local count = 0
-					for bit = 1, #Mutations.list + 1 do
-						if bit32.btest(mask, bit32.lshift(1, bit - 1)) then
-							count += 1
+				Components.corner(UDim.new(0, 12)),
+				Components.stroke(3),
+				text({
+					Size = UDim2.new(1, -8, 0.5, 0),
+					Position = UDim2.fromOffset(4, 6),
+					TextColor3 = Theme.color.white,
+					FontFace = Theme.font.heading,
+					Text = function()
+						return if (state().almanac or {})[species.id] then species.name else "???"
+					end,
+					Components.textStroke(2),
+				}),
+				text({
+					Size = UDim2.new(1, -8, 0.3, 0),
+					Position = UDim2.new(0, 4, 0.62, 0),
+					TextColor3 = Theme.color.white,
+					FontFace = Theme.font.number,
+					Text = function()
+						local mask = (state().almanac or {})[species.id] or 0
+						local count = 0
+						for bit = 1, #Mutations.list + 1 do
+							if bit32.btest(mask, bit32.lshift(1, bit - 1)) then
+								count += 1
+							end
 						end
-					end
-					return `{Theme.glyphFor(Rarities.forTier(species.tier).id)} {count}/{#Mutations.list + 1}`
-				end,
-				Components.textStroke(1.5),
-			}),
-		}))
+						return `{Theme.glyphFor(Rarities.forTier(species.tier).id)} {count}/{#Mutations.list + 1}`
+					end,
+					Components.textStroke(1.5),
+				}),
+			})
+		)
 	end
 	return Components.panel({
 		title = function()
@@ -876,7 +942,11 @@ local function almanacMenu(): Instance
 				AutomaticCanvasSize = Enum.AutomaticSize.Y,
 				CanvasSize = UDim2.new(),
 				ScrollBarThickness = 8,
-				create("UIGridLayout")({ CellSize = UDim2.fromOffset(110, 110), CellPadding = UDim2.fromOffset(10, 10), SortOrder = Enum.SortOrder.LayoutOrder }),
+				create("UIGridLayout")({
+					CellSize = UDim2.fromOffset(110, 110),
+					CellPadding = UDim2.fromOffset(10, 10),
+					SortOrder = Enum.SortOrder.LayoutOrder,
+				}),
 				Components.padding(6),
 				cells,
 			}),
@@ -1072,7 +1142,9 @@ local function welcome(): Instance
 					FontFace = Theme.font.title,
 					Text = function()
 						local p = state().pending or {}
-						return if p.offline and p.offline > 0 then `Your ranch earned {NumberFormat.cash(p.offline)} while you were away!` else ""
+						return if p.offline and p.offline > 0
+							then `Your ranch earned {NumberFormat.cash(p.offline)} while you were away!`
+							else ""
 					end,
 				}),
 				text({
@@ -1082,7 +1154,9 @@ local function welcome(): Instance
 					Text = function()
 						local p = state().pending or {}
 						local s = state().streak
-						return if p.streakSlot then `Day {s and s.count or 1} login streak reward ready!` else ""
+						return if p.streakSlot
+							then `Day {s and s.count or 1} login streak reward ready!`
+							else ""
 					end,
 				}),
 				Components.button({

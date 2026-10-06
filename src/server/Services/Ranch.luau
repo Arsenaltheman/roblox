@@ -321,7 +321,10 @@ function Ranch.addCritter(player: Player, new: NewCritter): string?
 	end
 	if freePen == nil then
 		local victim, victimIncome = weakest(player, d)
-		if victim == nil or Economy.critterIncome({ tier = new.tier, mutation = new.mutation }) <= victimIncome then
+		if
+			victim == nil
+			or Economy.critterIncome({ tier = new.tier, mutation = new.mutation }) <= victimIncome
+		then
 			return nil
 		end
 		local old = d.Critters[victim]
@@ -393,7 +396,10 @@ function Ranch.grantExclusive(player: Player, speciesId: string)
 			if victim then
 				Ranch.removeCritter(player, victim)
 			end
-			Ranch.addCritter(player, { species = speciesId, tier = species.tier, src = "robux", branded = true })
+			Ranch.addCritter(
+				player,
+				{ species = speciesId, tier = species.tier, src = "robux", branded = true }
+			)
 		end
 	end
 	Registry.Ui.reveal(player, { kind = "exclusive", species = speciesId, tier = species.tier })

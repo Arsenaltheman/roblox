@@ -76,7 +76,10 @@ local function rows(ids: { string }, labels: { string }, probabilities: { number
 	local percents = Odds.displayPercents(probabilities)
 	local out = {}
 	for i, id in ids do
-		table.insert(out, { id = id, label = labels[i], probability = probabilities[i], percent = percents[i] })
+		table.insert(
+			out,
+			{ id = id, label = labels[i], probability = probabilities[i], percent = percents[i] }
+		)
 	end
 	return out
 end

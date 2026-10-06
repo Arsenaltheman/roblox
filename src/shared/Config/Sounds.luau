@@ -3,9 +3,11 @@
 -- Each key's file is assets/audio/game/<key>.ogg (voice lines: assets/audio/game/voice/<key>.ogg).
 -- Prompts for every generated sound are logged in assets/audio/PROMPTS.md.
 
+local AssetIds = require("./AssetIds")
+
 export type SoundDef = { id: string, volume: number?, bus: "sfx" | "ui" | "voice" | "music" | "ambience" }
 
-return {
+local Sounds = {
 	-- UI
 	click = { id = "", bus = "ui", volume = 0.6 },
 	toast = { id = "", bus = "ui", volume = 0.5 },
@@ -50,5 +52,13 @@ return {
 	musicCalm = { id = "", bus = "music", volume = 0.4 },
 	musicChase = { id = "", bus = "music", volume = 0.45 },
 	-- Critter name callouts, keyed by species id (files: assets/audio/game/voice/<SpeciesId>.ogg).
-	VoiceIds = {} :: { [string]: string },
+	VoiceIds = AssetIds.voice,
 } :: any
+
+for key, def in Sounds do
+	if type(def) == "table" and def.bus and def.id == "" then
+		def.id = AssetIds.audio[key] or ""
+	end
+end
+
+return Sounds
