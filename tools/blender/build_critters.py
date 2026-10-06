@@ -109,7 +109,16 @@ def build(species_id, look):
         "gold": material("Gold", hex_rgb("#FFC83D"), 0.25),
         "wood": material("Wood", hex_rgb("#5B3A26"), 0.7),
         "glow": material("Glow", (1.0, 0.82, 0.45), 0.4, emission=2.0),
+        "flame": material("Flame", (1.0, 0.42, 0.1), 0.4, emission=0.7),
+        "flameCore": material("FlameCore", (1.0, 0.82, 0.25), 0.4, emission=0.9),
+        "brass": material("Brass", hex_rgb("#E2A93B"), 0.3),
+        "ruby": material("Ruby", hex_rgb("#E2463A"), 0.15, emission=0.6),
     }
+    # Rarity reads on the hat: Outlaws (tiers 35-38) wear black, Mythic and up (30+) get a gold band.
+    tier = look.get("tier", 1)
+    if 35 <= tier <= 38:
+        M["hat"] = material("Hat", hex_rgb("#1E1B2E"), 0.5)
+    M["hatBand"] = M["gold"] if tier >= 30 else M["band"]
     H = r * sy  # half height
     W = r * sx
     D = r * sz
@@ -133,6 +142,8 @@ def build(species_id, look):
         sphere("Foot", (fx * W, fy * D, r * 0.12), (r * 0.18, r * 0.22, r * 0.14), M["dark"])
 
     top = H * 2 - r * 0.18
+    # Crowns, flames and lanterns sit on the hat when there is one.
+    crest = top + (r * 0.55 if "hat" in look["features"] else 0.0)
     for feature in look["features"]:
         if feature == "hat":
             brim = sphere("HatBrim", (0, 0, top + r * 0.02), (r * 1.0, r * 0.82, r * 0.07), M["hat"], segments=20)
@@ -144,7 +155,7 @@ def build(species_id, look):
                     v.co.x *= 0.86
                     v.co.y *= 0.8
                     v.co.z -= abs(v.co.y) * 0.15 if abs(v.co.x) < 0.15 else 0
-            cylinder("HatBand", (0, 0, top + r * 0.1), r * 0.45, r * 0.1, M["band"])
+            cylinder("HatBand", (0, 0, top + r * 0.1), r * 0.45, r * 0.1, M["hatBand"])
         elif feature == "mustache":
             for side in (-1, 1):
                 sphere("Mustache", (side * r * 0.22, -D * 0.97, H * 0.98), (r * 0.24, r * 0.08, r * 0.08), M["ink"], rot=(0, side * 0.35, 0))
@@ -164,8 +175,10 @@ def build(species_id, look):
         elif feature == "tail":
             sphere("Tail", (0, D * 1.0, H * 1.05), (r * 0.16, r * 0.36, r * 0.16), M["accent"], rot=(0.5, 0, 0))
         elif feature == "bandana":
-            cylinder("Bandana", (0, 0, H * 0.62), W * 0.78, r * 0.18, M["band"])
-            cone("BandanaKnot", (0, -D * 0.8, H * 0.5), r * 0.22, 0, r * 0.3, M["band"], rot=(math.pi, 0, 0))
+            # The band hugs the body: an ellipsoid's cross-section at 0.62 H is 0.93x its widest.
+            band = cylinder("Bandana", (0, 0, H * 0.62), W * 0.97, r * 0.2, M["band"])
+            band.scale.y = D / W
+            cone("BandanaKnot", (0, -D * 0.96, H * 0.5), r * 0.24, 0, r * 0.34, M["band"], rot=(math.pi, 0, 0))
         elif feature == "boots":
             for side in (-1, 1):
                 cylinder("Boot", (side * W * 0.38, 0, r * 0.18), r * 0.2, r * 0.36, M["wood"], bevel=0.03)
@@ -179,12 +192,52 @@ def build(species_id, look):
         elif feature == "beak":
             cone("Beak", (0, -D * 1.02, H * 1.0), r * 0.18, 0, r * 0.35, M["gold"], rot=(math.pi / 2, 0, 0))
         elif feature == "wings":
+            # Three fanned feathers per side, raised and swept back.
             for side in (-1, 1):
-                sphere("Wing", (side * W * 0.98, D * 0.1, H * 1.05), (r * 0.1, r * 0.45, r * 0.38), M["accent"], rot=(0, side * 0.35, 0))
+                for i in range(3):
+                    feather = sphere(
+                        "Wing",
+                        (side * W * (0.92 + i * 0.05), D * (0.25 + i * 0.12), H * (1.45 - i * 0.12)),
+                        (r * 0.07, r * (0.32 - i * 0.05), r * (0.78 - i * 0.16)),
+                        M["accent"],
+                        rot=(-0.45 - i * 0.35, side * (0.75 + i * 0.1), 0),
+                    )
+                    feather.location.z += r * 0.35
         elif feature == "crown":
-            cylinder("Crown", (0, 0, top + r * 0.12), r * 0.38, r * 0.28, M["gold"])
-        elif feature in ("glow", "lantern"):
-            sphere("Lantern", (0, 0, top + r * 0.3), (r * 0.25, r * 0.25, r * 0.32), M["glow"])
+            # Tilted gold band with five points and a ruby.
+            cz = crest + r * 0.12
+            cylinder("Crown", (0, 0, cz), r * 0.4, r * 0.24, M["gold"], rot=(0, 0.14, 0), bevel=0.02)
+            for i in range(5):
+                a = i / 5 * math.tau
+                cone("CrownPoint", (math.cos(a) * r * 0.36, math.sin(a) * r * 0.36, cz + r * 0.22 + math.cos(a) * r * 0.05), r * 0.09, 0.0, r * 0.26, M["gold"], rot=(0, 0.14, 0))
+            sphere("CrownGem", (0, -r * 0.42, cz), (r * 0.09, r * 0.05, r * 0.09), M["ruby"])
+        elif feature == "lantern":
+            lz = crest + r * 0.32
+            sphere("Lantern", (0, 0, lz), (r * 0.22, r * 0.22, r * 0.27), M["glow"])
+            cylinder("LanternCap", (0, 0, lz + r * 0.27), r * 0.2, r * 0.1, M["brass"], bevel=0.02)
+            cylinder("LanternBase", (0, 0, lz - r * 0.27), r * 0.2, r * 0.08, M["brass"], bevel=0.02)
+            for a in (0.0, math.pi / 2):
+                bar = cylinder("LanternBar", (0, 0, lz), r * 0.235, r * 0.5, M["brass"])
+                bar.scale = (0.12 if a == 0 else 1.0, 1.0 if a == 0 else 0.12, 1.0)
+        elif feature == "glow":
+            pass  # a PointLight and aura in game; nothing on the mesh
+        elif feature == "cloud":
+            # A puffy cloud to ride on, ringing the bottom of the body.
+            for i in range(7):
+                a = i / 7 * math.tau
+                puff = r * (0.42 + 0.08 * math.sin(i * 2.3))
+                sphere("Cloud", (math.cos(a) * W * 0.95, math.sin(a) * D * 0.95, r * 0.22), (puff, puff, puff * 0.8), M["white"])
+        elif feature == "longtail":
+            # A curling tail of shrinking beads, ending in a rattle.
+            # It sweeps out to the critter's right and curls up, so it shows from the front.
+            steps = 12
+            for i in range(steps + 1):
+                t = i / steps  # 0 at the body, 1 at the tip
+                a = t * 2.6
+                rad = r * (0.34 - t * 0.22)
+                pos = (W * 0.6 + math.sin(a) * r * 0.75, D * 0.55 + math.cos(a) * r * 0.2, r * 0.3 + t * t * r * 1.1)
+                sphere("Tail", pos, (rad, rad, rad), M["body"])
+            sphere("Rattle", (pos[0], pos[1], pos[2] + r * 0.2), (r * 0.11, r * 0.11, r * 0.18), M["accent"])
         elif feature == "stack":
             for i in range(3):
                 cylinder("Pancake", (0, 0, H * 0.5 + i * r * 0.26), W * 0.95, r * 0.2, M["belly"], bevel=0.05)
@@ -192,7 +245,10 @@ def build(species_id, look):
             for side in (-1, 1):
                 cylinder("Wheel", (side * W * 0.95, 0, H * 0.5), r * 0.5, r * 0.18, M["wood"], rot=(0, math.pi / 2, 0), bevel=0.03)
         elif feature == "flame":
-            pass  # particles in game
+            # A flame tuft on the head (the game adds Fire particles on top).
+            for dx, height, lean in ((0.0, 0.95, 0.0), (-0.2, 0.6, -0.35), (0.2, 0.68, 0.35)):
+                cone("Flame", (dx * r, D * 0.1, crest + r * height * 0.5), r * 0.24, 0.0, r * height, M["flame"], rot=(0, lean, 0))
+            cone("Flame", (0, D * 0.02, crest + r * 0.3), r * 0.14, 0.0, r * 0.55, M["flameCore"])
 
     return M
 
@@ -226,7 +282,7 @@ def decimate(target=6500):
         if o.type == "MESH":
             bpy.context.view_layer.objects.active = o
             mod = o.modifiers.new("dec", "DECIMATE")
-            mod.ratio = max(ratio, 0.25)
+            mod.ratio = max(ratio, 0.15)
             bpy.ops.object.modifier_apply(modifier=mod.name)
 
 

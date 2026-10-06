@@ -29,7 +29,10 @@ Last updated: 2026-10-06.
 - **Figma UI.** Waiting on a paid Figma seat. The UI is built in code to the art bible meanwhile.
 - **Music.** Plan is free licensed Creator Store tracks. They're picked in Studio or the Creator Store, then their ids go into `musicCalm` / `musicChase` in `src/shared/Config/Sounds.luau`.
 - **Uploaded 3D models.** The game uses the procedural rig. Swapping in the FBX meshes is the "asset-upload spike" in the plan (`tools/cloud/upload_assets.py --models`, then load the models by id).
-- **Art second pass.** The top-tier critters look too similar to each other. They need a hero pass.
+- **Art.** The hero pass on the top tiers is done (`assets/concept/critter_sheet_v2.png`):
+  - real crowns, layered wings, flame tufts, serpent tails and a cloud;
+  - black hats for Outlaws, gold hat bands for Mythic and up.
+  - The train, station and buildings are still built from code parts, not Blender meshes.
 - **Human playtests on phones.** Only you can do these (section 4).
 
 ## 2. Owner setup (in this order)

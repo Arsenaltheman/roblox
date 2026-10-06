@@ -26,6 +26,9 @@ type Ctx = {
 	body: Color3,
 	accent: Color3,
 	bodyParts: { BasePart },
+	tier: number,
+	-- Height offset for things worn on the head (crown, flame, lantern): above the hat if there is one.
+	crest: number,
 }
 
 local function weld(part: BasePart, root: BasePart)
@@ -133,7 +136,9 @@ local FEATURES: { [string]: (Ctx) -> () } = {
 	hat = function(ctx)
 		local r, s = ctx.r, ctx.shape
 		local top = r * 0.92 * s[2]
-		local brimColor = ctx.accent:Lerp(C("woodDark"), 0.4)
+		-- Rarity reads on the hat: Outlaws (tiers 35-38) wear black, Mythic and up get a gold band.
+		local outlaw = ctx.tier >= 35 and ctx.tier <= 38
+		local brimColor = if outlaw then C("#1E1B2E") else ctx.accent:Lerp(C("woodDark"), 0.4)
 		piece(
 			ctx,
 			"HatBrim",
@@ -155,7 +160,7 @@ local FEATURES: { [string]: (Ctx) -> () } = {
 			"HatBand",
 			Vector3.new(r * 0.14, r * 0.98, r * 0.98),
 			CFrame.new(0, top + r * 0.1, 0) * CFrame.Angles(0, 0, math.rad(90)),
-			C("red"),
+			if ctx.tier >= 30 then C("gold") else C("red"),
 			"cylinder"
 		)
 	end,
@@ -218,7 +223,8 @@ local FEATURES: { [string]: (Ctx) -> () } = {
 		piece(
 			ctx,
 			"Bandana",
-			Vector3.new(r * 0.22, r * 1.55 * s[1], r * 1.55 * s[3]),
+			-- The body's cross-section at this height is ~0.91x its widest, so this hugs the surface.
+			Vector3.new(r * 0.22, r * 1.9 * s[1], r * 1.9 * s[3]),
 			CFrame.new(0, -r * 0.42 * s[2], 0) * CFrame.Angles(0, 0, math.rad(90)),
 			C("red"),
 			"cylinder"
@@ -227,7 +233,7 @@ local FEATURES: { [string]: (Ctx) -> () } = {
 			ctx,
 			"BandanaKnot",
 			Vector3.new(r * 0.5, r * 0.4, r * 0.15),
-			CFrame.new(0, -r * 0.55 * s[2], -r * 0.8 * s[3]) * CFrame.Angles(0, 0, math.rad(180)),
+			CFrame.new(0, -r * 0.55 * s[2], -r * 0.92 * s[3]) * CFrame.Angles(0, 0, math.rad(180)),
 			C("red"),
 			"wedge"
 		)
@@ -293,21 +299,36 @@ local FEATURES: { [string]: (Ctx) -> () } = {
 			"wedge"
 		)
 	end,
+	-- Three fanned feathers per side, raised and swept back, so wings read from far away.
 	wings = function(ctx)
 		local r, s = ctx.r, ctx.shape
 		for side = -1, 1, 2 do
-			piece(
-				ctx,
-				"Wing",
-				Vector3.new(r * 0.2, r * 0.8, r * 1.0),
-				CFrame.new(side * r * 0.98 * s[1], r * 0.1, r * 0.1)
-					* CFrame.Angles(0, 0, math.rad(side * 20)),
-				ctx.accent,
-				"sphere"
-			)
+			for i = 0, 2 do
+				piece(
+					ctx,
+					"Wing",
+					Vector3.new(r * 0.16, r * (1.15 - i * 0.2), r * 0.42),
+					CFrame.new(side * r * 1.0 * s[1], r * (0.35 + i * 0.05) * s[2], r * (0.05 + i * 0.22))
+						* CFrame.Angles(math.rad(-15 - i * 18), 0, math.rad(side * -35)),
+					ctx.accent:Lerp(Color3.new(1, 1, 1), i * 0.12),
+					"sphere"
+				)
+			end
 		end
 	end,
 	flame = function(ctx)
+		local r, s = ctx.r, ctx.shape
+		for i, color in { ctx.accent, Color3.fromRGB(255, 200, 70), Color3.fromRGB(255, 245, 190) } do
+			local tuft = piece(
+				ctx,
+				"Flame",
+				Vector3.new(r * (0.6 - i * 0.14), r * (0.8 - i * 0.12), r * (0.6 - i * 0.14)),
+				CFrame.new(0, r * (0.95 + i * 0.12) * s[2] + ctx.crest, r * 0.15),
+				color,
+				"sphere"
+			)
+			tuft.Material = Enum.Material.Neon
+		end
 		local fire = Instance.new("Fire")
 		fire.Size = ctx.r * 1.6
 		fire.Heat = 4
@@ -315,17 +336,88 @@ local FEATURES: { [string]: (Ctx) -> () } = {
 		fire.SecondaryColor = Color3.fromRGB(255, 230, 120)
 		fire.Parent = ctx.root
 	end,
+	-- Tilted gold band with five points and a ruby.
 	crown = function(ctx)
 		local r, s = ctx.r, ctx.shape
-		local crown = piece(
+		local base = CFrame.new(0, r * 1.02 * s[2] + ctx.crest, 0) * CFrame.Angles(0, 0, math.rad(-8))
+		local band = piece(
 			ctx,
 			"Crown",
-			Vector3.new(r * 0.35, r * 0.8, r * 0.8),
-			CFrame.new(0, r * 1.05 * s[2], 0) * CFrame.Angles(0, 0, math.rad(90)),
+			Vector3.new(r * 0.3, r * 0.85, r * 0.85),
+			base * CFrame.Angles(0, 0, math.rad(90)),
 			C("gold"),
 			"cylinder"
 		)
-		crown.Material = Enum.Material.Metal
+		band.Material = Enum.Material.Metal
+		for i = 1, 5 do
+			local a = (i - 1) / 5 * math.pi * 2
+			local point = piece(
+				ctx,
+				"CrownPoint",
+				Vector3.new(r * 0.16, r * 0.34, r * 0.16),
+				base * CFrame.new(math.cos(a) * r * 0.36, r * 0.24, math.sin(a) * r * 0.36),
+				C("gold"),
+				"sphere"
+			)
+			point.Material = Enum.Material.Metal
+		end
+		local gem = piece(
+			ctx,
+			"CrownGem",
+			Vector3.new(r * 0.18, r * 0.18, r * 0.1),
+			base * CFrame.new(0, 0, -r * 0.43),
+			C("red"),
+			"sphere"
+		)
+		gem.Material = Enum.Material.Neon
+	end,
+	-- A puffy cloud to ride on, ringing the bottom of the body.
+	cloud = function(ctx)
+		local r, s = ctx.r, ctx.shape
+		for i = 0, 6 do
+			local a = i / 7 * math.pi * 2
+			local d = r * (0.84 + 0.16 * math.sin(i * 2.3))
+			piece(
+				ctx,
+				"Cloud",
+				Vector3.new(d, d * 0.8, d),
+				CFrame.new(math.cos(a) * r * 0.95 * s[1], -r * 0.78 * s[2], math.sin(a) * r * 0.95 * s[3]),
+				Color3.new(1, 1, 1),
+				"sphere"
+			)
+		end
+	end,
+	-- A long tail that sweeps out to one side and curls up (same curve as tools/blender/build_critters.py).
+	longtail = function(ctx)
+		local r, s = ctx.r, ctx.shape
+		local steps = 12
+		local tip = Vector3.zero
+		for i = 0, steps do
+			local t = i / steps
+			local a = t * 2.6
+			local d = r * (0.68 - t * 0.44)
+			tip = Vector3.new(
+				r * 0.6 * s[1] + math.sin(a) * r * 0.75,
+				r * 0.3 + t * t * r * 1.1 - r * s[2],
+				r * 0.55 * s[3] + math.cos(a) * r * 0.2
+			)
+			piece(
+				ctx,
+				"Tail",
+				Vector3.new(d, d, d),
+				CFrame.new(tip),
+				ctx.body:Lerp(ctx.accent, t * 0.4),
+				"sphere"
+			)
+		end
+		piece(
+			ctx,
+			"Rattle",
+			Vector3.new(r * 0.22, r * 0.36, r * 0.22),
+			CFrame.new(tip + Vector3.new(0, r * 0.2, 0)),
+			ctx.accent,
+			"sphere"
+		)
 	end,
 	glow = function(ctx)
 		local light = Instance.new("PointLight")
@@ -360,7 +452,7 @@ local FEATURES: { [string]: (Ctx) -> () } = {
 			ctx,
 			"Lantern",
 			Vector3.new(r * 0.55, r * 0.7, r * 0.55),
-			CFrame.new(0, r * 1.1 * s[2], 0),
+			CFrame.new(0, r * 1.1 * s[2] + ctx.crest, 0),
 			Color3.fromRGB(255, 210, 110),
 			"sphere"
 		)
@@ -515,6 +607,8 @@ function CritterRig.build(
 		body = C(look.body),
 		accent = C(look.accent),
 		bodyParts = {},
+		tier = tier,
+		crest = if table.find(look.features, "hat") then r * 0.5 else 0,
 	}
 
 	if mesh and mesh:IsA("Model") then

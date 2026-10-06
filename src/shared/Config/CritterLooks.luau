@@ -1,8 +1,9 @@
 --!strict
 -- How each critter looks while the Blender meshes are being made: body colors and features for the
 -- procedural rig (client/Controllers/CritterRig.luau). Also the brief for the 3D art.
--- features: "mustache" | "hat" | "bandana" | "boots" | "badge" | "horns" | "ears" | "tail" | "spikes"
---   | "wheels" | "shell" | "beak" | "wings" | "flame" | "crown" | "glow" | "stack" | "lantern"
+-- features: "mustache" | "hat" | "bandana" | "boots" | "badge" | "horns" | "ears" | "tail" | "longtail"
+--   | "cloud" | "spikes" | "wheels" | "shell" | "beak" | "wings" | "flame" | "crown" | "glow" | "stack" | "lantern"
+-- Hats also show rarity: Mythic and up (tier 30+) get a gold band, Outlaws (35-38) a black hat.
 
 export type Look = {
 	body: string,
@@ -117,20 +118,30 @@ return {
 		shape = { 1.3, 0.9, 1 },
 	},
 	GoldPanPanda = { body = "#F4F4F4", accent = "#2B2B2B", features = { "ears", "hat", "boots" } },
-	GoldToothGoose = { body = "#FFFFFF", accent = "#FFC83D", features = { "beak", "crown", "wings" } },
+	GoldToothGoose = {
+		body = "#FFFFFF",
+		accent = "#FFC83D",
+		features = { "beak", "crown", "wings" },
+		shape = { 0.9, 1.25, 0.95 },
+	},
 	RattlesnakeRex = {
 		body = "#A5893F",
 		accent = "#5B3A26",
-		features = { "tail", "hat" },
-		shape = { 1.4, 0.7, 0.8 },
+		features = { "longtail", "hat" },
+		shape = { 1.2, 0.75, 0.85 },
 	},
 	Thunderhoof = {
-		body = "#3B3A3F",
+		body = "#4A4852",
 		accent = "#FFF15C",
-		features = { "ears", "tail", "glow" },
+		features = { "ears", "tail", "glow", "flame" },
 		shape = { 1.3, 1, 0.9 },
 	},
-	DynamoArmadillo = { body = "#9A6F5A", accent = "#FFB43D", features = { "shell", "glow" } },
+	DynamoArmadillo = {
+		body = "#9A6F5A",
+		accent = "#FFB43D",
+		features = { "shell", "glow", "ears", "flame" },
+		shape = { 1.15, 0.9, 1 },
+	},
 	SteamboatSloth = { body = "#8D7A63", accent = "#E2463A", features = { "hat", "lantern" } },
 	SteamEngineStallion = {
 		body = "#2E2E33",
@@ -138,29 +149,59 @@ return {
 		features = { "wheels", "ears", "flame" },
 		shape = { 1.4, 1, 0.9 },
 	},
-	CycloneCoyote = { body = "#7FB7D8", accent = "#FFFFFF", features = { "ears", "tail", "glow" } },
+	CycloneCoyote = {
+		body = "#7FB7D8",
+		accent = "#FFFFFF",
+		features = { "ears", "tail", "glow", "bandana" },
+		shape = { 1.1, 0.95, 1.05 },
+	},
 	SunsetSerpent = {
 		body = "#FF7A3D",
 		accent = "#FFD34D",
-		features = { "tail", "crown", "glow" },
-		shape = { 1.4, 0.7, 0.8 },
+		features = { "longtail", "crown", "glow" },
+		shape = { 1.1, 0.85, 0.85 },
 	},
-	GoldenSpurGriffin = { body = "#E2A93B", accent = "#FFF4DD", features = { "wings", "beak", "boots" } },
+	GoldenSpurGriffin = {
+		body = "#E2A93B",
+		accent = "#FFF4DD",
+		features = { "wings", "beak", "boots", "ears" },
+		shape = { 1.15, 1.1, 1.05 },
+	},
 	CanyonColossus = {
 		body = "#B06A45",
 		accent = "#4E9A4B",
-		features = { "spikes", "hat" },
+		features = { "spikes", "hat", "horns", "boots" },
 		shape = { 1.3, 1.3, 1.1 },
 	},
-	MidnightMarauder = { body = "#1E1B2E", accent = "#7B5CFF", features = { "hat", "bandana", "glow" } },
-	BlackHatBadger = { body = "#2B2B2B", accent = "#F4F4F4", features = { "hat", "ears", "tail" } },
-	PhantomRider = { body = "#B8F5E0", accent = "#1E6F86", features = { "hat", "glow", "bandana" } },
-	DustDevilDragon = { body = "#C46A3A", accent = "#FFD34D", features = { "wings", "horns", "flame" } },
+	MidnightMarauder = {
+		body = "#2A2540",
+		accent = "#7B5CFF",
+		features = { "hat", "bandana", "glow", "mustache" },
+		shape = { 1, 1.15, 0.95 },
+	},
+	BlackHatBadger = {
+		body = "#3A3A3F",
+		accent = "#F4F4F4",
+		features = { "hat", "ears", "tail", "badge" },
+		shape = { 1.25, 0.85, 1.05 },
+	},
+	PhantomRider = {
+		body = "#B8F5E0",
+		accent = "#1E6F86",
+		features = { "hat", "glow", "bandana", "flame" },
+		shape = { 0.9, 1.3, 0.9 },
+	},
+	DustDevilDragon = {
+		body = "#C46A3A",
+		accent = "#FFD34D",
+		features = { "wings", "horns", "flame", "longtail" },
+		shape = { 1.2, 1.05, 1.1 },
+	},
 	CloudCowboy = {
 		body = "#EAF6FF",
 		accent = "#3FB7B0",
-		features = { "hat", "glow", "boots" },
-		shape = { 1.2, 1, 1.1 },
+		features = { "hat", "glow", "cloud", "bandana" },
+		shape = { 1.1, 1.05, 1.05 },
 	},
 	LaLocomotoraLoca = {
 		body = "#E2463A",
@@ -179,6 +220,7 @@ return {
 	DiamondDesperado = {
 		body = "#9FF3FF",
 		accent = "#1E6F86",
-		features = { "hat", "bandana", "glow", "crown" },
+		features = { "bandana", "glow", "crown", "mustache" },
+		shape = { 0.95, 1.2, 0.95 },
 	},
 } :: { [string]: Look }
