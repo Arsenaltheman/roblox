@@ -1,13 +1,29 @@
 # Status and owner checklist
 
-Last updated: 2026-10-07 (overnight build).
+Last updated: 2026-10-07 (plan v2: "complete everything").
 
 **Short version:**
 - The game is fully written: code, economy, 43 critter models, sound and voice.
 - It has **never run on a real Roblox server.** This cloud environment can't reach `apis.roblox.com`, and nobody has opened it in Studio yet.
 - The next step is yours (section 2). After it, a new Claude session can publish, upload and smoke-test without you.
 
-## 0. Good morning: what was built overnight
+## 0. Latest: plan v2 ("complete everything")
+
+Everything is pushed to `main`, and all checks pass: 140 unit tests, strict types, lint, place lint, economy gates. Plan: `docs/PLAN_V2.md`.
+
+| New | Try it |
+|---|---|
+| **The Bounty Trail:** 40 big quests in 8 chapters (2–3 objectives each), ending at Frontier 8, about 10+ hours for a free player (see `docs/ECONOMY.md`). Chapter finales give a title, spins, Nuggets and 2× Cash. **Weekly bounties:** 4 a week, plus a bonus for clearing all four. A quest tracker sits on the HUD | QUESTS → BOUNTY TRAIL / DAILY / WEEKLY; the tracker is left of centre |
+| **Onboarding:** a red arrow and beam on every tutorial target (your reserved cage, your collect plate, Bandit Bart), hints that follow the train, then a teal arrow to the first heist | Start with a fresh save (Studio: Data → reset, or a new test account) |
+| **8 gear items** now unlock across Frontiers 0–7: Grapple Hook (dash), Dynamite Decoy, Cactus Wall, Stampede Call, Ghost Lantern | Gear tab; hotbar keys 1–8 |
+| **Sprint with stamina** (Shift / L3 / SPRINT button), FOV kick, dust and landing puffs | Hold Shift |
+| **Trading:** same-server escrow, policy-gated | MORE → TRADE |
+| **Wardrobe and visible cosmetics:** title tags, hats, lasso and poster colours, ranch themes | MORE → Wardrobe |
+| **Graphics:** Future lighting, a golden-hour day cycle, a mood per zone, dust, tumbleweeds, buzzards, fireflies, and richer zones and town | Walk out to each zone |
+| **Bandit Camp red light:** the bandit visibly naps, wakes and watches | Go to the Bandit Camp |
+| **Whole-codebase review:** about 40 bugs fixed. The big ones: the HUD now scales on phones; idle animations now run; heist/wheel/boss reveals show the critter; the "collect" quest now counts; cosmetics now render; and the purchase-safety fixes | — |
+
+## 0b. The overnight build (before plan v2)
 
 Everything below is pushed to `main`, and every check passes: 119 unit tests, types, lint, place lint, economy gates. Plan and status: `docs/OVERNIGHT.md`.
 
