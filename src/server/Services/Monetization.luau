@@ -7,6 +7,7 @@
 
 local MarketplaceService = game:GetService("MarketplaceService")
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 local PolicyService = game:GetService("PolicyService")
 
 local Products = require("@game/ReplicatedStorage/Shared/Config/Products")
@@ -89,10 +90,24 @@ function Monetization.mayPrompt(player: Player): boolean
 	return t == nil or os.clock() - t >= Products.noPromptAfterLossSeconds
 end
 
+-- Set below (grant is defined after this function).
+local studioGrant: (Player, Products.Product) -> ()
+
 function Monetization.prompt(player: Player, key: string)
 	local product = Products.byKey[key]
+	if product and not product.id and RunService:IsStudio() then
+		-- No Roblox id yet: in Studio, simulate the purchase for free so every item can be tested.
+		-- Live servers never take this path.
+		local okOffer, why = Monetization.canOffer(player, key)
+		if not okOffer then
+			Registry.Ui.toast(player, why or "Not available")
+			return
+		end
+		studioGrant(player, product)
+		return
+	end
 	if not product or not product.id then
-		Registry.Ui.toast(player, "This item isn't available yet.")
+		Registry.Ui.toast(player, "Coming soon! (The owner hasn't created this item on Roblox yet.)")
 		return
 	end
 	local ok, reason = Monetization.canOffer(player, key)
@@ -217,6 +232,23 @@ local function loadPlayer(player: Player)
 		end
 	end
 	ownedPasses[player] = owned
+end
+
+studioGrant = function(player: Player, product: Products.Product)
+	if product.kind == "pass" then
+		local owned = ownedPasses[player] or {}
+		owned[product.key] = true
+		ownedPasses[player] = owned
+		player:SetAttribute("Pass_" .. product.key, true)
+		Monetization.passChanged:Fire(player, product.key)
+	elseif product.kind == "product" then
+		if not grant(player, product) then
+			Registry.Ui.toast(player, "[STUDIO TEST] Couldn't grant that right now.")
+			return
+		end
+		Registry.Ui.pushState(player)
+	end
+	Registry.Ui.toast(player, `[STUDIO TEST] {product.name} granted for free (no Robux in Studio).`)
 end
 
 function Monetization.init()
