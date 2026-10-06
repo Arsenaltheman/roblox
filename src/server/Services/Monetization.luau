@@ -51,9 +51,35 @@ function Monetization.isPremium(player: Player): boolean
 	return player.MembershipType == Enum.MembershipType.Premium
 end
 
+-- Sheriff's Club: a Roblox Subscription (status cached per player). In Studio without an id, a
+-- test purchase grants 30 days in d.Boosts.Club instead.
+local subscribed: { [Player]: boolean } = {}
+
+local function refreshSubscription(player: Player)
+	local id = Products.subscription.id
+	if id == "" then
+		return
+	end
+	local ok, status = pcall(function()
+		return MarketplaceService:GetUserSubscriptionStatusAsync(player, id)
+	end)
+	if ok and status then
+		subscribed[player] = (status :: any).IsSubscribed == true
+	end
+end
+
+function Monetization.isSubscribed(player: Player): boolean
+	if subscribed[player] then
+		return true
+	end
+	local d = Registry.Data.get(player)
+	return d ~= nil and (d.Boosts.Club or 0) > os.time()
+end
+
 function Monetization.passes(player: Player): Economy.Passes
 	return {
 		Premium = Monetization.isPremium(player),
+		Club = Monetization.isSubscribed(player),
 		DoubleCash = Monetization.owns(player, "DoubleCash"),
 		VIP = Monetization.owns(player, "VIP"),
 		IronLock = Monetization.owns(player, "IronLock"),
@@ -88,6 +114,9 @@ function Monetization.canOffer(player: Player, key: string): (boolean, string?)
 	then
 		return false, "Every pen holds a branded critter. Get more pens first."
 	end
+	if key == "InstantHatch" and not Registry.Eggs.hasUnready(player) then
+		return false, "No egg is waiting to hatch."
+	end
 	return true, nil
 end
 
@@ -103,9 +132,14 @@ end
 
 -- Set below (grant is defined after this function).
 local studioGrant: (Player, Products.Product) -> ()
+local promptSubscription: (Player) -> ()
 
 function Monetization.prompt(player: Player, key: string)
 	local product = Products.byKey[key]
+	if product and product.kind == "subscription" then
+		promptSubscription(player)
+		return
+	end
 	if product and not product.id and RunService:IsStudio() then
 		-- No Roblox id yet: in Studio, simulate the purchase for free so every item can be tested.
 		-- Live servers never take this path.
@@ -133,6 +167,32 @@ function Monetization.prompt(player: Player, key: string)
 	end
 end
 
+-- Subscriptions have no numeric id; they're prompted by their subscription id string.
+promptSubscription = function(player: Player)
+	local id = Products.subscription.id
+	if id == "" then
+		if RunService:IsStudio() then
+			local d = Registry.Data.get(player)
+			if d then
+				d.Boosts.Club = math.max(d.Boosts.Club or 0, os.time()) + 30 * 86400
+				d.Owned.hat_club = true
+				Registry.Ui.toast(player, "[STUDIO TEST] Sheriff's Club granted for 30 days.")
+				Registry.Ui.pushState(player)
+				Monetization.passChanged:Fire(player, "SheriffClub")
+			end
+		else
+			Registry.Ui.toast(
+				player,
+				"Coming soon! (The owner hasn't created the subscription on Roblox yet.)"
+			)
+		end
+		return
+	end
+	pcall(function()
+		MarketplaceService:PromptSubscriptionPurchase(player, id)
+	end)
+end
+
 -- Effects of developer products. Returns false if it can't be granted now (retry later).
 local function grant(player: Player, product: Products.Product): boolean
 	local d = Registry.Data.get(player)
@@ -148,6 +208,8 @@ local function grant(player: Player, product: Products.Product): boolean
 		local mult = tonumber(string.sub(key, -1)) :: number
 		Registry.Train.addServerLuck(mult)
 		return true
+	elseif key == "InstantHatch" then
+		return Registry.Eggs.readyNow(player)
 	elseif key == "Lockpick" then
 		d.Stats.Lockpicks = (d.Stats.Lockpicks or 0) + 1
 		return true
@@ -275,6 +337,31 @@ function Monetization.init()
 end
 
 function Monetization.start()
+	-- Subscription status: on join and whenever Roblox reports a change.
+	Players.PlayerAdded:Connect(function(player)
+		task.spawn(refreshSubscription, player)
+	end)
+	for _, player in Players:GetPlayers() do
+		task.spawn(refreshSubscription, player)
+	end
+	pcall(function()
+		MarketplaceService.UserSubscriptionStatusChanged:Connect(
+			function(player: Player, subscriptionId: string)
+				if subscriptionId == Products.subscription.id then
+					refreshSubscription(player)
+					local d = Registry.Data.get(player)
+					if d and subscribed[player] then
+						d.Owned.hat_club = true
+					end
+					Monetization.passChanged:Fire(player, "SheriffClub")
+					Registry.Ui.pushState(player)
+				end
+			end
+		)
+	end)
+	Players.PlayerRemoving:Connect(function(player)
+		subscribed[player] = nil
+	end)
 	for _, player in Players:GetPlayers() do
 		task.spawn(loadPlayer, player)
 	end

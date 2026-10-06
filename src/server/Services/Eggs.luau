@@ -104,6 +104,41 @@ function Eggs.buyHatchery(player: Player): boolean
 	return Eggs.give(player, Registry.Ranch.band(player), "Hatchery")
 end
 
+-- Instant Hatch (Robux): the egg hatching soonest becomes ready now. False if none is waiting.
+function Eggs.hasUnready(player: Player): boolean
+	local d = Registry.Data.get(player)
+	if not d then
+		return false
+	end
+	for _, egg in d.Eggs do
+		if egg.hatchAt > os.time() then
+			return true
+		end
+	end
+	return false
+end
+
+function Eggs.readyNow(player: Player): boolean
+	local d = Registry.Data.get(player)
+	if not d then
+		return false
+	end
+	local best: any = nil
+	for _, egg in d.Eggs do
+		if egg.hatchAt > os.time() and (best == nil or egg.hatchAt < best.hatchAt) then
+			best = egg
+		end
+	end
+	if not best then
+		return false
+	end
+	best.hatchAt = os.time()
+	Registry.Ui.fx(player, "egg", #d.Eggs)
+	Registry.Ui.toast(player, "Your egg is ready! Open EGGS and hatch it.")
+	Registry.Ui.pushState(player)
+	return true
+end
+
 function Eggs.init() end
 
 function Eggs.start()

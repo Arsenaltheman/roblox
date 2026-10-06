@@ -110,6 +110,7 @@ function Shop.applyEquipped(player: Player)
 		player:SetAttribute("Equip_lassoTrail", "trail_gold")
 	end
 	player:SetAttribute("VIP", Registry.Monetization.owns(player, "VIP"))
+	player:SetAttribute("Club", Registry.Monetization.isSubscribed(player))
 	Registry.Ui.pushState(player)
 end
 

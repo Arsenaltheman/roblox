@@ -11,6 +11,7 @@ local Rng = require("@game/ReplicatedStorage/Shared/Sim/Rng")
 local Streak = require("@game/ReplicatedStorage/Shared/Sim/Streak")
 local Net = require("@game/ReplicatedStorage/Shared/Net/Net")
 local Signal = require("@game/ReplicatedStorage/Shared/Util/Signal")
+local Species = require("@game/ReplicatedStorage/Shared/Config/Species")
 local Registry = require("../Registry")
 
 local ProgressionService = {}
@@ -203,6 +204,23 @@ local function claim(player: Player, what: string, index: number)
 		d.Stats.PendingStreakSlot = 0
 		grantReward(player, reward.kind, reward.amount, "Streak", 300)
 		Registry.Ui.reveal(player, { kind = "streak", slot = d.Streak.count })
+		-- Every 30 days in a row: a Legendary critter and the "Regular" title.
+		if d.Streak.count % 30 == 0 then
+			local tier = 25
+			local species = Species.byTier[tier]
+			local cid =
+				Registry.Ranch.addCritter(player, { species = species.id, tier = tier, src = "streak" })
+			if cid then
+				Registry.Ui.reveal(player, { kind = "wheel", species = species.id, tier = tier })
+			else
+				Registry.Wallet.addCash(player, Economy.price(tier), "Streak30")
+			end
+			d.Owned.title_regular = true
+			Registry.Ui.announce(
+				`{player.DisplayName} logged in 30 days in a row and earned a Legendary!`,
+				"golden"
+			)
+		end
 	elseif what == "offline" then
 		local p = pending[player]
 		if not p or p.offline <= 0 then

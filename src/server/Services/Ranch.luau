@@ -636,10 +636,12 @@ local function assign(player: Player)
 	end
 	ownerByIndex[index] = player
 	local remainingShield = math.max(0, Progression.newbieShieldSeconds - (d.Stats.PlaySeconds or 0))
+	-- Everyone gets 30 s of lock on arrival (time to look around before anyone can steal).
+	local joinLock = if remainingShield > 0 then 0 else now() + 30
 	states[player] = {
 		index = index,
 		uncollected = 0,
-		lockedUntil = 0,
+		lockedUntil = joinLock,
 		lockReadyAt = 0,
 		pickedUntil = 0,
 		shieldUntil = now() + remainingShield,
@@ -653,7 +655,7 @@ local function assign(player: Player)
 		m:SetAttribute("Owner", player.UserId)
 		m:SetAttribute("OwnerName", player.DisplayName)
 		m:SetAttribute("ShieldUntil", states[player].shieldUntil)
-		m:SetAttribute("LockedUntil", 0)
+		m:SetAttribute("LockedUntil", joinLock)
 		local sign = m:FindFirstChild("Sign")
 		if sign then
 			for _, gui in sign:GetChildren() do

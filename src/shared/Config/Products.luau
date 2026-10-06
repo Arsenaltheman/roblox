@@ -8,7 +8,7 @@
 
 export type Product = {
 	key: string,
-	kind: "pass" | "product" | "privateServer",
+	kind: "pass" | "product" | "privateServer" | "subscription",
 	name: string,
 	price: number,
 	description: string,
@@ -17,7 +17,7 @@ export type Product = {
 	-- Store presentation: which tab it's in, its picture (assets/ui/<icon>.png) and the preview effect.
 	category: "passes" | "boosts" | "cash" | "critters",
 	icon: string,
-	fx: "coins" | "gold" | "luck" | "speed" | "shield" | "snap" | "critter",
+	fx: "coins" | "gold" | "luck" | "speed" | "shield" | "snap" | "critter" | "egg",
 }
 
 local list: { Product } = {
@@ -241,6 +241,26 @@ local list: { Product } = {
 	},
 
 	{
+		key = "InstantHatch",
+		category = "boosts",
+		icon = "egg",
+		fx = "egg",
+		kind = "product",
+		price = 9,
+		name = "Instant Hatch",
+		description = "Your next egg is ready to hatch right now.",
+	},
+	{
+		key = "SheriffClub",
+		category = "passes",
+		icon = "sheriffstar",
+		fx = "gold",
+		kind = "subscription",
+		price = 199,
+		name = "Sheriff's Club (monthly)",
+		description = "x1.25 cash, +1 free spin every day, the Club Stetson and a Club tag. Cancel any time.",
+	},
+	{
 		key = "PrivateServer",
 		category = "passes",
 		icon = "key",
@@ -278,4 +298,9 @@ return {
 	lockpickSeconds = 8,
 	-- Owner decision: no purchase prompts right after a loss (robbed / bad reveal).
 	noPromptAfterLossSeconds = 120,
+	-- Roblox Subscription id (from Creator Hub -> Monetization -> Subscriptions); "" until created.
+	subscription = { id = "" },
+	-- Roblox group whose members get a one-time Nugget reward (0 = feature off).
+	groupId = 0,
+	groupRewardNuggets = 100,
 }

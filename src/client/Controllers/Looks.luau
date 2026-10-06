@@ -99,9 +99,10 @@ local function buildHat(id: string, head: BasePart): Model?
 	local hat = Instance.new("Model")
 	hat.Name = "LooksHat"
 	local flat = CFrame.Angles(0, 0, math.rad(90))
-	if id == "hat_StarterStetson" or id == "hat_sheriff" then
+	if id == "hat_StarterStetson" or id == "hat_sheriff" or id == "hat_club" then
 		local brown = if id == "hat_sheriff"
 			then Color3.fromRGB(226, 169, 59)
+			elseif id == "hat_club" then Color3.fromRGB(255, 200, 61)
 			else Color3.fromRGB(138, 90, 59)
 		hatPart(
 			hat,

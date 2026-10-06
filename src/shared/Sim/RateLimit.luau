@@ -45,6 +45,8 @@ RateLimit.limits = {
 	BuyGear = { rate = 1, burst = 2 },
 	UseGear = { rate = 2, burst = 3 },
 	HitBoss = { rate = 3, burst = 4 },
+	GroupReward = { rate = 0.2, burst = 1 },
+	PrivateSteal = { rate = 0.5, burst = 2 },
 	-- Press + release per sprint; generous so tapping sprint never gets a release dropped.
 	Sprint = { rate = 6, burst = 10 },
 	TradeInvite = { rate = 0.2, burst = 2 },

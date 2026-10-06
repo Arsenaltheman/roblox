@@ -136,7 +136,9 @@ function Wheel.start()
 		local today = WheelConfig.day(os.time())
 		if (d.Stats.LastSpinDay or 0) < today then
 			d.Stats.LastSpinDay = today
-			d.Stats.Spins = math.min(WheelConfig.MAX_STORED, (d.Stats.Spins or 0) + WheelConfig.DAILY_SPINS)
+			local daily = WheelConfig.DAILY_SPINS
+				+ (if Registry.Monetization.isSubscribed(player) then 1 else 0)
+			d.Stats.Spins = math.min(WheelConfig.MAX_STORED, (d.Stats.Spins or 0) + daily)
 		end
 		mirror(player)
 	end)

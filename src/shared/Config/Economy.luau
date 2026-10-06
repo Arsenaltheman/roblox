@@ -27,6 +27,8 @@ return {
 		VIP = 1.5,
 		-- Roblox Premium members (Roblox's own subscription) get a small perk.
 		Premium = 1.1,
+		-- Sheriff's Club (our monthly subscription).
+		Club = 1.25,
 	},
 
 	-- Frontier (rebirth) n needs frontierCostMultiplier * price(T) cash plus owning a critter of tier >= T,

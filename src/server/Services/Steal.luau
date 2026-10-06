@@ -399,8 +399,29 @@ local function stealBandit(player: Player, lootPen: string)
 	end)
 end
 
+-- Private servers: the owner can switch stealing off for their friends.
+local privateStealOff = false
+
+local function privateSteal(player: Player, allowed: boolean)
+	if game.PrivateServerId == "" or player.UserId ~= game.PrivateServerOwnerId then
+		return
+	end
+	privateStealOff = not allowed
+	Workspace:SetAttribute("PrivateStealOff", privateStealOff)
+	Registry.Ui.announce(
+		if allowed
+			then "The host turned stealing ON in this private server."
+			else "The host turned stealing OFF in this private server.",
+		"info"
+	)
+end
+
 local function stealStart(player: Player, ranchIndex: number, cid: string)
 	if not Registry.LiveConfig.enabled("ff.stealing") then
+		return
+	end
+	if privateStealOff and ranchIndex ~= 9 then
+		Registry.Ui.toast(player, "Stealing is off in this private server.")
 		return
 	end
 	if loaded(player) or grabbing[player] or Registry.Session.isSuspicious(player) then
@@ -673,6 +694,7 @@ function Steal.start()
 	Net.on("StealCancel", stealCancel)
 	Net.on("Lasso", lasso)
 	Net.on("Lockpick", lockpick)
+	Net.on("PrivateSteal", privateSteal)
 	Net.on("Sprint", sprint)
 
 	local function onCharacter(player: Player)

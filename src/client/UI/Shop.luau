@@ -48,6 +48,7 @@ export type Item = {
 	fx: string,
 	currency: "robux" | "cash" | "nuggets",
 	price: number,
+	monthly: boolean?,
 	species: string?, -- show this critter in 3D instead of the icon
 	random: boolean?,
 	owned: () -> boolean,
@@ -96,6 +97,8 @@ local GLYPH: { [string]: string } = {
 	CashBag1h = "$$",
 	CashBag6h = "$$$",
 	CashBag24h = "$$$$",
+	InstantHatch = "◯",
+	SheriffClub = "✪",
 }
 
 local CRITTER_OF: { [string]: string } = {
@@ -144,7 +147,7 @@ end
 
 local function priceText(item: Item): string
 	if item.currency == "robux" then
-		return `R$ {item.price}`
+		return if item.monthly then `R$ {item.price}/mo` else `R$ {item.price}`
 	elseif item.currency == "cash" then
 		return `${NumberFormat.short(item.price)}`
 	end
@@ -178,12 +181,15 @@ local function productItems(): { Item }
 				fx = product.fx,
 				currency = "robux",
 				price = product.price,
+				monthly = product.kind == "subscription",
 				species = species,
 				random = product.random,
 				owned = function()
 					attrTick()
 					if product.kind == "pass" then
 						return localPlayer:GetAttribute("Pass_" .. product.key) == true
+					elseif product.kind == "subscription" then
+						return localPlayer:GetAttribute("Club") == true
 					end
 					return product.key == "StarterPack" and state().starterPack == true
 				end,

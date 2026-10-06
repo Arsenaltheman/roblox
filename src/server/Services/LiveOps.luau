@@ -139,8 +139,28 @@ function LiveOps.init()
 	end
 end
 
+-- One-time reward for members of the owner's Roblox group (Products.groupId; 0 = off).
+local function groupReward(player: Player)
+	local d = Registry.Data.get(player)
+	if not d or Products.groupId == 0 or d.Owned.group_reward then
+		return
+	end
+	local ok, member = pcall(function()
+		return player:IsInGroupAsync(Products.groupId)
+	end)
+	if not ok or not member then
+		Registry.Ui.toast(player, "Join the group on Roblox first, then come back and claim.")
+		return
+	end
+	d.Owned.group_reward = true
+	Registry.Wallet.addNuggets(player, Products.groupRewardNuggets, "GroupReward")
+	Registry.Ui.toast(player, `Thanks for joining! +{Products.groupRewardNuggets} Gold Nuggets.`)
+	Registry.Ui.pushState(player)
+end
+
 function LiveOps.start()
 	Net.on("SheriffPower", sheriffPower)
+	Net.on("GroupReward", groupReward)
 	Net.on("Sticker", sticker)
 	Net.on("BugReport", bugReport)
 	for _, player in Players:GetPlayers() do

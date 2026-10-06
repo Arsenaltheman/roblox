@@ -10,6 +10,8 @@ local Workspace = game:GetService("Workspace")
 local Vide = require("@game/ReplicatedStorage/Packages/Vide")
 local LuckConfig = require("@game/ReplicatedStorage/Shared/Config/Luck")
 local Mutations = require("@game/ReplicatedStorage/Shared/Config/Mutations")
+local Progression = require("@game/ReplicatedStorage/Shared/Config/Progression")
+local Products = require("@game/ReplicatedStorage/Shared/Config/Products")
 local Rarities = require("@game/ReplicatedStorage/Shared/Config/Rarities")
 local Species = require("@game/ReplicatedStorage/Shared/Config/Species")
 local HeistConfig = require("@game/ReplicatedStorage/Shared/Config/Heist")
@@ -758,6 +760,21 @@ local function eggsMenu(): Instance
 								Net.request("Hatch", i)
 							end
 						end,
+						-- Robux timer skip on eggs that aren't ready.
+						extra = Components.button({
+							text = "HATCH NOW R$9",
+							color = Theme.color.pink,
+							size = UDim2.fromOffset(150, 34),
+							position = UDim2.new(0.62, 0, 0.5, 0),
+							anchor = Vector2.new(0, 0.5),
+							textSize = 16,
+							visible = function()
+								return egg().hatchAt > clock()
+							end,
+							onClick = function()
+								Net.request("ShopBuy", "InstantHatch", 1)
+							end,
+						}),
 					})
 				end),
 			}),
@@ -1031,6 +1048,44 @@ local function settingsMenu(): Instance
 						Net.request("Setting", "Quality", order[i % #order + 1])
 					end,
 				}),
+				if Products.groupId > 0
+					then card({
+						order = 0,
+						title = function()
+							return "Join our Roblox group"
+						end,
+						sub = function()
+							return if (state().owned or {}).group_reward
+								then "Claimed. Thanks for being part of the posse!"
+								else `Members get +{Products.groupRewardNuggets} Gold Nuggets (join on Roblox, then claim)`
+						end,
+						color = Theme.color.nugget,
+						button = "CLAIM",
+						glyph = "◆",
+						onClick = function()
+							Net.request("GroupReward")
+						end,
+					})
+					else nil,
+				if game.PrivateServerId ~= "" and game.PrivateServerOwnerId == localPlayer.UserId
+					then card({
+						order = 0,
+						title = function()
+							return "Private server: stealing"
+						end,
+						sub = function()
+							return if Workspace:GetAttribute("PrivateStealOff") == true
+								then "OFF: friends can't steal from each other"
+								else "ON: friends can steal from each other"
+						end,
+						color = Theme.color.red,
+						button = "Toggle",
+						glyph = "⚑",
+						onClick = function()
+							Net.request("PrivateSteal", Workspace:GetAttribute("PrivateStealOff") == true)
+						end,
+					})
+					else nil,
 				card({
 					order = 0,
 					title = function()
@@ -1172,9 +1227,18 @@ local function welcome(): Instance
 					Text = function()
 						local p = state().pending or {}
 						local s = state().streak
-						return if p.streakSlot
-							then `Day {s and s.count or 1} login streak reward ready!`
-							else ""
+						if not p.streakSlot then
+							return ""
+						end
+						local count = s and s.count or 1
+						local rewards = Progression.streak.rewards
+						local nextReward = rewards[(count % #rewards) + 1]
+						local tomorrow = if (count + 1) % 30 == 0
+							then "a LEGENDARY critter"
+							elseif nextReward.kind == "egg" then `{nextReward.amount} egg(s)`
+							elseif nextReward.kind == "nuggets" then `{nextReward.amount} Gold Nuggets`
+							else "cash"
+						return `Day {count} login streak reward ready! Tomorrow: {tomorrow}.`
 					end,
 				}),
 				Components.button({
@@ -1706,6 +1770,8 @@ function App.build(scale: () -> number): Instance
 	return create("ScreenGui")({
 		Name = "CritterExpressUI",
 		ResetOnSpawn = false,
+		-- Keeps buttons clear of notches and Roblox's top bar on phones.
+		ScreenInsets = Enum.ScreenInsets.CoreUISafeInsets,
 		ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
 		-- A UIScale also scales the frame's own size, so the frame is sized 1/scale to still cover the
 		-- whole screen; everything inside is laid out in 1280x720 design pixels.

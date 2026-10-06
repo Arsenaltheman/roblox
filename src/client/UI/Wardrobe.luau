@@ -50,6 +50,10 @@ local function howToGet(cosmetic: Cosmetics.Cosmetic): string
 		return "Earned on the Bounty Trail"
 	elseif cosmetic.id == "hat_premium" then
 		return "Roblox Premium members"
+	elseif cosmetic.id == "hat_club" then
+		return "Sheriff's Club members"
+	elseif cosmetic.id == "title_regular" then
+		return "A 30-day login streak"
 	elseif cosmetic.id == "trail_gold" then
 		return "Sheriff's Badge (VIP)"
 	end

@@ -31,6 +31,8 @@ return {
 		"BuyGear",
 		"UseGear",
 		"HitBoss",
+		"GroupReward",
+		"PrivateSteal",
 		"Sprint",
 		"TradeInvite",
 		"TradeRespond",

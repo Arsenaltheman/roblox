@@ -12,7 +12,7 @@ export type Gift = {
 return {
 	-- Playtime gifts (pause while idle). Cash gifts scale with income so they stay meaningful.
 	gifts = {
-		{ minute = 1, kind = "cash", amount = 60, floor = 250 },
+		{ minute = 0.5, kind = "cash", amount = 60, floor = 250 },
 		{ minute = 3, kind = "egg", amount = 1 },
 		{ minute = 5, kind = "cash", amount = 120, floor = 500 },
 		{ minute = 10, kind = "nuggets", amount = 25 },
