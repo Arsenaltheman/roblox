@@ -25,11 +25,14 @@ return {
 		VIP = 1.5,
 	},
 
-	-- Frontier (rebirth) n needs 3 * price(T) cash plus owning a critter of tier >= T,
-	-- where T = frontierBaseTier + frontierTierStep * (n - 1).
+	-- Frontier (rebirth) n needs frontierCostMultiplier * price(T) cash plus owning a critter of tier >= T,
+	-- where T = frontierBaseTier + frontierTierStep * (n - 1), capped at the top tier.
+	-- Past the cap the cost keeps growing by frontierEndlessGrowth per Frontier (endless prestige until
+	-- weekly updates add higher tiers).
 	frontierBaseTier = 14,
 	frontierTierStep = 3,
-	frontierCostMultiplier = 3,
+	frontierCostMultiplier = 6,
+	frontierEndlessGrowth = 4,
 	-- Cash you restart with after Frontier n = cost(n) / this.
 	frontierPurseDivisor = 1000,
 	maxFrontier = 30,
@@ -59,11 +62,12 @@ return {
 
 	-- Exclusive (Robux) critters earn like a cage critter this many tiers above the owner's best band.
 	exclusiveTierBonus = {
-		DeputyDuck = 1,
-		GoldenLocomotive = 3,
-		DiamondDesperado = 5,
+		DeputyDuck = 0,
+		GoldenLocomotive = 1,
+		DiamondDesperado = 2,
 	},
 
-	-- Cash is clamped here so maths stays exact in doubles (2^53 ~ 9e15).
-	cashCeiling = 1e15,
+	-- Hard ceiling on cash. Doubles stay well-behaved far beyond this; past 2^53 (~9e15) cents are
+	-- lost, which doesn't matter at those amounts. The ceiling only guards against runaway bugs.
+	cashCeiling = 1e30,
 }

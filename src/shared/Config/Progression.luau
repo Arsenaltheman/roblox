@@ -16,7 +16,7 @@ return {
 		{ minute = 3, kind = "egg", amount = 1 },
 		{ minute = 5, kind = "cash", amount = 120, floor = 500 },
 		{ minute = 10, kind = "nuggets", amount = 25 },
-		{ minute = 15, kind = "cash", amount = 300, floor = 2000 },
+		{ minute = 15, kind = "cash", amount = 150, floor = 2000 },
 		{ minute = 20, kind = "egg", amount = 1 },
 		{ minute = 30, kind = "nuggets", amount = 50 },
 		{ minute = 45, kind = "cash", amount = 600, floor = 10000 },
@@ -59,7 +59,7 @@ return {
 	quests = {
 		dailyCount = 3,
 		-- Rewards: seconds of income + nuggets.
-		cashSeconds = 300,
+		cashSeconds = 120,
 		nuggets = 20,
 	},
 

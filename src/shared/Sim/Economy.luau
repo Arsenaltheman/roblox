@@ -100,12 +100,22 @@ function Economy.sellValue(critter: CritterLike): number
 	return Economy.price(critter.tier) * Mutations.multiplierOf(critter.mutation) * Config.sellRefund
 end
 
-function Economy.frontierTargetTier(n: number): number
+local function uncappedTargetTier(n: number): number
 	return Config.frontierBaseTier + Config.frontierTierStep * (n - 1)
 end
 
+function Economy.frontierTargetTier(n: number): number
+	return math.min(uncappedTargetTier(n), Rarities.maxTier)
+end
+
 function Economy.frontierCost(n: number): number
-	return Config.frontierCostMultiplier * Economy.price(Economy.frontierTargetTier(n))
+	local cost = Config.frontierCostMultiplier * Economy.price(Economy.frontierTargetTier(n))
+	-- Past the top tier, each extra Frontier costs frontierEndlessGrowth times more per tier step skipped.
+	local overflowSteps = math.max(0, uncappedTargetTier(n) - Rarities.maxTier) / Config.frontierTierStep
+	if overflowSteps > 0 then
+		cost *= Config.frontierEndlessGrowth ^ math.ceil(overflowSteps)
+	end
+	return cost
 end
 
 function Economy.frontierPurse(n: number): number
