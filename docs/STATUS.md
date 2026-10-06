@@ -28,6 +28,7 @@ Everything below is pushed to `main`, and every check passes: 119 unit tests, ty
 4. Events: does the banner count down? Do Crate Rain crates land on Main Street, and can you grab and run them home?
 5. Bandit King: does he leap smoothly? Is the health bar readable? Does the loot arrive?
 6. Leaderboards: are the boards readable from the platform?
+7. Sprint: hold Shift (PC), click L3 (gamepad) or hold/tap the SPRINT button (phone, left of jump). Do you run ~30% faster for 5 s, does the stamina bar drain (faster while carrying) and refill, and does the FOV kick, dust and landing puff feel good? Shift-lock moved to Ctrl.
 
 ## 1. What exists
 

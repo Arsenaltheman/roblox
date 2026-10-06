@@ -31,6 +31,7 @@ return {
 		"BuyGear",
 		"UseGear",
 		"HitBoss",
+		"Sprint",
 	},
 	-- Client -> server with a reply (RemoteFunctions). Kept minimal.
 	functions = {

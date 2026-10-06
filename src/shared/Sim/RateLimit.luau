@@ -44,6 +44,8 @@ RateLimit.limits = {
 	BuyGear = { rate = 1, burst = 2 },
 	UseGear = { rate = 2, burst = 3 },
 	HitBoss = { rate = 3, burst = 4 },
+	-- Press + release per sprint; generous so tapping sprint never gets a release dropped.
+	Sprint = { rate = 6, burst = 10 },
 } :: { [string]: Limit }
 
 function RateLimit.newBucket(limit: Limit, now: number): Bucket

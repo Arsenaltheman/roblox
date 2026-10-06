@@ -25,6 +25,7 @@ local Store = require("../Store")
 local Components = require("./Components")
 local Shop = require("./Shop")
 local Hotbar = require("./Hotbar")
+local SprintButton = require("./SprintButton")
 local EventBanner = require("./EventBanner")
 local Theme = require("./Theme")
 
@@ -1584,6 +1585,7 @@ function App.build(scale: () -> number): Instance
 			toasts(),
 			runBanner(),
 			Hotbar.build(),
+			SprintButton.build(),
 			EventBanner.build(),
 		}),
 		create("Frame")({

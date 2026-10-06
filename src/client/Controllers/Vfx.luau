@@ -116,32 +116,67 @@ function Vfx.fireworks(position: Vector3, color: Color3, rockets: number?)
 	end
 end
 
--- Camera shake through the humanoid's camera offset (respects Reduced Motion).
-function Vfx.shake(strength: number, duration: number)
-	if Quality.reducedMotion() then
+-- Several effects move the camera through the humanoid's CameraOffset (shake here, run bob and
+-- landing dip in Movement). Each writes its own layer and one RenderStepped sums them, so they
+-- never overwrite or zero each other.
+local cameraLayers: { [string]: Vector3 } = {}
+local lastCameraOffset = Vector3.zero
+
+function Vfx.cameraOffset(layer: string, offset: Vector3)
+	if offset.Magnitude > 1e-4 then
+		cameraLayers[layer] = offset
+	else
+		cameraLayers[layer] = nil
+	end
+end
+
+local function applyCameraOffset()
+	local total = Vector3.zero
+	for _, offset in cameraLayers do
+		total += offset
+	end
+	if total == lastCameraOffset then
 		return
 	end
 	local character = localPlayer.Character
 	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
-	if not humanoid then
+	if humanoid then
+		humanoid.CameraOffset = total
+		lastCameraOffset = total
+	end
+end
+
+-- Camera shake through the humanoid's camera offset (respects Reduced Motion).
+function Vfx.shake(strength: number, duration: number)
+	if Quality.reducedMotion() then
 		return
 	end
 	local started = os.clock()
 	local connection
 	connection = RunService.RenderStepped:Connect(function()
 		local elapsed = os.clock() - started
-		if elapsed >= duration or not humanoid.Parent then
-			humanoid.CameraOffset = Vector3.zero
+		if elapsed >= duration then
+			Vfx.cameraOffset("shake", Vector3.zero)
 			connection:Disconnect()
 			return
 		end
 		local falloff = 1 - elapsed / duration
-		humanoid.CameraOffset = Vector3.new(
-			(math.random() - 0.5) * strength * falloff,
-			(math.random() - 0.5) * strength * falloff,
-			(math.random() - 0.5) * strength * falloff
+		Vfx.cameraOffset(
+			"shake",
+			Vector3.new(
+				(math.random() - 0.5) * strength * falloff,
+				(math.random() - 0.5) * strength * falloff,
+				(math.random() - 0.5) * strength * falloff
+			)
 		)
 	end)
+end
+
+-- Extra speed-line strength (0..1) on top of the speed-based amount (Movement sets it while sprinting,
+-- since a base-speed sprint is below the speed threshold).
+local speedLineBoost = 0
+function Vfx.speedLines(amount: number)
+	speedLineBoost = math.clamp(amount, 0, 1)
 end
 
 -- A thick cloud of smoke that hangs for a few seconds (Smoke Bomb).
@@ -620,7 +655,7 @@ function Vfx.start()
 		local speed = if root
 			then Vector3.new(root.AssemblyLinearVelocity.X, 0, root.AssemblyLinearVelocity.Z).Magnitude
 			else 0
-		local amount = math.clamp((speed - 21) / 12, 0, 1)
+		local amount = math.max(math.clamp((speed - 21) / 12, 0, 1), speedLineBoost)
 		if Quality.reducedMotion() then
 			amount = 0
 		end
@@ -638,6 +673,11 @@ function Vfx.start()
 				line.BackgroundTransparency = 1 - amount * (0.25 + math.random() * 0.35)
 			end
 		end
+	end)
+	-- Camera offset layers are summed after everything else has written this frame.
+	RunService:BindToRenderStep("CameraOffsetLayers", Enum.RenderPriority.Camera.Value - 1, applyCameraOffset)
+	localPlayer.CharacterAdded:Connect(function()
+		lastCameraOffset = Vector3.zero -- new humanoid starts at zero
 	end)
 	-- Weather particles follow the camera.
 	RunService.RenderStepped:Connect(function()

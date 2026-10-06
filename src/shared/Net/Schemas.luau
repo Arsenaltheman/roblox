@@ -79,6 +79,7 @@ local Schemas: { [string]: { Validator } } = {
 	BuyBoots = {},
 	SpinWheel = {},
 	HitBoss = {},
+	Sprint = { V.bool() }, -- held on / let go
 	GetOdds = { V.oneOf({ "wild", "reserved", "mutations", "egg", "species" }) },
 }
 

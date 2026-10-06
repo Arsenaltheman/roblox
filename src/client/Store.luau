@@ -30,6 +30,9 @@ local Store = {
 	trainCycle = source(-1),
 	activeMinutes = source(0),
 	grab = source(nil :: { started: number, duration: number }?),
+	-- Predicted sprint stamina (0..1) and whether we're sprinting (Movement writes, SprintButton reads).
+	stamina = source(1),
+	sprinting = source(false),
 }
 
 local nextId = 0
