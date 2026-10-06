@@ -42,6 +42,11 @@ function Session.activeMinutes(player: Player): number
 	return if i then i.activeSeconds / 60 else 0
 end
 
+function Session.idleSeconds(player: Player): number
+	local i = info[player]
+	return if i then os.clock() - i.lastActive else 0
+end
+
 function Session.isActive(player: Player): boolean
 	local i = info[player]
 	return i ~= nil and os.clock() - i.lastActive <= LuckConfig.idleAfterSeconds

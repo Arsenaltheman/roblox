@@ -31,6 +31,8 @@ local ORDER = {
 	"Events",
 	"Leaderboards",
 	"Trail",
+	"Posse",
+	"Afk",
 }
 
 local services = script.Parent:WaitForChild("Services")

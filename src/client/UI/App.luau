@@ -37,6 +37,7 @@ local EventBanner = require("./EventBanner")
 local Quests = require("./Quests")
 local Wardrobe = require("./Wardrobe")
 local Offer = require("./Offer")
+local PosseUI = require("./Posse")
 local Theme = require("./Theme")
 
 local create = Vide.create :: any
@@ -1089,6 +1090,22 @@ local function settingsMenu(): Instance
 				card({
 					order = 0,
 					title = function()
+						return "Posse (party of 4)"
+					end,
+					sub = function()
+						return "Team up: no robbing each other, +10% cash per mate, shared bounty"
+					end,
+					color = Theme.color.sky,
+					button = "POSSE",
+					glyph = "♞",
+					onClick = function()
+						Sound.play("click")
+						Store.menu("posse")
+					end,
+				}),
+				card({
+					order = 0,
+					title = function()
 						return "Invite friends"
 					end,
 					sub = function()
@@ -1711,6 +1728,78 @@ local function wheelMenu(): Instance
 	})
 end
 
+-- AFK warning: a big red countdown to Bandit Bart's raid (server attribute AfkRaidAt), with an alarm
+-- every 30 s. Any real action clears it.
+local function afkTimer(): any
+	local raidAt = source(localPlayer:GetAttribute("AfkRaidAt") :: number?)
+	localPlayer:GetAttributeChangedSignal("AfkRaidAt"):Connect(function()
+		raidAt(localPlayer:GetAttribute("AfkRaidAt") :: number?)
+	end)
+	local clock = source(Workspace:GetServerTimeNow())
+	task.spawn(function()
+		local lastAlarm = 0
+		while true do
+			clock(Workspace:GetServerTimeNow())
+			local at = raidAt()
+			if at and os.clock() - lastAlarm > 30 then
+				lastAlarm = os.clock()
+				Sound.play("alarm")
+			end
+			task.wait(0.2)
+		end
+	end)
+	return show(function()
+		return raidAt() ~= nil
+	end, function()
+		return create("Frame")({
+			Name = "AfkTimer",
+			Size = UDim2.fromOffset(620, 150),
+			Position = UDim2.new(0.5, 0, 0.5, -40),
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			BackgroundColor3 = Color3.new(1, 1, 1),
+			ZIndex = 9,
+			Components.corner(UDim.new(0, 22)),
+			Components.stroke(5),
+			Components.gradient(Theme.color.red),
+			Components.stripes(UDim.new(0, 22), 0.14),
+			Components.popIn(),
+			Components.idle(1.5, 0.6),
+			Components.sparkles(6, Theme.color.yellow),
+			text({
+				Size = UDim2.new(1, -24, 0, 40),
+				Position = UDim2.fromOffset(12, 10),
+				FontFace = Theme.font.title,
+				TextColor3 = Theme.color.white,
+				ZIndex = 10,
+				Text = "YOU'RE AFK! BANDIT BART IS COMING",
+				Components.textStroke(3),
+			}),
+			text({
+				Size = UDim2.new(1, -24, 0, 64),
+				Position = UDim2.fromOffset(12, 50),
+				FontFace = Theme.font.number,
+				TextColor3 = Theme.color.white,
+				ZIndex = 10,
+				Text = function()
+					local left = math.max(0, (raidAt() or 0) - clock())
+					return NumberFormat.clock(left)
+				end,
+				Components.goldText(),
+				Components.textStroke(4),
+			}),
+			text({
+				Size = UDim2.new(1, -24, 0, 26),
+				Position = UDim2.fromOffset(12, 116),
+				FontFace = Theme.font.heading,
+				TextColor3 = Theme.color.white,
+				ZIndex = 10,
+				Text = "He takes a critter to the Bandit Camp every 3 minutes you stay idle. MOVE to cancel!",
+				Components.textStroke(2),
+			}),
+		})
+	end)
+end
+
 -- Big pulsing banner while you carry a heist crate.
 local function runBanner(): any
 	local carrying = source(localPlayer:GetAttribute("HeistCarry") == true)
@@ -1792,6 +1881,12 @@ function App.build(scale: () -> number): Instance
 			toasts(),
 			runBanner(),
 			Hotbar.build(),
+			afkTimer(),
+			PosseUI.hud(function()
+				return (state().tutorial or 0) >= 3 and Store.menu() == ""
+			end),
+			PosseUI.invitePopup(),
+			PosseUI.listen(),
 			SprintButton.build(),
 			EventBanner.build(),
 			Quests.tracker(function()
@@ -1812,6 +1907,13 @@ function App.build(scale: () -> number): Instance
 			show(function()
 				return Store.menu() == "eggs"
 			end, eggsMenu),
+			show(function()
+				return Store.menu() == "posse"
+			end, function()
+				return PosseUI.panel(function()
+					Store.menu("")
+				end)
+			end),
 			show(function()
 				return Store.menu() == "offer"
 			end, function()

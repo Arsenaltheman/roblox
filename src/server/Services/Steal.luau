@@ -341,6 +341,33 @@ local function near(player: Player, position: Vector3?, reach: number): boolean
 	return r ~= nil and position ~= nil and (r.Position - position).Magnitude <= reach
 end
 
+-- Critters Bandit Bart took from AFK players wait here until someone robs the camp (newest last,
+-- at most 6; the oldest falls off).
+type Stashed = { s: string, tier: number, m: string? }
+local stash: { Stashed } = {}
+
+function Steal.stashAdd(critter: Stashed)
+	table.insert(stash, critter)
+	while #stash > 6 do
+		table.remove(stash, 1)
+	end
+	Workspace:SetAttribute("BanditStash", #stash)
+end
+
+local function stashPop(): Stashed?
+	local best, bestIndex = nil, 0
+	for i, c in stash do
+		if not best or c.tier > best.tier then
+			best, bestIndex = c, i
+		end
+	end
+	if best then
+		table.remove(stash, bestIndex)
+		Workspace:SetAttribute("BanditStash", #stash)
+	end
+	return best
+end
+
 local function stealBandit(player: Player, lootPen: string)
 	local n = tonumber(lootPen)
 	if not n or n < 1 or n > 3 then
@@ -385,14 +412,31 @@ local function stealBandit(player: Player, lootPen: string)
 		if bd then
 			bd.Stats.BanditReadyAt = os.time() + BANDIT_COOLDOWN
 		end
+		-- Loot taken from AFK players first; otherwise a critter a tier above your band.
+		local stashed = stashPop()
 		local band = Registry.Ranch.band(player)
-		local tier = math.clamp(band + 1, 1, math.min(Economy.carryLimit(0, {}) + 10, Rarities.maxTier))
-		local species = Species.byTier[tier]
-		local cid = Registry.Ranch.addCritter(player, { species = species.id, tier = tier, src = "bandit" })
+		local tier = if stashed
+			then stashed.tier
+			else math.clamp(band + 1, 1, math.min(Economy.carryLimit(0, {}) + 10, Rarities.maxTier))
+		local species = if stashed
+			then Species.byId[stashed.s] or Species.byTier[tier]
+			else Species.byTier[tier]
+		local mutation = if stashed then stashed.m else nil
+		local cid = Registry.Ranch.addCritter(
+			player,
+			{ species = species.id, tier = tier, mutation = mutation, src = "bandit" }
+		)
 		if cid then
-			Registry.Ui.reveal(player, { kind = "stolen", species = species.id, tier = tier })
+			Registry.Ui.reveal(
+				player,
+				{ kind = "stolen", species = species.id, tier = tier, mutation = mutation }
+			)
 		else
-			Registry.Wallet.addCash(player, Economy.sellValue({ tier = tier }), "BanditLoot")
+			Registry.Wallet.addCash(
+				player,
+				Economy.sellValue({ tier = tier, mutation = mutation }),
+				"BanditLoot"
+			)
 		end
 		Registry.Progression.questEvent(player, "bandit", 1)
 		Registry.Progression.onboard(player, "FirstSteal")
@@ -432,6 +476,10 @@ local function stealStart(player: Player, ranchIndex: number, cid: string)
 		return
 	end
 	local target = Registry.Ranch.targetInfo(ranchIndex, cid)
+	if target and Registry.Posse.sameGroup(player, target.owner) then
+		Registry.Ui.toast(player, "You don't rob your own posse!")
+		return
+	end
 	if not target or target.owner == player then
 		return
 	end
@@ -600,6 +648,10 @@ local function lasso(player: Player, targetUserId: number)
 	lassoReadyAt[player] = t + (if golden then LASSO_COOLDOWN / 2 else LASSO_COOLDOWN)
 	local target = Players:GetPlayerByUserId(targetUserId)
 	if not target or target == player then
+		return
+	end
+	if Registry.Posse.sameGroup(player, target) then
+		Registry.Ui.toast(player, "That's your posse mate!")
 		return
 	end
 	-- Lassoing someone running a heist crate home snatches the crate.

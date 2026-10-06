@@ -412,6 +412,7 @@ local function deliver(player: Player)
 		end
 	end
 	Registry.Wheel.heistDelivered(player)
+	Registry.Posse.onHeist(player)
 	Registry.Data.saveNow(player)
 	local r = root(player)
 	Registry.Ui.fxAll("heistDeliver", crate.tier, r and r.Position)

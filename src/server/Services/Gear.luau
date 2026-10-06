@@ -162,7 +162,8 @@ local function use(player: Player, key: string)
 		for _, other in Players:GetPlayers() do
 			local orr = root(other)
 			-- Only thieves and crate carriers are knocked out (never bystanders at the station).
-			local carrier = Registry.Steal.isCarrying(other) or Registry.Heist.isCarrying(other)
+			local carrier = (Registry.Steal.isCarrying(other) or Registry.Heist.isCarrying(other))
+				and not Registry.Posse.sameGroup(player, other)
 			if
 				other ~= player
 				and orr

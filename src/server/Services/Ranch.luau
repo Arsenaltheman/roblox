@@ -132,7 +132,7 @@ function Ranch.context(player: Player): Economy.IncomeContext
 	return {
 		frontier = if d then d.Frontier else 0,
 		passes = Registry.Monetization.passes(player),
-		friends = friends(player),
+		friends = friends(player) + Registry.Posse.mateCount(player),
 		eventActive = Registry.LiveOps.incomeEventActive(),
 		timedDoubleCash = Registry.Monetization.timedBoostActive(player, "DoubleCash"),
 		incomeScale = Registry.LiveConfig.get("econ.incomeScale"),

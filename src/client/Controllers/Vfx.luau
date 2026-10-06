@@ -673,6 +673,25 @@ local function onFx(kind: string, value: number, position: Vector3?)
 				task.wait(0.25)
 			end
 		end)
+	elseif kind == "afkRaid" then
+		if value == localPlayer.UserId then
+			Vfx.alarm()
+			Sound.play("stolen")
+			Vfx.shake(2.5, 0.8)
+		elseif position then
+			Vfx.burst(position + Vector3.new(0, 3, 0), C("red"), 40, 1.5, 20)
+		end
+	elseif kind == "posseJoin" then
+		Sound.play("frontier")
+		if root then
+			Vfx.burst(root.Position + Vector3.new(0, 3, 0), C("sky"), 40, 1.3, 18)
+		end
+	elseif kind == "posseBounty" then
+		Sound.play("collect")
+		if root then
+			Vfx.fireworks(root.Position, C("sky"), 4)
+			Vfx.floatText(root.Position + Vector3.new(0, 5, 0), "POSSE BOUNTY!", C("sky"))
+		end
 	elseif kind == "spinEarned" then
 		Sound.play("giftReady")
 		if root then
