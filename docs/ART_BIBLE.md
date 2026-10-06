@@ -45,11 +45,16 @@ Every rarity color is always paired with its glyph (● ▲ ■ ◆ ★ ✦ ☠ 
 - Mutations are the exception and may change material: Foil (Gold), Glass (Diamond), Ice (Frosty), CrackedLava (Molten), Neon (Cosmic).
 
 **Lighting** (in `default.project.json`)
-- ClockTime 17.4, warm ambient.
-- Atmosphere haze 1.6 with orange decay.
-- Bloom 0.6, subtle SunRays.
-- ColorCorrection +12% saturation.
-- Weather tints the grade toward that weather's mutation color.
+- Future lighting, soft shadows (ShadowSoftness 0.3), warm sun-side ColorShift.
+- Shadows lifted by a bright warm OutdoorAmbient so they stay readable on phones.
+- Atmosphere haze 1.5 with orange decay.
+- Bloom 0.45 (threshold 1.8, so only neon and lanterns glow), subtle SunRays.
+- ColorCorrection "Grade": +15% saturation, +10% contrast.
+- Weather tints "Grade" toward that weather's mutation color (Vfx).
+- Day cycle (client Ambience): ClockTime drifts 16.0 → 18.5 → 16.0 every 20 minutes from server
+  time, so it is always golden hour. Lanterns fade up toward dusk; exposure lifts a little.
+- Zone moods (client Ambience): Atmosphere and a separate "ZoneGrade" blend toward Ghost Town's
+  cold green-grey fog, Gold Mine's golden glow or Rattlesnake Canyon's red haze, and back in town.
 
 ## UI
 - **Buttons:** chunky, 3 px ink outline, 14 px corners, top-lit gradient, white text with an ink stroke, and a bounce on press (0.9 → overshoot back to 1).
