@@ -320,10 +320,11 @@ local function giftButton(): Instance
 end
 
 local function statusBadges(): Instance
-	local clock = source(os.time())
+	-- Boost end times are server unix time; compare against server time, not the device clock.
+	local clock = source(Workspace:GetServerTimeNow())
 	task.spawn(function()
 		while true do
-			clock(os.time())
+			clock(Workspace:GetServerTimeNow())
 			task.wait(1)
 		end
 	end)
@@ -345,7 +346,7 @@ local function statusBadges(): Instance
 	end
 	return create("Frame")({
 		Name = "Badges",
-		Size = UDim2.fromOffset(200, 200),
+		Size = UDim2.fromOffset(200, 250),
 		Position = UDim2.new(1, -124, 0, 70),
 		AnchorPoint = Vector2.new(1, 0),
 		BackgroundTransparency = 1,
@@ -682,11 +683,15 @@ end
 
 local function eggsMenu(): Instance
 	local clock = source(os.time())
+	local alive = true
 	task.spawn(function()
-		while true do
+		while alive do
 			clock(os.time())
 			task.wait(1)
 		end
+	end)
+	Vide.cleanup(function()
+		alive = false
 	end)
 	return Components.panel({
 		title = "EGGS",

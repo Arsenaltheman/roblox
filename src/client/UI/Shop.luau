@@ -27,7 +27,7 @@ local Theme = require("./Theme")
 
 local create = Vide.create :: any
 local show = Vide.show
-local indexes = Vide.indexes
+local values = Vide.values :: any
 local source = Vide.source
 local derive = Vide.derive
 local action = Vide.action
@@ -402,6 +402,7 @@ local function runEffect(fx: string, color: Color3, layer: GuiObject, pic: GuiOb
 	local t0 = os.clock()
 	local function every(seconds: number, fn: () -> ())
 		task.spawn(function()
+			task.wait(math.min(seconds, 0.6))
 			while alive and layer.Parent do
 				fn()
 				task.wait(seconds)
@@ -844,12 +845,15 @@ local function grid(children: any): Instance
 		Size = UDim2.fromScale(1, 1),
 		BackgroundTransparency = 1,
 		ScrollBarThickness = 8,
+		VerticalScrollBarInset = Enum.ScrollBarInset.ScrollBar,
 		AutomaticCanvasSize = Enum.AutomaticSize.Y,
 		CanvasSize = UDim2.new(),
 		create("UIGridLayout")({
 			CellSize = UDim2.new(0.25, -12, 0, 214),
 			CellPadding = UDim2.fromOffset(12, 12),
 			SortOrder = Enum.SortOrder.LayoutOrder,
+			-- Cards keep their shape on small screens.
+			create("UIAspectRatioConstraint")({ AspectRatio = 0.86 }),
 		}),
 		Components.padding(8),
 		children,
@@ -892,6 +896,7 @@ local function preview(item: Item, onClose: () -> ()): Instance
 		}),
 		create("Frame")({
 			Name = "Window",
+			Active = true,
 			Size = UDim2.fromScale(0.7, 0.66),
 			Position = UDim2.fromScale(0.5, 0.52),
 			AnchorPoint = Vector2.new(0.5, 0.5),
@@ -1094,17 +1099,20 @@ function Shop.menu(onClose: () -> ()): Instance
 		return out
 	end
 
+	-- Ids in stock; cards are keyed by id so a restock swaps them.
 	local stock = derive(function()
-		local items = { hatchery }
+		local ids = { "HatcheryEgg" }
 		local shop = state().shop
 		for _, id in (shop and shop.items) or {} do
-			local item = cosmeticItem(id)
-			if item then
-				table.insert(items, item)
+			if Cosmetics.byId[id] then
+				table.insert(ids, id)
 			end
 		end
-		return items
+		return ids
 	end)
+	local function lookup(id: string): Item
+		return if id == "HatcheryEgg" then hatchery else cosmeticItem(id) :: Item
+	end
 
 	local tabButtons = {}
 	for i, t in TABS do
@@ -1133,7 +1141,7 @@ function Shop.menu(onClose: () -> ()): Instance
 					end),
 					Components.gloss(UDim.new(0, 12)),
 					create("Frame")({
-						Size = UDim2.fromScale(0.36, 0.86),
+						Size = UDim2.fromScale(0.86, 0.86),
 						SizeConstraint = Enum.SizeConstraint.RelativeYY,
 						Position = UDim2.new(0, 4, 0.5, 0),
 						AnchorPoint = Vector2.new(0, 0.5),
@@ -1198,8 +1206,8 @@ function Shop.menu(onClose: () -> ()): Instance
 							Size = UDim2.new(1, 0, 1, -28),
 							Position = UDim2.fromOffset(0, 28),
 							BackgroundTransparency = 1,
-							grid(indexes(stock, function(item, i)
-								return itemCard(item(), i, select)
+							grid(values(stock, function(id, i)
+								return itemCard(lookup(id), i(), select)
 							end)),
 						}),
 					})

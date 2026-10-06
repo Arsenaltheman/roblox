@@ -56,6 +56,21 @@ function EventBanner.build(): Instance
 		return if e and hot() then Palette.color(e.color) else Theme.color.woodDark
 	end
 
+	local icons = {}
+	for id, look in ICON do
+		table.insert(
+			icons,
+			create("Frame")({
+				Size = UDim2.fromScale(1, 1),
+				BackgroundTransparency = 1,
+				Visible = function()
+					return shownId() == id
+				end,
+				Components.icon(look[1], look[2], Theme.color.white),
+			})
+		)
+	end
+
 	return create("Frame")({
 		Name = "EventBanner",
 		Size = function()
@@ -81,29 +96,16 @@ function EventBanner.build(): Instance
 			})
 		end),
 		create("Frame")({
-			Size = UDim2.fromScale(0.3, 0.86),
+			Size = UDim2.fromScale(0.86, 0.86),
 			SizeConstraint = Enum.SizeConstraint.RelativeYY,
 			Position = UDim2.new(0, 6, 0.5, 0),
 			AnchorPoint = Vector2.new(0, 0.5),
 			BackgroundTransparency = 1,
 			ZIndex = 4,
 			Visible = hot,
-			create("Frame")({
-				Size = UDim2.fromScale(3, 1),
-				BackgroundTransparency = 1,
-				-- Re-create the icon when the event changes.
-				show(function()
-					return shownId() ~= ""
-				end, function()
-					local look = ICON[shownId()] or { "gift", "★" }
-					return create("Frame")({
-						Size = UDim2.fromScale(1 / 3, 1),
-						BackgroundTransparency = 1,
-						Components.icon(look[1], look[2], Theme.color.white),
-						Components.idle(8, 1.2),
-					})
-				end),
-			}),
+			Components.idle(8, 1.2),
+			-- One icon per event; only the shown one is visible.
+			icons :: any,
 		}),
 		create("TextLabel")({
 			Size = function()

@@ -546,6 +546,7 @@ function Components.panel(
 		}),
 		create("Frame")({
 			Name = "Panel",
+			Active = true,
 			Size = props.size or UDim2.fromScale(0.62, 0.72),
 			Position = UDim2.fromScale(0.5, 0.53),
 			AnchorPoint = Vector2.new(0.5, 0.5),

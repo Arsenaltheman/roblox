@@ -8,6 +8,7 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
 
+local BossConfig = require("@game/ReplicatedStorage/Shared/Config/Boss")
 local Layout = require("@game/ReplicatedStorage/Shared/Config/Layout")
 local Rarities = require("@game/ReplicatedStorage/Shared/Config/Rarities")
 local Species = require("@game/ReplicatedStorage/Shared/Config/Species")
@@ -259,7 +260,7 @@ local function banditAction(rootPos: Vector3): Action?
 end
 
 -- LASSO the Bandit King during his raid (Config/Boss).
-local BOSS_RANGE = 45
+local BOSS_RANGE = BossConfig.HIT_RANGE
 local function bossAction(rootPos: Vector3): Action?
 	local king = Workspace:FindFirstChild("BanditKing")
 	local root = king and king:FindFirstChild("Root") :: BasePart?
@@ -383,8 +384,8 @@ function Context.start()
 			return
 		end
 		local pos = root.Position
-		local action = lassoAction(pos)
-			or bossAction(pos)
+		local action = bossAction(pos)
+			or lassoAction(pos)
 			or cageAction(pos)
 			or crackAction(pos)
 			or stealAction(pos)
