@@ -1,0 +1,103 @@
+# Status and owner checklist
+
+Last updated: 2026-10-06.
+
+**Short version:**
+- The game is fully written: code, economy, 43 critter models, sound and voice.
+- It has **never run on a real Roblox server.** This cloud environment can't reach `apis.roblox.com`, and nobody has opened it in Studio yet.
+- The next step is yours (section 2). After it, a new Claude session can publish, upload and smoke-test without you.
+
+## 1. What exists
+
+| Area | State | Where |
+|---|---|---|
+| Plan, research, economy, art bible | Done | `docs/` |
+| Server (17 services) | Written, type-checked, never run on Roblox | `src/server/` |
+| Client: train, critters, HUD, menus, reveals, VFX, sound | Written, type-checked, never run on Roblox | `src/client/` |
+| Pure game logic | 99 unit tests pass | `src/shared/Sim/`, `tests/unit/` |
+| Economy simulator | Gates pass: first rebirth ~29 min, third ~94 min, top spender ~6.6× faster than free | `tools/econ-sim/`, `docs/ECONOMY.md` |
+| Critter 3D models | 43 FBX meshes from Blender, not uploaded | `assets/critters/`, `tools/blender/` |
+| In-game critter look | Procedural rig built from code (matches the Blender designs) | `src/client/Controllers/CritterRig.luau` |
+| Sound effects | 26 sounds, processed | `assets/audio/game/` |
+| Voice | 43 name callouts + 7 announcer lines | `assets/audio/game/voice/` |
+| Prompt log | Every sound and voice prompt | `assets/audio/PROMPTS.md` |
+| Cloud tools | Publish, asset upload, product ids, Luau execution | `tools/cloud/`, `tests/cloud/smoke.luau` |
+| CI | GitHub Actions runs `scripts/check.sh` on every push | `.github/workflows/ci.yml` |
+
+**Not done yet, and why:**
+- **Nothing tested on Roblox.** Blocked on the API key and network access (section 2). This is the biggest risk: expect a round of fixes the first time it runs.
+- **Figma UI.** Waiting on a paid Figma seat. The UI is built in code to the art bible meanwhile.
+- **Music.** Plan is free licensed Creator Store tracks. They're picked in Studio or the Creator Store, then their ids go into `musicCalm` / `musicChase` in `src/shared/Config/Sounds.luau`.
+- **Uploaded 3D models.** The game uses the procedural rig. Swapping in the FBX meshes is the "asset-upload spike" in the plan (`tools/cloud/upload_assets.py --models`, then load the models by id).
+- **Art second pass.** The top-tier critters look too similar to each other. They need a hero pass.
+- **Human playtests on phones.** Only you can do these (section 4).
+
+## 2. Owner setup (in this order)
+
+1. **Roblox account.**
+   - Turn on 2-step verification.
+   - Complete ID verification (raises upload limits).
+   - **Start Roblox Premium now.** Kids/Select listing needs 2 consecutive months of it.
+2. **Group + experiences.**
+   - Create a Roblox group to own the game.
+   - Under the group, create two experiences: `Critter Express [TEST]` (private) and the LIVE one (private until launch).
+   - In TEST → Settings → Security, turn on **Enable Studio Access to API Services**.
+3. **Open Cloud API key** (Creator Dashboard → Open Cloud → API Keys).
+   - Restrict it to the **TEST** experience.
+   - Scopes: universe-places write (publishing); Luau execution sessions read + write; assets read + write; data stores read + write.
+   - Allowed IP `0.0.0.0/0` (this environment's IP changes). Expiry 90 days.
+4. **This cloud environment's settings.** Open the environment menu in the session title bar → Edit.
+   - Environment variables:
+     - `ROBLOX_API_KEY` = the key. **Never paste it in chat.**
+     - `ROBLOX_UNIVERSE_ID` and `ROBLOX_TEST_PLACE_ID`: from the TEST experience's URL and settings.
+     - `ROBLOX_GROUP_ID`: the group that owns uploaded audio.
+   - Network access: **Custom**, and add `apis.roblox.com`.
+5. **Start a new session** in this repo. Settings only apply to new sessions. Then ask: *"Publish to TEST and run the smoke test."*
+6. **Passes and products.**
+   - Run `python3 tools/cloud/create_products.py --list` for the exact names, prices and descriptions.
+   - Create each pass/product in Creator Hub.
+   - Then give a session the ids, or run `python3 tools/cloud/create_products.py --set VIP=<id> ...` yourself.
+7. **Maturity & Compliance questionnaire.** Answer Mild, and **declare paid random items**: Server Luck, Lucky Horseshoe and Sheriff's Star change odds.
+8. **ElevenLabs.** Confirm a **paid plan**, which commercial use of the generated audio requires.
+9. **Figma.** When you have a paid Full seat, say which team/project to use.
+
+## 3. What a session does after setup
+
+```bash
+python3 tools/cloud/publish.py                         # build + publish to TEST
+python3 tools/cloud/run_luau.py tests/cloud/smoke.luau  # boot, train, config, DataStore checks
+python3 tools/cloud/upload_assets.py                    # 76 audio files -> ids -> Config/AssetIds.luau
+python3 tools/cloud/publish.py                         # republish with sound
+```
+
+- **Commit the ids.** `upload_assets.py` writes `assets/ids/*.json` and regenerates `src/shared/Config/AssetIds.luau`. Commit both.
+- **Unverified client.** `run_luau.py` was written without access to the real API. If the first run fails on the request format, fix the client first.
+- **LIVE publish** needs `ROBLOX_LIVE_UNIVERSE_ID` and `ROBLOX_LIVE_PLACE_ID`, plus `--live --confirm-live`. Only do it after your "ship it".
+
+## 4. Your first playtest
+
+Do this on a phone (plus PC if you can), in the TEST place.
+
+1. **Comprehension.**
+   - Within 30 s of spawning, do you know what to do?
+   - Does the RESERVED cage stand out?
+2. **First buy.** Buy a critter: does it run home and earn money?
+3. **Collect.** Collect at your ranch: coin burst and sound?
+4. **Lock.** Lock the ranch: timer visible?
+5. **Bandit tutorial (~4 min).** The tutorial bandit steals: can you lasso it back?
+6. **Bandit Camp.** Hold to steal while the bandit naps, release when he peeks.
+7. **Eggs.** Get an egg → hatch: is the reveal exciting? Is the name callout audible over the music?
+8. **Second account.**
+   - Steal from each other after the 15-min shield.
+   - Does WANTED show?
+   - Can the victim lasso the thief?
+9. **Shop.** Open it: the odds panel lists every outcome and sums to 100%.
+10. **Performance.** FPS on the weakest phone. Heat after 20 min.
+
+Send screenshots or screen recordings of anything that looks wrong. Claude can't see the game render.
+
+## 5. Known risks to watch on first run
+
+- **Untested engine APIs.** Several engine APIs have never been exercised: the new Audio API wiring, Highlights, AudioPlayer assets, and TextChat-free stickers. Errors show in the server/client logs; the smoke test catches server boot failures.
+- **Code-built town.** The town is built from code (`World` service). Spacing or scale may need tuning once seen.
+- **Sound lengths.** Some generated sounds came out shorter or longer than asked; see the note in `PROMPTS.md`.
