@@ -174,7 +174,9 @@ local function processReceipt(receipt): Enum.ProductPurchaseDecision
 	end
 	-- Only confirm once the grant is safely saved.
 	local saved = false
-	Registry.Data.afterNextSave(player, function()
+	Registry.Data.afterSaveWhere(player, function(lastSaved)
+		return table.find(lastSaved.Receipts or {}, purchaseId) ~= nil
+	end, function()
 		saved = true
 	end)
 	local deadline = os.clock() + 15

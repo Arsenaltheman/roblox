@@ -45,16 +45,25 @@ function Data.saveNow(player: Player)
 	end
 end
 
--- Connect to the next completed save of this player's profile (used to confirm Robux purchases).
-function Data.afterNextSave(player: Player, fn: () -> ()): boolean
+-- Calls fn once a completed save actually contains what `saved` checks for (used to confirm Robux
+-- purchases). A save that was already in flight copied the data earlier, so its completion alone
+-- proves nothing: keep listening (and request another save) until the check passes.
+function Data.afterSaveWhere(player: Player, saved: (any) -> boolean, fn: () -> ()): boolean
 	local profile = profiles[player]
 	if not profile then
 		return false
 	end
 	local connection
-	connection = profile.OnAfterSave:Connect(function()
-		connection:Disconnect()
-		fn()
+	local expires = os.clock() + 20
+	connection = profile.OnAfterSave:Connect(function(lastSaved: any)
+		if lastSaved and saved(lastSaved) then
+			connection:Disconnect()
+			fn()
+		elseif os.clock() > expires then
+			connection:Disconnect() -- the caller has given up (receipt returns NotProcessedYet)
+		else
+			profile:Save()
+		end
 	end)
 	profile:Save()
 	return true

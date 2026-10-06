@@ -43,8 +43,8 @@ function Guard.allow(player: Player, name: string): boolean
 		limiters[player] = limiter
 	end
 	if not limiter:allow(name, os.clock()) then
-		-- Rate-limited requests are dropped silently; heavy spam also strikes.
-		Guard.strike(player, "rate:" .. name)
+		-- Dropped silently. No strike: real players mash buttons (lasso, buy), and kicking them
+		-- for it is worse than ignoring a few extra requests. Malformed requests still strike.
 		return false
 	end
 	Guard.activity:Fire(player)

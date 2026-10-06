@@ -53,7 +53,7 @@ local Schemas: { [string]: { Validator } } = {
 	Lock = {},
 	StealStart = { V.int(1, 9), critterId }, -- ranch slot (9 = Bandit Camp), critter id (or loot pen)
 	StealCancel = {},
-	Lasso = { V.int(1, 1e12) }, -- target userId
+	Lasso = { V.int(-1e12, 1e12) }, -- target userId (negative in Studio test servers)
 	CrackStart = { V.int(0, 1e7) }, -- train cycle
 	Hatch = { V.int(1, 16) }, -- egg slot
 	Claim = { V.oneOf({ "gift", "streak", "quest", "offline" }), V.int(0, 64) },
