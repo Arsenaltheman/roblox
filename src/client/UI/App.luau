@@ -6,10 +6,8 @@ local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 
 local Vide = require("@game/ReplicatedStorage/Packages/Vide")
-local Cosmetics = require("@game/ReplicatedStorage/Shared/Config/Cosmetics")
 local LuckConfig = require("@game/ReplicatedStorage/Shared/Config/Luck")
 local Mutations = require("@game/ReplicatedStorage/Shared/Config/Mutations")
-local Products = require("@game/ReplicatedStorage/Shared/Config/Products")
 local Progression = require("@game/ReplicatedStorage/Shared/Config/Progression")
 local Rarities = require("@game/ReplicatedStorage/Shared/Config/Rarities")
 local Species = require("@game/ReplicatedStorage/Shared/Config/Species")
@@ -24,6 +22,7 @@ local Context = require("../Controllers/Context")
 local Sound = require("../Controllers/Sound")
 local Store = require("../Store")
 local Components = require("./Components")
+local Shop = require("./Shop")
 local Theme = require("./Theme")
 
 local create = Vide.create :: any
@@ -642,184 +641,10 @@ local function showOdds(kind: string)
 	end)
 end
 
--- Icon glyph and colour for each shop item (no image assets needed).
-local SHOP_LOOK: { [string]: { any } } = {
-	VIP = { "★", Theme.color.yellow },
-	DoubleCash = { "2x", Theme.color.green },
-	AutoCollect = { "$", Theme.color.teal },
-	LuckyHorseshoe = { "♣", Theme.color.gold },
-	GoldenLasso = { "◎", Theme.color.orange },
-	SpeedSpurs = { "»", Theme.color.blue },
-	IronLock = { "■", Theme.color.purple },
-	HeavySaddlebag = { "▲", Theme.color.pink },
-	BigRanch = { "+2", Theme.color.green },
-	SheriffStar = { "✦", Theme.color.red },
-	ServerLuck2 = { "x2", Theme.color.gold },
-	ServerLuck3 = { "x3", Theme.color.gold },
-	ServerLuck5 = { "x5", Theme.color.gold },
-	Lockpick = { "!", Theme.color.purple },
-	CashBag10m = { "$", Theme.color.green },
-	CashBag1h = { "$$", Theme.color.green },
-	CashBag6h = { "$$$", Theme.color.green },
-	CashBag24h = { "$$$$", Theme.color.green },
-	StarterPack = { "◆", Theme.color.pink },
-	GoldenLocomotive = { "♛", Theme.color.yellow },
-	DiamondDesperado = { "♛", Theme.color.teal },
-}
-
 local function shopMenu(): Instance
-	local tab = source("robux")
-	local restricted = localPlayer:GetAttribute("RandomRestricted") == true
-	local robux = {}
-	for i, product in Products.list do
-		if product.kind ~= "privateServer" and not (product.random and restricted) then
-			local owned = function()
-				return product.kind == "pass" and localPlayer:GetAttribute("Pass_" .. product.key) == true
-			end
-			table.insert(
-				robux,
-				card({
-					order = i,
-					title = function()
-						return product.name
-					end,
-					sub = function()
-						return product.description
-					end,
-					color = SHOP_LOOK[product.key] and SHOP_LOOK[product.key][2]
-						or (if product.random then Theme.color.gold else Theme.color.blue),
-					glyph = SHOP_LOOK[product.key] and SHOP_LOOK[product.key][1] or "★",
-					button = function()
-						return if owned() then "OWNED" else "View Item"
-					end,
-					onClick = function()
-						if not owned() then
-							Net.request("ShopBuy", product.key, 1)
-						end
-					end,
-					extra = if product.random
-						then Components.button({
-							text = "Odds",
-							color = Theme.color.skyDeep,
-							size = UDim2.fromOffset(80, 36),
-							position = UDim2.new(0.62, 0, 0.5, 0),
-							anchor = Vector2.new(0, 0.5),
-							textSize = 18,
-							onClick = function()
-								showOdds("reserved")
-							end,
-						})
-						else nil,
-				})
-			)
-		end
-	end
-	local post = derive(function()
-		local items = {}
-		local shop = state().shop
-		for _, id in (shop and shop.items) or {} do
-			table.insert(items, id)
-		end
-		return items
+	return Shop.menu(function()
+		Store.menu("")
 	end)
-	return Components.panel({
-		title = "TRADING POST",
-		mascot = "SheriffShrimpo",
-		onClose = function()
-			Store.menu("")
-		end,
-		children = {
-			create("Frame")({
-				Size = UDim2.new(1, 0, 0, 48),
-				BackgroundTransparency = 1,
-				create("UIListLayout")({
-					FillDirection = Enum.FillDirection.Horizontal,
-					Padding = UDim.new(0, 10),
-				}),
-				Components.button({
-					text = "ROBUX",
-					color = function()
-						return if tab() == "robux" then Theme.color.green else Theme.color.wood
-					end,
-					size = UDim2.fromOffset(150, 44),
-					onClick = function()
-						tab("robux")
-					end,
-				}),
-				Components.button({
-					text = "NUGGETS",
-					color = function()
-						return if tab() == "nuggets" then Theme.color.green else Theme.color.wood
-					end,
-					size = UDim2.fromOffset(150, 44),
-					onClick = function()
-						tab("nuggets")
-					end,
-				}),
-			}),
-			create("Frame")({
-				Size = UDim2.new(1, 0, 1, -56),
-				Position = UDim2.fromOffset(0, 56),
-				BackgroundTransparency = 1,
-				show(function()
-					return tab() == "robux"
-				end, function()
-					return list(robux)
-				end),
-				show(function()
-					return tab() == "nuggets"
-				end, function()
-					return list({
-						card({
-							order = 0,
-							title = function()
-								return "Hatchery Egg"
-							end,
-							sub = function()
-								return `{Progression.eggs.hatcheryCost} Gold Nuggets · odds shown in Eggs`
-							end,
-							color = Theme.color.nugget,
-							button = "BUY",
-							onClick = function()
-								Net.request("ShopBuy", "HatcheryEgg", 1)
-							end,
-						}),
-						text({
-							Size = UDim2.new(1, 0, 0, 26),
-							LayoutOrder = 1,
-							FontFace = Theme.font.heading,
-							Text = function()
-								local shop = state().shop
-								local left = if shop
-									then math.max(0, shop.restockAt - Workspace:GetServerTimeNow())
-									else 0
-								return `New stock in {NumberFormat.clock(left)}`
-							end,
-						}),
-						indexes(post, function(id, i)
-							local cosmetic = Cosmetics.byId[id()]
-							return card({
-								order = 1 + i,
-								title = function()
-									return cosmetic.name
-								end,
-								sub = function()
-									return `{cosmetic.nuggets} Gold Nuggets`
-								end,
-								color = Theme.color.nugget,
-								button = function()
-									return if (state().owned or {})[id()] then "OWNED" else "BUY"
-								end,
-								onClick = function()
-									Net.request("ShopBuy", id(), 1)
-								end,
-							})
-						end),
-					})
-				end),
-			}),
-		},
-	})
 end
 
 local function eggsMenu(): Instance

@@ -14,12 +14,19 @@ export type Product = {
 	description: string,
 	random: boolean?,
 	id: number?,
+	-- Store presentation: which tab it's in, its picture (assets/ui/<icon>.png) and the preview effect.
+	category: "passes" | "boosts" | "cash" | "critters",
+	icon: string,
+	fx: "coins" | "gold" | "luck" | "speed" | "shield" | "snap" | "critter",
 }
 
 local list: { Product } = {
 	-- Game passes (permanent)
 	{
 		key = "VIP",
+		category = "passes",
+		icon = "ticket",
+		fx = "gold",
 		kind = "pass",
 		price = 499,
 		name = "Sheriff's Badge (VIP)",
@@ -27,6 +34,9 @@ local list: { Product } = {
 	},
 	{
 		key = "DoubleCash",
+		category = "passes",
+		icon = "coins",
+		fx = "coins",
 		kind = "pass",
 		price = 299,
 		name = "2x Cash",
@@ -34,6 +44,9 @@ local list: { Product } = {
 	},
 	{
 		key = "AutoCollect",
+		category = "passes",
+		icon = "magnet",
+		fx = "coins",
 		kind = "pass",
 		price = 149,
 		name = "Auto-Collect",
@@ -41,6 +54,9 @@ local list: { Product } = {
 	},
 	{
 		key = "LuckyHorseshoe",
+		category = "passes",
+		icon = "horseshoe",
+		fx = "luck",
 		kind = "pass",
 		price = 399,
 		name = "Lucky Horseshoe",
@@ -49,6 +65,9 @@ local list: { Product } = {
 	},
 	{
 		key = "GoldenLasso",
+		category = "passes",
+		icon = "lasso",
+		fx = "gold",
 		kind = "pass",
 		price = 499,
 		name = "Golden Lasso",
@@ -56,22 +75,49 @@ local list: { Product } = {
 	},
 	{
 		key = "SpeedSpurs",
+		category = "passes",
+		icon = "boots",
+		fx = "speed",
 		kind = "pass",
 		price = 349,
 		name = "Speed Spurs",
 		description = "+20% run speed, +15% while carrying.",
 	},
-	{ key = "IronLock", kind = "pass", price = 299, name = "Iron Lock", description = "+60s ranch lock." },
+	{
+		key = "IronLock",
+		category = "passes",
+		icon = "lock",
+		fx = "shield",
+		kind = "pass",
+		price = 299,
+		name = "Iron Lock",
+		description = "+60s ranch lock.",
+	},
 	{
 		key = "HeavySaddlebag",
+		category = "passes",
+		icon = "saddlebag",
+		fx = "gold",
 		kind = "pass",
 		price = 399,
 		name = "Heavy Saddlebag",
 		description = "Carry critters 5 tiers rarer when stealing.",
 	},
-	{ key = "BigRanch", kind = "pass", price = 349, name = "Bigger Ranch", description = "+2 pens." },
+	{
+		key = "BigRanch",
+		category = "passes",
+		icon = "barn",
+		fx = "shield",
+		kind = "pass",
+		price = 349,
+		name = "Bigger Ranch",
+		description = "+2 pens.",
+	},
 	{
 		key = "SheriffStar",
+		category = "passes",
+		icon = "sheriffstar",
+		fx = "gold",
 		kind = "pass",
 		price = 4999,
 		name = "Sheriff's Star",
@@ -82,6 +128,9 @@ local list: { Product } = {
 	-- Developer products (consumable)
 	{
 		key = "ServerLuck2",
+		category = "boosts",
+		icon = "clover",
+		fx = "luck",
 		kind = "product",
 		price = 249,
 		name = "Server Luck x2 (15 min)",
@@ -90,6 +139,9 @@ local list: { Product } = {
 	},
 	{
 		key = "ServerLuck3",
+		category = "boosts",
+		icon = "clover",
+		fx = "luck",
 		kind = "product",
 		price = 499,
 		name = "Server Luck x3 (15 min)",
@@ -98,6 +150,9 @@ local list: { Product } = {
 	},
 	{
 		key = "ServerLuck5",
+		category = "boosts",
+		icon = "clover",
+		fx = "luck",
 		kind = "product",
 		price = 999,
 		name = "Server Luck x5 (15 min)",
@@ -106,6 +161,9 @@ local list: { Product } = {
 	},
 	{
 		key = "Lockpick",
+		category = "boosts",
+		icon = "lockpick",
+		fx = "snap",
 		kind = "product",
 		price = 79,
 		name = "Lockpick",
@@ -113,6 +171,9 @@ local list: { Product } = {
 	},
 	{
 		key = "CashBag10m",
+		category = "cash",
+		icon = "pouch",
+		fx = "coins",
 		kind = "product",
 		price = 39,
 		name = "Small Cash Bag",
@@ -120,6 +181,9 @@ local list: { Product } = {
 	},
 	{
 		key = "CashBag1h",
+		category = "cash",
+		icon = "coins",
+		fx = "coins",
 		kind = "product",
 		price = 129,
 		name = "Cash Bag",
@@ -127,6 +191,9 @@ local list: { Product } = {
 	},
 	{
 		key = "CashBag6h",
+		category = "cash",
+		icon = "moneybag",
+		fx = "coins",
 		kind = "product",
 		price = 349,
 		name = "Big Cash Bag",
@@ -134,6 +201,9 @@ local list: { Product } = {
 	},
 	{
 		key = "CashBag24h",
+		category = "cash",
+		icon = "chest",
+		fx = "coins",
 		kind = "product",
 		price = 899,
 		name = "Vault of Cash",
@@ -141,6 +211,9 @@ local list: { Product } = {
 	},
 	{
 		key = "StarterPack",
+		category = "critters",
+		icon = "bundle",
+		fx = "critter",
 		kind = "product",
 		price = 99,
 		name = "Starter Pack",
@@ -148,6 +221,9 @@ local list: { Product } = {
 	},
 	{
 		key = "GoldenLocomotive",
+		category = "critters",
+		icon = "crate",
+		fx = "critter",
 		kind = "product",
 		price = 1499,
 		name = "Golden Locomotive",
@@ -155,6 +231,9 @@ local list: { Product } = {
 	},
 	{
 		key = "DiamondDesperado",
+		category = "critters",
+		icon = "crate",
+		fx = "critter",
 		kind = "product",
 		price = 2499,
 		name = "Diamond Desperado",
@@ -163,6 +242,9 @@ local list: { Product } = {
 
 	{
 		key = "PrivateServer",
+		category = "passes",
+		icon = "key",
+		fx = "gold",
 		kind = "privateServer",
 		price = 79,
 		name = "Private Server",
