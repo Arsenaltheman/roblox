@@ -298,9 +298,10 @@ return {
 	lockpickSeconds = 8,
 	-- Owner decision: no purchase prompts right after a loss (robbed / bad reveal).
 	noPromptAfterLossSeconds = 120,
-	-- Roblox Subscription id (from Creator Hub -> Monetization -> Subscriptions); "" until created.
-	subscription = { id = "" },
-	-- Roblox group whose members get a one-time Nugget reward (0 = feature off).
-	groupId = 0,
+	-- Roblox Subscription id (Creator Hub -> Monetization -> Subscriptions), recorded by
+	-- tools/cloud/create_products.py --subscription; "" until created.
+	subscription = { id = (AssetIds :: any).subscription or "" },
+	-- Roblox group whose members get a one-time Nugget reward (--group; 0 = feature off).
+	groupId = (AssetIds :: any).groupId or 0,
 	groupRewardNuggets = 100,
 }

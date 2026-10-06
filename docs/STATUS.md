@@ -7,7 +7,33 @@ Last updated: 2026-10-07 (plan v2: "complete everything").
 - It has **never run on a real Roblox server.** This cloud environment can't reach `apis.roblox.com`, and nobody has opened it in Studio yet.
 - The next step is yours (section 2). After it, a new Claude session can publish, upload and smoke-test without you.
 
-## 0. Latest: plan v2 ("complete everything")
+## 0. Latest: onboarding, anti-cheat, revenue (round 3)
+
+All pushed to `main`; 140 unit tests and every check pass. Still never run in Studio: the owner's playtest is the next step.
+
+**Onboarding (traced minute by minute as a new phone player):**
+- Nothing pops over the tutorial any more (the first screen used to be WELCOME BACK + the Prize Wheel).
+- Hints show the real seconds to the next train and know whether this train has your cage.
+- Fixed a stall: the tutorial bandit never triggered from the golden-ticket buy. Fixed slow phones missing the train (they now ask for it).
+- The Golden Ticket cage is always affordable. Bandit Bart starts at the gate, walks out to the street, glows red.
+- Gift at 30 s (first reward under a minute), gift/egg hints and reveals that say what you got.
+- Action button and SKIP sit clear of the jump button on phones; safe-area insets on.
+
+**Anti-cheat (from an exploit review):** server movement check (position jumps are undone, repeated ones kick), travel-time gates on heist and steal deliveries, bear trap by server proximity, gear blocked while stunned, tumbleweed hits only thieves, activity counts only real play, no Frontier while a critter is being carried away.
+
+**Data safety:** load timeout with a message, migrate before reconcile, coalesced saves, receipt listeners expire.
+
+**Revenue and retention (from a 2026 competitor/policy brief):**
+- **Sheriff's Club** monthly subscription (199 R$): x1.25 cash, +1 daily spin, Club Stetson.
+- **Instant Hatch** (9 R$) on waiting eggs.
+- **Premium perks** (x1.1 income, top hat), **invite friends** card, **group reward** (set the group id), **Starter Pack offer** at a calm moment after the tutorial.
+- 30-day streak → Legendary critter + "Regular" title; the daily panel says what tomorrow brings.
+- Private servers: the host can switch stealing off. Everyone's ranch is locked 30 s after joining.
+- Nothing prohibited: no like/favorite rewards, no fake timers, odds shown, PolicyService gates.
+
+**Owner steps for live revenue:** `docs/GAMEPLAN.md` section 3 (passes, products, the subscription and the optional group id).
+
+## 0a. Plan v2 ("complete everything")
 
 Everything is pushed to `main`, and all checks pass: 140 unit tests, strict types, lint, place lint, economy gates. Plan: `docs/PLAN_V2.md`.
 

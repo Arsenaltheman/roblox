@@ -52,6 +52,10 @@ Status: ✅ built · 🔨 being built now · 📅 next · 🧊 later.
 | Free daily spin | Prize Wheel (free spins only, never sold) | ✅ |
 | Quests | Wanted Board daily quests | ✅ |
 | Leaderboards in the world | Boards for Richest (with a gold statue of the #1), Top Heisters, Most Wanted; this server + all-time | ✅ |
+| Subscription (Roblox Subscriptions) | **Sheriff's Club** 199 R$/mo: x1.25 cash, +1 daily spin, Club Stetson | ✅ |
+| Timer skips (9 R$ instant hatch, common in the genre) | **Instant Hatch** 9 R$ on any waiting egg | ✅ |
+| Premium perks (Roblox pays for Premium playtime) | x1.1 income + Premium Top Hat | ✅ |
+| Group-join reward | +100 Nuggets once (owner sets the group id) | ✅ |
 | Trading | Same-server escrow trading: invite a player (MORE → TRADE), up to 6 critters + Gold Nuggets per side, both READY → 5 s countdown, server swaps atomically. Frontier 1+, 7-day accounts, PolicyService-gated; Branded and Robux-luck critters excluded | ✅ |
 | Potions / boosts | 2x Cash for finishing all daily quests; Luck Potion for beating the Bandit King | ✅ |
 | Image-based, chunky UI | Icon set + gold titles, stripes, mascots | ✅ (icons appear after upload) |
@@ -87,6 +91,8 @@ Roblox only sells an item once it exists in Creator Hub, and only the owner can 
    - create each **Developer Product**.
    `python3 tools/cloud/create_products.py --list` prints the exact names, prices and descriptions.
 3. Give the IDs to a Claude session, or run `python3 tools/cloud/create_products.py --set VIP=123 DoubleCash=456 ...`.
-4. Republish. Purchases are then real.
+4. **Sheriff's Club** (monthly subscription, 199 R$): Creator Hub → Monetization → **Subscriptions** → create it with the name and benefits from `--list`, then `python3 tools/cloud/create_products.py --subscription <id>`.
+5. Optional **group reward**: make a Roblox group for the game, then `python3 tools/cloud/create_products.py --group <groupId>`. Members claim +100 Nuggets once under MORE.
+6. Republish. Purchases are then real.
 
 Until then, in Studio every item can be "bought" for free as a labelled **STUDIO TEST**, so their effects can be tested.
