@@ -1,0 +1,22 @@
+# Build output
+/build/
+*.rbxl
+*.rbxlx
+*.rbxl.lock
+*.rbxlx.lock
+sourcemap.json
+
+# Tool output
+/tools/econ-sim/out/
+/tools/blender/out/
+
+# Editors / OS
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Python / Node leftovers from tooling
+__pycache__/
+*.pyc
+node_modules/
