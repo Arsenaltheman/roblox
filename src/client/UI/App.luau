@@ -24,6 +24,7 @@ local Store = require("../Store")
 local Components = require("./Components")
 local Shop = require("./Shop")
 local Hotbar = require("./Hotbar")
+local EventBanner = require("./EventBanner")
 local Theme = require("./Theme")
 
 local create = Vide.create :: any
@@ -525,6 +526,7 @@ local function announcements(): Instance
 				then Theme.rarityColor(kind)
 				elseif kind == "golden" or kind == "luck" then Theme.color.gold
 				elseif kind == "steal" then Theme.color.red
+				elseif kind == "event" then Theme.color.orange
 				else Theme.color.skyDeep
 			local scale = source(1.6)
 			local s = spring(scale, 0.35, 0.5)
@@ -1475,6 +1477,7 @@ function App.build(scale: () -> number): Instance
 			toasts(),
 			runBanner(),
 			Hotbar.build(),
+			EventBanner.build(),
 		}),
 		create("Frame")({
 			Name = "Menus",

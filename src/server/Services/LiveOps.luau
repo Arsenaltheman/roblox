@@ -19,7 +19,7 @@ local LiveOps = {}
 local sheriffReadyAt: { [Player]: number } = {}
 
 function LiveOps.incomeEventActive(): boolean
-	return Registry.LiveConfig.enabled("event.incomeBoost")
+	return Registry.LiveConfig.enabled("event.incomeBoost") or Registry.Events.goldRush()
 end
 
 local function sheriffPower(player: Player, power: string, arg: string)

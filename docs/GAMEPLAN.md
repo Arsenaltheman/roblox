@@ -21,7 +21,7 @@ Status: ✅ built · 🔨 being built now · 📅 next · 🧊 later.
 | **Coin-shop gear** gated by rebirth: speed coil, invisibility cloak, … laser bypass | **Gear shop** (cash): Smoke Bomb, Tumbleweed Bomb, Bear Trap, unlocking by Frontier | 🔨 |
 | Rarity ladder up to Secret and OG | Common → Secret (8 tiers, 40 species + exclusives) | ✅ |
 | Mutations (Gold … Rainbow …) | 8 mutations, weather-driven | ✅ |
-| **"Admin Abuse" live events** | **Server events** every ~25 min with a countdown: Crate Rain, Gold Rush, Jackpot Restock | 🔨 |
+| **"Admin Abuse" live events** | **Server events** every ~25 min with a countdown: Crate Rain, Gold Rush, Jackpot Restock | ✅ |
 | Server luck products | Server Luck ×2/×3/×5 (odds shown, policy-gated) | ✅ |
 | Lucky blocks (paid random) | Not copied: paid random boxes are a compliance risk for kids | ❌ skipped |
 | Index / collection | Almanac; set bonuses come next | ✅ · 📅 bonuses |
@@ -43,7 +43,7 @@ Status: ✅ built · 🔨 being built now · 📅 next · 🧊 later.
 | Offline growth | Offline earnings (25–50%, 8 h cap) | ✅ |
 | Shop restocks every 5 min | Trading Post restock | ✅ |
 | Weather mutations (2×–150×) | Weather events every 12 min | ✅ |
-| Admin abuse before updates | Server events (see above) | 🔨 |
+| Admin abuse before updates | Server events (see above) | ✅ |
 
 ### From Pet Simulator 99 and others (retention)
 | Mechanic | Our version | Status |

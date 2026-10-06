@@ -26,6 +26,7 @@ local ORDER = {
 	"Gear",
 	"Shop",
 	"LiveOps",
+	"Events",
 }
 
 local services = script.Parent:WaitForChild("Services")

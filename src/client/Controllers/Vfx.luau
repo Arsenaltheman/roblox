@@ -451,6 +451,10 @@ local function onFx(kind: string, value: number, position: Vector3?)
 		if root and (root.Position - position).Magnitude < 120 then
 			Sound.play("strongboxOpen", 0.1)
 		end
+	elseif kind == "eventStart" then
+		Sound.play("goldenExpress")
+		Vfx.fireworks(Vector3.new(0, 14, 72), C("gold"), 10)
+		Vfx.shake(0.8, 0.4)
 	elseif kind == "spinEarned" then
 		Sound.play("giftReady")
 		if root then

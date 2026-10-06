@@ -1,0 +1,96 @@
+--!strict
+-- Server events (our take on "admin abuse" moments): every ~25 minutes the whole server gets a
+-- big shared moment, announced with a real countdown. Pure data + picking logic (unit-tested).
+--   Crate Rain      - bonus critter crates fall along Main Street; first to grab one keeps it.
+--   Gold Rush       - all ranch income is doubled for a few minutes.
+--   Jackpot Restock - every heist nest refills one rarity higher.
+
+export type Event = {
+	id: string,
+	name: string,
+	blurb: string,
+	duration: number, -- seconds the event stays active
+	color: string, -- Palette colour name
+	weight: number,
+}
+
+local list: { Event } = {
+	{
+		id = "CrateRain",
+		name = "CRATE RAIN",
+		blurb = "Critter crates are falling on Main Street! Grab one and run it home!",
+		duration = 75,
+		color = "gold",
+		weight = 40,
+	},
+	{
+		id = "GoldRush",
+		name = "GOLD RUSH",
+		blurb = "All ranch income is DOUBLED!",
+		duration = 5 * 60,
+		color = "gold",
+		weight = 35,
+	},
+	{
+		id = "JackpotRestock",
+		name = "JACKPOT RESTOCK",
+		blurb = "Every heist nest just refilled one rarity higher!",
+		duration = 90,
+		color = "red",
+		weight = 25,
+	},
+}
+
+local byId: { [string]: Event } = {}
+for _, e in list do
+	byId[e.id] = e
+end
+
+-- Picks the next event from r in [0, 1), never repeating `previous` back to back.
+local function pick(r: number, previous: string?): Event
+	local pool = {}
+	local total = 0
+	for _, e in list do
+		if e.id ~= previous then
+			table.insert(pool, e)
+			total += e.weight
+		end
+	end
+	local x = r * total
+	for _, e in pool do
+		x -= e.weight
+		if x < 0 then
+			return e
+		end
+	end
+	return pool[#pool]
+end
+
+-- Crate Rain: which heist zone's rarity range each falling crate uses (weights per zone 1..4).
+local CRATE_ZONE_WEIGHTS = { 50, 30, 15, 5 }
+local function crateZone(r: number): number
+	local x = r * 100
+	for zone, w in CRATE_ZONE_WEIGHTS do
+		x -= w
+		if x < 0 then
+			return zone
+		end
+	end
+	return #CRATE_ZONE_WEIGHTS
+end
+
+return {
+	list = list,
+	byId = byId,
+	pick = pick,
+	crateZone = crateZone,
+	FIRST_DELAY = 8 * 60, -- first event this long after the server starts
+	INTERVAL = 25 * 60, -- start to start
+	WARNING = 2 * 60, -- countdown banner shows this long before
+	CRATE_COUNT = 14,
+	CRATE_SPREAD = 30, -- seconds over which crates fall
+	CRATE_LIFETIME = 75,
+	-- Main Street drop area (between the two ranch rows).
+	STREET = { minX = -105, maxX = 105, minZ = 64, maxZ = 80 },
+	RESTOCK_BOOST = 1,
+}
