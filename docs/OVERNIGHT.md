@@ -13,7 +13,7 @@ Nothing is published to Roblox: that still waits for the owner's "ship it".
 | 2 | **Gear in play.** Hotbar: keys 1/2/3 and touch buttons, cooldown sweep, owned only. World effects for smoke, tumbleweed, trap set/snap, gear bought, crate drop, spin earned | Gear can be bought but has no buttons yet | ✅ |
 | 3 | **Server events** about every 25 min with a real countdown banner: **Crate Rain** (bonus crates fall around town), **Gold Rush** (2× cash for 5 min), **Jackpot Restock** (every nest refills one rarity higher) | Steal a Brainrot's "admin abuse" moments; gives everyone a reason to stay | ✅ |
 | 4 | **Bandit King boss** in Ghost Town: shared health bar, the whole server lassoes him, everyone who helped gets loot | Steal An Egg's weekly-boss hook | ✅ |
-| 5 | **Station leaderboards:** richest ranch, most heists, most critters stolen. In-world boards plus a top-3 statue podium | Status and rivalry | 📅 |
+| 5 | **Station leaderboards:** richest ranch, most heists, most critters stolen. In-world boards plus a top-3 statue podium | Status and rivalry | ✅ |
 | 6 | **Almanac set bonuses** (+income for each completed rarity set) and **timed boosts** (2× luck / 2× cash potions from the wheel and quests) | Long-term goals | 📅 |
 | 7 | **Bug sweep:** read every service and controller for nil errors, leaks and exploit gaps. Rebuild `build/CritterExpress.rbxl`. Write the morning summary and a playtest checklist in `STATUS.md` | So the morning playtest goes smoothly | 📅 |
 

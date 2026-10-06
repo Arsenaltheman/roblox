@@ -28,6 +28,7 @@ local ORDER = {
 	"LiveOps",
 	"Boss",
 	"Events",
+	"Leaderboards",
 }
 
 local services = script.Parent:WaitForChild("Services")

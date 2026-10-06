@@ -51,7 +51,7 @@ Status: ✅ built · 🔨 being built now · 📅 next · 🧊 later.
 | Daily rewards, streaks | 7-day streak, playtime gifts | ✅ |
 | Free daily spin | Prize Wheel (free spins only, never sold) | ✅ |
 | Quests | Wanted Board daily quests | ✅ |
-| Leaderboards in the world | Station leaderboard boards (richest, most heists) | 📅 |
+| Leaderboards in the world | Boards for Richest (with a gold statue of the #1), Top Heisters, Most Wanted; this server + all-time | ✅ |
 | Trading | Same-server escrow trading (policy-gated) | 🧊 |
 | Potions / boosts | Timed boosts from the wheel and quests | 📅 |
 | Image-based, chunky UI | Icon set + gold titles, stripes, mascots | ✅ (icons appear after upload) |
