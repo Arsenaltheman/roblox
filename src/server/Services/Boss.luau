@@ -229,6 +229,7 @@ local function reward(f: Fight)
 			Registry.Wallet.addCash(p, cash, "BanditKing")
 			Registry.Wallet.addNuggets(p, BossConfig.REWARD_NUGGETS, "BanditKing")
 			Registry.Wheel.addSpins(p, 1, "Bandit King")
+			Registry.Progression.questEvent(p, "bossWin", 1)
 			Registry.Progression.giveBoost(p, "Luck", Progression.boosts.bossLuckMinutes, "LUCK POTION")
 			Registry.Ui.toast(
 				p,

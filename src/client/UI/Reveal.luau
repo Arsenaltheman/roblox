@@ -204,9 +204,10 @@ local function play(data: any)
 	local tier = data.tier or 1
 	local rarity = Rarities.forTier(math.clamp(tier, 1, Rarities.maxTier))
 	local rarityIndex = Rarities.indexOf(rarity.id)
-	local color = Theme.rarityColor(rarity.id)
+	local color = if data.kind == "chapter" then Theme.color.gold else Theme.rarityColor(rarity.id)
+	-- Any reveal that carries a species shows the critter (eggs, steals, exclusives, heists, the
+	-- wheel, the Bandit King).
 	local isCritter = data.species ~= nil
-		and (data.kind == "egg" or data.kind == "stolen" or data.kind == "exclusive")
 
 	local root = make("Frame", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, ZIndex = 50 }, gui)
 	local dim = make("TextButton", {
@@ -246,7 +247,7 @@ local function play(data: any)
 		end
 		Sound.play(if data.kind == "strongbox" then "strongboxOpen" else "eggCrack")
 		egg:Destroy()
-	elseif data.kind == "frontier" then
+	elseif data.kind == "frontier" or data.kind == "chapter" then
 		Sound.play("frontier")
 		Sound.announce("ann_frontier")
 		wait(if quick then 0.2 else 0.8)
@@ -308,6 +309,12 @@ local function play(data: any)
 	elseif data.kind == "frontier" then
 		title = `FRONTIER {data.level}!`
 		caption = `Income x{data.level + 1} · +1 pen · new unlocks`
+	elseif data.kind == "chapter" then
+		title = `CHAPTER {data.chapter} COMPLETE!`
+		local cosmetic = data.title and Cosmetics.byId[data.title]
+		caption = if cosmetic
+			then `{data.name} · new title: {cosmetic.name} · bonus spins, Nuggets and 2x Cash`
+			else `{data.name} · bonus spins, Nuggets and 2x Cash`
 	elseif data.kind == "gift" then
 		title = "GIFT!"
 	elseif data.kind == "streak" then

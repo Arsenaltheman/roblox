@@ -32,6 +32,7 @@ type State = {
 	uncollected: number,
 	lockedUntil: number,
 	lockReadyAt: number,
+	lastAutoQuest: number?,
 	pickedUntil: number,
 	shieldUntil: number,
 }
@@ -478,6 +479,13 @@ function Ranch.collect(player: Player, auto: boolean?)
 	Registry.Wallet.addCash(player, amount, "Collect")
 	Registry.Ui.fx(player, "collect", amount)
 	Registry.Progression.onboard(player, "FirstCollect")
+	-- Quests count collects; automatic ones (Auto-Collect, standing on the plate) at most once a minute.
+	if not auto or os.clock() - (s.lastAutoQuest or 0) >= 60 then
+		if auto then
+			s.lastAutoQuest = os.clock()
+		end
+		Registry.Progression.questEvent(player, "collect", 1)
+	end
 end
 
 local function lock(player: Player)
@@ -497,6 +505,7 @@ local function lock(player: Player)
 		m:SetAttribute("LockedUntil", s.lockedUntil)
 	end
 	Registry.Ui.fx(player, "lock", 0)
+	Registry.Progression.questEvent(player, "lock", 1)
 end
 
 local function sell(player: Player, cid: string)

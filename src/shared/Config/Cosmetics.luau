@@ -30,6 +30,15 @@ local list: { Cosmetic } = {
 	{ id = "title_rookie", slot = "title", name = "Rookie Rustler", nuggets = 20, color = "#A7ADB4" },
 	{ id = "title_marshal", slot = "title", name = "Marshal", color = "#E2A93B" },
 	{ id = "title_legend", slot = "title", name = "Legend of the West", color = "#FF5FD2" },
+	-- Bounty Trail chapter titles (earned only).
+	{ id = "title_greenhorn", slot = "title", name = "Greenhorn", color = "#A7D98B" },
+	{ id = "title_deputy", slot = "title", name = "Deputy", color = "#3FB7B0" },
+	{ id = "title_outlaw", slot = "title", name = "Outlaw", color = "#E2463A" },
+	{ id = "title_gunslinger", slot = "title", name = "Gunslinger", color = "#FF8C28" },
+	{ id = "title_marshal_trail", slot = "title", name = "Marshal of the Trail", color = "#E2A93B" },
+	{ id = "title_bountyhunter", slot = "title", name = "Bounty Hunter", color = "#9A5AFF" },
+	{ id = "title_legend_trail", slot = "title", name = "Living Legend", color = "#FF5FD2" },
+	{ id = "title_king", slot = "title", name = "King of the West", color = "#FFC83D" },
 }
 
 local byId: { [string]: Cosmetic } = {}

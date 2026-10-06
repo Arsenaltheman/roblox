@@ -74,6 +74,7 @@ function ProgressionService.questEvent(player: Player, kind: string, amount: num
 	if not d then
 		return
 	end
+	Registry.Trail.event(player, kind, amount)
 	ensureQuestDay(player)
 	for _, quest in dailyQuests(today()) do
 		if quest.kind == kind and not d.Quests.Claimed[quest.id] then
@@ -205,6 +206,8 @@ local function claim(player: Player, what: string, index: number)
 		p.offline = 0
 		Registry.Wallet.addCash(player, amount, "Offline")
 		Registry.Ui.fx(player, "collect", amount)
+	elseif what == "trail" or what == "weekly" then
+		Registry.Trail.claim(player, what, index)
 	elseif what == "quest" then
 		ensureQuestDay(player)
 		local quest = dailyQuests(today())[index]

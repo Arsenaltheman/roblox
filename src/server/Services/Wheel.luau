@@ -114,6 +114,7 @@ local function spin(player: Player)
 	local segment = WheelConfig.segments[index]
 	local prizeText = grant(player, segment)
 	d.Stats.WheelSpins = (d.Stats.WheelSpins or 0) + 1
+	Registry.Progression.questEvent(player, "spin", 1)
 	mirror(player)
 	Registry.Ui.pushState(player)
 	Registry.Data.saveNow(player)

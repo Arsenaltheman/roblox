@@ -8,7 +8,6 @@ local Workspace = game:GetService("Workspace")
 local Vide = require("@game/ReplicatedStorage/Packages/Vide")
 local LuckConfig = require("@game/ReplicatedStorage/Shared/Config/Luck")
 local Mutations = require("@game/ReplicatedStorage/Shared/Config/Mutations")
-local Progression = require("@game/ReplicatedStorage/Shared/Config/Progression")
 local Rarities = require("@game/ReplicatedStorage/Shared/Config/Rarities")
 local Species = require("@game/ReplicatedStorage/Shared/Config/Species")
 local HeistConfig = require("@game/ReplicatedStorage/Shared/Config/Heist")
@@ -26,6 +25,7 @@ local Components = require("./Components")
 local Shop = require("./Shop")
 local Hotbar = require("./Hotbar")
 local EventBanner = require("./EventBanner")
+local Quests = require("./Quests")
 local Theme = require("./Theme")
 
 local create = Vide.create :: any
@@ -741,48 +741,9 @@ local function eggsMenu(): Instance
 end
 
 local function questsMenu(): Instance
-	return Components.panel({
-		title = "WANTED BOARD",
-		onClose = function()
-			Store.menu("")
-		end,
-		children = {
-			list({
-				text({
-					Size = UDim2.new(1, 0, 0, 30),
-					LayoutOrder = 0,
-					FontFace = Theme.font.heading,
-					Text = function()
-						local s = state().streak
-						return `Login streak: day {s and s.count or 0} · new quests at 00:00 UTC`
-					end,
-				}),
-				indexes(function()
-					return state().quests or {}
-				end, function(q, i)
-					return card({
-						order = i,
-						title = function()
-							return q().text
-						end,
-						sub = function()
-							return `{q().progress}/{q().goal} · reward: cash + {Progression.quests.nuggets} nuggets`
-						end,
-						color = Theme.color.red,
-						button = function()
-							return if q().claimed
-								then "DONE"
-								elseif q().progress >= q().goal then "CLAIM"
-								else "..."
-						end,
-						onClick = function()
-							Net.request("Claim", "quest", q().index)
-						end,
-					})
-				end),
-			}),
-		},
-	})
+	return Quests.menu(function()
+		Store.menu("")
+	end)
 end
 
 local function almanacMenu(): Instance
@@ -1585,6 +1546,9 @@ function App.build(scale: () -> number): Instance
 			runBanner(),
 			Hotbar.build(),
 			EventBanner.build(),
+			Quests.tracker(function()
+				return (state().tutorial or 0) >= 3 and Store.menu() == ""
+			end),
 		}),
 		create("Frame")({
 			Name = "Menus",

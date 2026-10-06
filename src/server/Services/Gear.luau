@@ -180,6 +180,7 @@ local function use(player: Player, key: string)
 	end
 	mine[key] = t + item.cooldown
 	player:SetAttribute("GearReady_" .. key, mine[key])
+	Registry.Progression.questEvent(player, "gear", 1)
 end
 
 function Gear.init() end

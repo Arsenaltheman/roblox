@@ -393,6 +393,14 @@ local function deliver(player: Player)
 	if d then
 		d.Stats.Heists = (d.Stats.Heists or 0) + 1
 		Registry.Progression.questEvent(player, "heist", 1)
+		if carry.zone == BONUS_ZONE then
+			Registry.Progression.questEvent(player, "crateRain", 1)
+		elseif carry.zone >= 2 then
+			Registry.Progression.questEvent(player, "heist_z" .. carry.zone, 1)
+		end
+		if Rarities.indexOf(Rarities.forTier(crate.tier).id) >= 3 then
+			Registry.Progression.questEvent(player, "heistRare", 1)
+		end
 	end
 	Registry.Wheel.heistDelivered(player)
 	Registry.Data.saveNow(player)
