@@ -35,23 +35,27 @@ local function text(props: { [any]: any }): Instance
 end
 
 -- Opens the offer when the moment is right. Called from a slow client loop.
-function Offer.maybeShow()
+function Offer.maybeShow(): boolean
 	if shownThisSession then
-		return
+		return true
 	end
 	local s = Store.state()
 	if not s or (s.tutorial or 0) < 3 or s.starterPack or Store.menu() ~= "" or s.mayPrompt == false then
-		return
+		return false
 	end
 	local p = s.pending
 	if p and ((p.offline or 0) > 0 or p.streakSlot ~= nil) then
-		return -- the welcome panel goes first
+		return false -- the welcome panel goes first
 	end
 	if localPlayer:GetAttribute("HeistCarry") == true then
-		return
+		return false
+	end
+	if Store.reveal and Store.reveal() ~= nil then
+		return false
 	end
 	shownThisSession = true
 	Store.menu("offer")
+	return true
 end
 
 function Offer.panel(onClose: () -> ()): Instance

@@ -764,9 +764,9 @@ local function eggsMenu(): Instance
 						extra = Components.button({
 							text = "HATCH NOW R$9",
 							color = Theme.color.pink,
-							size = UDim2.fromOffset(150, 34),
-							position = UDim2.new(0.62, 0, 0.5, 0),
-							anchor = Vector2.new(0, 0.5),
+							size = UDim2.fromOffset(140, 34),
+							position = UDim2.new(0.75, -26, 0.5, -3),
+							anchor = Vector2.new(1, 0.5),
 							textSize = 16,
 							visible = function()
 								return egg().hatchAt > clock()
@@ -1759,10 +1759,9 @@ function App.mount()
 	-- The Starter Pack offer waits for a calm moment after the tutorial (once per session).
 	task.spawn(function()
 		task.wait(90)
-		while true do
-			Offer.maybeShow()
+		repeat
 			task.wait(15)
-		end
+		until Offer.maybeShow()
 	end)
 end
 

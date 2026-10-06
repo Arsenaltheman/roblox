@@ -19,7 +19,7 @@ return {
 	freeBoostCap = 1.3,
 	friendBoostEach = 0.1,
 	friendBoostMax = 0.3,
-	eventBoost = 1.0,
+	eventBoost = 0.5, -- Gold Rush: +50% (fun, not game-breaking, and events run every 10 min)
 	-- Each completed Almanac rarity set adds this much income, for good (earned, never sold).
 	almanacSetBonus = 0.05,
 	paidMultipliers = {

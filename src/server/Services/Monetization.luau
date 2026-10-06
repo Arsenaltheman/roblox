@@ -64,7 +64,17 @@ local function refreshSubscription(player: Player)
 		return MarketplaceService:GetUserSubscriptionStatusAsync(player, id)
 	end)
 	if ok and status then
+		local was = subscribed[player] == true
 		subscribed[player] = (status :: any).IsSubscribed == true
+		if subscribed[player] and not was then
+			-- Subscribed on the website or elsewhere: grant the perks here too.
+			local d = Registry.Data.get(player) or Registry.Data.waitFor(player)
+			if d then
+				d.Owned.hat_club = true
+			end
+			Monetization.passChanged:Fire(player, "SheriffClub")
+			Registry.Ui.pushState(player)
+		end
 	end
 end
 

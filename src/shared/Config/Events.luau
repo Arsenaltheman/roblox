@@ -26,7 +26,7 @@ local list: { Event } = {
 	{
 		id = "GoldRush",
 		name = "GOLD RUSH",
-		blurb = "All ranch income is DOUBLED!",
+		blurb = "All ranch income +50% for five minutes!",
 		duration = 5 * 60,
 		color = "gold",
 		weight = 35,
@@ -92,9 +92,9 @@ return {
 	byId = byId,
 	pick = pick,
 	crateZone = crateZone,
-	FIRST_DELAY = 8 * 60, -- first event this long after the server starts
-	INTERVAL = 25 * 60, -- start to start
-	WARNING = 2 * 60, -- countdown banner shows this long before
+	FIRST_DELAY = 3 * 60, -- first event this long after the server starts
+	INTERVAL = 10 * 60, -- start to start: something is live or about to start most of the time
+	WARNING = 90, -- countdown banner shows this long before
 	CRATE_COUNT = 14,
 	CRATE_SPREAD = 30, -- seconds over which crates fall
 	CRATE_LIFETIME = 75,

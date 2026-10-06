@@ -18,6 +18,7 @@ type Info = {
 	-- Movement sanity check state.
 	lastCharacter: Model?,
 	lastGood: Vector3?,
+	lastGoodAt: number?,
 	consecutive: number?,
 	violations: { number },
 	suspiciousUntil: number?,
@@ -134,32 +135,41 @@ function Session.start()
 				if i.lastCharacter ~= character or not canSample(character) or not humanoid then
 					i.lastCharacter = character
 					i.lastGood = position
+					i.lastGoodAt = os.clock()
 					i.consecutive = 0
 				elseif i.lastGood then
 					local moved = ((position - i.lastGood) * Vector3.new(1, 0, 1)).Magnitude
+					-- Judged over the time since the last good sample, so a lag spike that
+					-- withholds one sample doesn't make the next one look like a jump.
+					local elapsed = math.max(step, os.clock() - (i.lastGoodAt or os.clock()))
 					local dash = if os.clock() < (i.dashUntil or 0) then 60 else 0
-					local allowed = humanoid.WalkSpeed * step * 1.25 + 8 + dash
+					local allowed = humanoid.WalkSpeed * elapsed * 1.25 + 8 + dash
 					if moved > allowed then
 						i.consecutive = (i.consecutive or 0) + 1
-						table.insert(i.violations, os.clock())
-						-- One bad sample can be lag; two in a row (or a cross-map jump) is not.
-						if i.consecutive >= 2 or moved > allowed + 150 then
-							character:PivotTo(CFrame.new(i.lastGood + Vector3.new(0, 1, 0)))
-							i.suspiciousUntil = os.clock() + 5
-						end
-						local recent = 0
+						-- Keep only the last minute of violations.
+						local kept = {}
 						for _, at in i.violations do
 							if os.clock() - at < 60 then
-								recent += 1
+								table.insert(kept, at)
 							end
 						end
-						if recent >= 6 then
+						table.insert(kept, os.clock())
+						i.violations = kept
+						-- A cross-map jump is never lag; a smaller overshoot needs two in a row.
+						if moved > allowed + 150 or i.consecutive >= 2 then
+							character:PivotTo(CFrame.new(i.lastGood + Vector3.new(0, 1, 0)))
+							i.suspiciousUntil = os.clock() + 5
+							i.consecutive = 0
+							i.lastGoodAt = os.clock()
+						end
+						if #i.violations >= 6 then
 							table.clear(i.violations)
 							Guard.strike(player, "movement")
 						end
 					else
 						i.consecutive = 0
 						i.lastGood = position
+						i.lastGoodAt = os.clock()
 					end
 				else
 					i.lastGood = position
