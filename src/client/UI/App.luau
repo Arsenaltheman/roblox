@@ -981,12 +981,10 @@ local function settingsMenu(): Instance
 			color = Theme.color.sky,
 			button = "Change",
 			onClick = function()
+				-- Cycle 0 -> 25 -> 50 -> 75 -> 100 -> 0 %, snapping saved values (0.7) onto the steps.
 				local s = state().settings or {}
-				local v = (s[key] or 0) + 0.25
-				if v > 1.01 then
-					v = 0
-				end
-				Net.request("Setting", key, v)
+				local step = math.floor((s[key] or 0) * 4 + 0.5)
+				Net.request("Setting", key, ((step + 1) % 5) / 4)
 			end,
 		})
 	end
@@ -1037,7 +1035,9 @@ local function settingsMenu(): Instance
 					end,
 					sub = function()
 						local q = (state().settings or {}).Quality or "auto"
-						return if q == "auto" then "Auto (adjusts to your device)" else string.upper(q)
+						return if q == "auto"
+							then "Auto (adjusts to your device; drops a step when frames get slow)"
+							else `{string.upper(q)}: fixed amount of dust, critters and effects`
 					end,
 					color = Theme.color.sky,
 					button = "Change",
@@ -1113,13 +1113,14 @@ local function settingsMenu(): Instance
 						end)
 					end,
 				}),
-				volume(1, "Music", "Music volume"),
-				volume(2, "Sfx", "Sound effects"),
-				volume(3, "Voice", "Critter voices"),
-				toggle(4, "ReducedFx", "Reduced effects (no flashes or shakes)"),
-				toggle(5, "QuickReveal", "Quick reveals"),
+				toggle(2, "Muted", "Mute all sound"),
+				volume(3, "Music", "Music volume"),
+				volume(4, "Sfx", "Sound effects (incl. UI and ambience)"),
+				volume(5, "Voice", "Critter voices and announcer"),
+				toggle(6, "ReducedFx", "Reduced effects: no flashes, shakes or camera bob"),
+				toggle(7, "QuickReveal", "Quick reveals"),
 				card({
-					order = 6,
+					order = 8,
 					title = function()
 						return "Report a bug"
 					end,
@@ -1133,7 +1134,7 @@ local function settingsMenu(): Instance
 					end,
 				}),
 				card({
-					order = 7,
+					order = 9,
 					title = function()
 						return "Sheriff Powers (Sheriff's Star)"
 					end,

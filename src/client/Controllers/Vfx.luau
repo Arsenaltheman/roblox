@@ -429,7 +429,9 @@ local function onFx(kind: string, value: number, position: Vector3?)
 		Sound.play("lock")
 	elseif kind == "heistGrab" and position then
 		Vfx.burst(position + Vector3.new(0, 2, 0), C("gold"), 40, 1.4, 22)
-		if value == localPlayer.UserId then
+		if value ~= localPlayer.UserId then
+			Sound.playAt("alarm", position, nil, 120)
+		else
 			Sound.play("lassoCatch")
 			Sound.play("alarm")
 			Vfx.shake(0.6, 0.35)
@@ -440,13 +442,11 @@ local function onFx(kind: string, value: number, position: Vector3?)
 		local big = Rarities.indexOf(Rarities.forTier(math.max(1, value)).id) >= 4
 		Vfx.fireworks(position, rarityColor, if big then 9 else 4)
 		Vfx.burst(position + Vector3.new(0, 3, 0), C("gold"), 80, 1.5, 26)
-		Sound.play("collect")
-		if big then
-			Sound.play("frontier")
-		end
+		Sound.playAt("collect", position)
+		Sound.stinger("heistDeliver")
 	elseif kind == "tackle" and position then
 		Vfx.burst(position, C("red"), 50, 1.4, 24)
-		Sound.play("caught")
+		Sound.playAt("caught", position)
 		if value == localPlayer.UserId then
 			Vfx.shake(2.2, 0.5)
 			Vfx.alarm()
@@ -454,12 +454,12 @@ local function onFx(kind: string, value: number, position: Vector3?)
 	elseif kind == "guardAlert" and position then
 		if root and (root.Position - position).Magnitude < 90 then
 			Vfx.floatText(position + Vector3.new(0, 7, 0), "!", C("red"))
-			Sound.play("whistle", 0.2)
+			Sound.playAt("whistle", position, 0.2, 90)
 		end
 	elseif kind == "smoke" and position then
 		Vfx.smoke(position, 5)
 		Vfx.burst(position, Color3.fromRGB(220, 220, 230), 40, 2, 16)
-		Sound.play("doors", 0.1)
+		Sound.playAt("doors", position, 0.1)
 		if value == localPlayer.UserId then
 			Store.toast("POOF! Guards lost you. RUN!")
 		end
@@ -467,7 +467,7 @@ local function onFx(kind: string, value: number, position: Vector3?)
 		Vfx.ring(position, Color3.fromRGB(214, 170, 110), 16)
 		Vfx.burst(position, Color3.fromRGB(214, 170, 110), 70, 1.8, 30)
 		Vfx.floatText(position + Vector3.new(0, 5, 0), "BOOM!", C("gold"))
-		Sound.play("caught")
+		Sound.playAt("caught", position)
 		if root and (root.Position - position).Magnitude < 40 then
 			Vfx.shake(1.6, 0.4)
 		end
@@ -480,8 +480,8 @@ local function onFx(kind: string, value: number, position: Vector3?)
 		Vfx.burst(position + Vector3.new(0, 1, 0), C("red"), 60, 1.5, 26)
 		Vfx.ring(position, C("red"), 10)
 		Vfx.floatText(position + Vector3.new(0, 5, 0), "SNAP!", C("red"))
-		Sound.play("lock")
-		Sound.play("caught")
+		Sound.playAt("lock", position)
+		Sound.playAt("caught", position)
 		if value == localPlayer.UserId then
 			Vfx.shake(2.5, 0.5)
 			Vfx.alarm()
@@ -496,18 +496,16 @@ local function onFx(kind: string, value: number, position: Vector3?)
 		local rarity = Rarities.forTier(math.max(1, value))
 		Vfx.ring(position, C(rarity.color), 12)
 		Vfx.burst(position + Vector3.new(0, 2, 0), C(rarity.color), 50, 1.6, 24)
-		if root and (root.Position - position).Magnitude < 120 then
-			Sound.play("strongboxOpen", 0.1)
-		end
+		Sound.playAt("strongboxOpen", position, 0.1, 120)
 	elseif kind == "eventStart" then
-		Sound.play("goldenExpress")
+		Sound.stinger("eventStart")
 		Vfx.fireworks(Vector3.new(0, 14, 72), C("gold"), 10)
 		Vfx.shake(0.8, 0.4)
 	elseif kind == "bossSpawn" and position then
 		Vfx.fireworks(position, C("purple"), 8)
 		Vfx.ring(position, C("purple"), 40)
 		Sound.play("alarm")
-		Sound.play("goldenExpress")
+		Sound.stinger("bossSpawn")
 	elseif kind == "bossWarn" and position then
 		-- Red danger ring where he'll land (value = stomp radius).
 		local warn = anchoredPart(
@@ -528,7 +526,7 @@ local function onFx(kind: string, value: number, position: Vector3?)
 	elseif kind == "bossStomp" and position then
 		Vfx.ring(position, Color3.fromRGB(214, 170, 110), value)
 		Vfx.burst(position + Vector3.new(0, 1, 0), Color3.fromRGB(214, 170, 110), 60, 2, 28)
-		Sound.play("caught")
+		Sound.playAt("caught", position, nil, 200)
 		if root and (root.Position - position).Magnitude < 60 then
 			Vfx.shake(2, 0.45)
 		end
@@ -550,7 +548,7 @@ local function onFx(kind: string, value: number, position: Vector3?)
 		Vfx.shake(1.2, 0.5)
 	elseif kind == "bossEscape" and position then
 		Vfx.smoke(position, 2)
-		Sound.play("whistle")
+		Sound.playAt("whistle", position, nil, 250)
 	elseif kind == "boost" then
 		if root then
 			Vfx.burst(root.Position, C("purple"), 50, 1.4, 20)
@@ -599,14 +597,14 @@ local function onFx(kind: string, value: number, position: Vector3?)
 		light.Color = Color3.fromRGB(255, 160, 60)
 		light.Range = 12
 		light.Parent = stick
-		Sound.play("alarm", 0.2)
+		Sound.playAt("alarm", position, 0.2)
 		task.delay(math.max(0.5, value), function()
 			stick:Destroy()
 		end)
 	elseif kind == "cactusWall" and position then
 		Vfx.burst(position, C("cactus"), 50, 1.6, 20)
 		Vfx.ring(position, Color3.fromRGB(214, 170, 110), 12)
-		Sound.play("doors")
+		Sound.playAt("doors", position)
 		if root and (root.Position - position).Magnitude < 50 then
 			Vfx.shake(0.8, 0.3)
 		end
@@ -614,7 +612,7 @@ local function onFx(kind: string, value: number, position: Vector3?)
 		Vfx.ring(position, Color3.fromRGB(214, 170, 110), 60)
 		Vfx.burst(position, Color3.fromRGB(214, 170, 110), 120, 2.2, 36)
 		Vfx.floatText(position + Vector3.new(0, 6, 0), "STAMPEDE!", C("gold"))
-		Sound.play("whistle")
+		Sound.playAt("whistle", position, nil, 250)
 		if root and (root.Position - position).Magnitude < 90 then
 			Vfx.shake(2.4, 1.2)
 		end
