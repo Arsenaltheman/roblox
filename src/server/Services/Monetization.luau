@@ -1,0 +1,256 @@
+--!strict
+-- Game passes, developer products and the rules Roblox requires around them:
+-- * Receipts are idempotent (a purchase id is granted once) and confirmed only after the save completes.
+-- * Products that change random outcomes are hidden/blocked when PolicyService restricts paid random items
+--   (and when the policy lookup fails, we treat the player as restricted).
+-- * No purchase prompts within 2 minutes of a loss (robbed / bad reveal).
+
+local MarketplaceService = game:GetService("MarketplaceService")
+local Players = game:GetService("Players")
+local PolicyService = game:GetService("PolicyService")
+
+local Products = require("@game/ReplicatedStorage/Shared/Config/Products")
+local Economy = require("@game/ReplicatedStorage/Shared/Sim/Economy")
+local Profile = require("@game/ReplicatedStorage/Shared/Sim/Profile")
+local Signal = require("@game/ReplicatedStorage/Shared/Util/Signal")
+local Registry = require("../Registry")
+
+local Monetization = {}
+
+Monetization.passChanged = Signal.new() :: Signal.Signal<Player, string>
+
+type Policy = { randomRestricted: boolean, tradingAllowed: boolean }
+
+local ownedPasses: { [Player]: { [string]: boolean } } = {}
+local policies: { [Player]: Policy } = {}
+local lastLoss: { [Player]: number } = {}
+
+local productByAssetId: { [number]: Products.Product } = {}
+for _, product in Products.list do
+	if product.id then
+		productByAssetId[product.id] = product
+	end
+end
+
+function Monetization.policy(player: Player): Policy
+	return policies[player] or { randomRestricted = true, tradingAllowed = false }
+end
+
+function Monetization.owns(player: Player, key: string): boolean
+	local owned = ownedPasses[player]
+	if owned and owned[key] then
+		return true
+	end
+	local d = Registry.Data.get(player)
+	return d ~= nil and d.Owned["pass:" .. key] == true
+end
+
+-- The Economy.Passes table used by every formula.
+function Monetization.passes(player: Player): Economy.Passes
+	return {
+		DoubleCash = Monetization.owns(player, "DoubleCash"),
+		VIP = Monetization.owns(player, "VIP"),
+		IronLock = Monetization.owns(player, "IronLock"),
+		BigRanch = Monetization.owns(player, "BigRanch"),
+		HeavySaddlebag = Monetization.owns(player, "HeavySaddlebag"),
+	}
+end
+
+function Monetization.timedBoostActive(player: Player, key: string): boolean
+	local d = Registry.Data.get(player)
+	return d ~= nil and (d.Boosts[key] or 0) > os.time()
+end
+
+-- Can this product be offered to this player right now?
+function Monetization.canOffer(player: Player, key: string): (boolean, string?)
+	local product = Products.byKey[key]
+	if not product then
+		return false, "unknown"
+	end
+	if product.random and Monetization.policy(player).randomRestricted then
+		return false, "Not available in your region"
+	end
+	if key == "StarterPack" then
+		local d = Registry.Data.get(player)
+		if d and d.StarterPack then
+			return false, "Already claimed"
+		end
+	end
+	return true, nil
+end
+
+-- Record a loss so we don't push purchases at an upset player.
+function Monetization.noteLoss(player: Player)
+	lastLoss[player] = os.clock()
+end
+
+function Monetization.mayPrompt(player: Player): boolean
+	local t = lastLoss[player]
+	return t == nil or os.clock() - t >= Products.noPromptAfterLossSeconds
+end
+
+function Monetization.prompt(player: Player, key: string)
+	local product = Products.byKey[key]
+	if not product or not product.id then
+		Registry.Ui.toast(player, "This item isn't available yet.")
+		return
+	end
+	local ok, reason = Monetization.canOffer(player, key)
+	if not ok then
+		Registry.Ui.toast(player, reason or "Not available")
+		return
+	end
+	if product.kind == "pass" then
+		MarketplaceService:PromptGamePassPurchase(player, product.id)
+	elseif product.kind == "product" then
+		MarketplaceService:PromptProductPurchase(player, product.id)
+	end
+end
+
+-- Effects of developer products. Returns false if it can't be granted now (retry later).
+local function grant(player: Player, product: Products.Product): boolean
+	local d = Registry.Data.get(player)
+	if not d then
+		return false
+	end
+	local key = product.key
+	local cashBag = Products.cashBagSeconds[key]
+	if cashBag then
+		local income = Registry.Ranch.income(player)
+		return Registry.Wallet.addCash(player, Economy.cashBag(cashBag, income), "Robux:" .. key)
+	elseif key == "ServerLuck2" or key == "ServerLuck3" or key == "ServerLuck5" then
+		local mult = tonumber(string.sub(key, -1)) :: number
+		Registry.Train.addServerLuck(mult)
+		return true
+	elseif key == "Lockpick" then
+		d.Stats.Lockpicks = (d.Stats.Lockpicks or 0) + 1
+		return true
+	elseif key == "StarterPack" then
+		if d.StarterPack then
+			-- Already granted (e.g. re-purchase): still a valid receipt; give cash instead of a duplicate.
+			return Registry.Wallet.addCash(player, Economy.cashBag(3600, Registry.Ranch.income(player)), "Robux:StarterPackRepeat")
+		end
+		d.StarterPack = true
+		d.Boosts.DoubleCash = math.max(d.Boosts.DoubleCash or 0, os.time()) + 30 * 60
+		d.Owned["hat_StarterStetson"] = true
+		Registry.Ranch.grantExclusive(player, "DeputyDuck")
+		return true
+	elseif key == "GoldenLocomotive" or key == "DiamondDesperado" then
+		Registry.Ranch.grantExclusive(player, key)
+		return true
+	end
+	warn("[Monetization] no grant for product " .. key)
+	return false
+end
+
+local function processReceipt(receipt): Enum.ProductPurchaseDecision
+	local player = Players:GetPlayerByUserId(receipt.PlayerId)
+	if not player then
+		return Enum.ProductPurchaseDecision.NotProcessedYet
+	end
+	local d = Registry.Data.waitFor(player)
+	if not d then
+		return Enum.ProductPurchaseDecision.NotProcessedYet
+	end
+	local product = productByAssetId[receipt.ProductId]
+	if not product then
+		warn(`[Monetization] unknown product id {receipt.ProductId}`)
+		return Enum.ProductPurchaseDecision.NotProcessedYet
+	end
+	local purchaseId = tostring(receipt.PurchaseId)
+	-- Idempotency: a purchase id is granted at most once, even if Roblox retries.
+	local alreadyHad = table.find(d.Receipts, purchaseId) ~= nil
+	if not alreadyHad then
+		if not grant(player, product) then
+			return Enum.ProductPurchaseDecision.NotProcessedYet
+		end
+		Profile.recordReceipt(d, purchaseId)
+		d.RobuxSpent += receipt.CurrencySpent or 0
+		Registry.Telemetry.custom(player, "Purchase:" .. product.key, receipt.CurrencySpent)
+	end
+	-- Only confirm once the grant is safely saved.
+	local saved = false
+	Registry.Data.afterNextSave(player, function()
+		saved = true
+	end)
+	local deadline = os.clock() + 15
+	while not saved and os.clock() < deadline and player.Parent == Players do
+		task.wait(0.2)
+	end
+	if not saved then
+		return Enum.ProductPurchaseDecision.NotProcessedYet
+	end
+	Registry.Ui.toast(player, `Thanks! {product.name} is yours.`)
+	return Enum.ProductPurchaseDecision.PurchaseGranted
+end
+
+local function loadPlayer(player: Player)
+	-- Policy (fail closed: restricted).
+	local policy: Policy = { randomRestricted = true, tradingAllowed = false }
+	local ok, info = pcall(function()
+		return PolicyService:GetPolicyInfoForPlayerAsync(player)
+	end)
+	if ok and type(info) == "table" then
+		policy.randomRestricted = info.ArePaidRandomItemsRestricted ~= false
+		policy.tradingAllowed = info.IsPaidItemTradingAllowed == true
+	end
+	policies[player] = policy
+	player:SetAttribute("RandomRestricted", policy.randomRestricted)
+
+	-- Pass ownership.
+	local owned = {}
+	for _, product in Products.list do
+		if product.kind == "pass" and product.id then
+			local okPass, has = pcall(function()
+				return MarketplaceService:UserOwnsGamePassAsync(player.UserId, product.id :: number)
+			end)
+			if okPass and has then
+				owned[product.key] = true
+				player:SetAttribute("Pass_" .. product.key, true)
+			end
+		end
+	end
+	ownedPasses[player] = owned
+end
+
+function Monetization.init()
+	MarketplaceService.ProcessReceipt = processReceipt
+end
+
+function Monetization.start()
+	for _, player in Players:GetPlayers() do
+		task.spawn(loadPlayer, player)
+	end
+	Players.PlayerAdded:Connect(loadPlayer)
+	Players.PlayerRemoving:Connect(function(player)
+		ownedPasses[player] = nil
+		policies[player] = nil
+		lastLoss[player] = nil
+	end)
+	MarketplaceService.PromptGamePassPurchaseFinished:Connect(function(player, passId, purchased)
+		if not purchased then
+			return
+		end
+		for _, product in Products.list do
+			if product.id == passId then
+				local owned = ownedPasses[player] or {}
+				owned[product.key] = true
+				ownedPasses[player] = owned
+				player:SetAttribute("Pass_" .. product.key, true)
+				Monetization.passChanged:Fire(player, product.key)
+				Registry.Ui.toast(player, `{product.name} unlocked!`)
+			end
+		end
+	end)
+
+	local Net = require("@game/ReplicatedStorage/Shared/Net/Net")
+	Net.on("ShopBuy", function(player, key: string, _qty: number)
+		if Products.byKey[key] then
+			Monetization.prompt(player, key)
+		else
+			Registry.Shop.buy(player, key)
+		end
+	end)
+end
+
+return Monetization

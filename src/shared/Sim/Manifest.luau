@@ -91,7 +91,7 @@ local function makeCage(id: number, tier: number, owner: number, mutation: strin
 end
 
 function Manifest.roll(seed: number, cycle: number, players: { PlayerSlot }, options: Options?): Manifest
-	local opts = options or {}
+	local opts: Options = options or {}
 	local rng = Rng.new(Rng.derive(seed, cycle))
 	local golden = opts.golden == true
 	local eventLuck = if golden then Train.goldenExpress.luck else 1

@@ -17,6 +17,8 @@ local specs = {
 	"./unit/RateLimit.spec",
 	"./unit/Profile.spec",
 	"./unit/StealRules.spec",
+	"./unit/BanditClock.spec",
+	"./unit/Schemas.spec",
 }
 
 for _, path in specs do

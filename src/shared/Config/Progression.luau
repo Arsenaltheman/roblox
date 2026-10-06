@@ -61,6 +61,18 @@ return {
 		-- Rewards: seconds of income + nuggets.
 		cashSeconds = 120,
 		nuggets = 20,
+		-- Daily quests are drawn from this pool (same 3 for everyone on a given UTC day).
+		pool = {
+			{ id = "buy10", kind = "buy", goal = 10, text = "Lasso 10 critters off the train" },
+			{ id = "buy25", kind = "buy", goal = 25, text = "Lasso 25 critters off the train" },
+			{ id = "crack3", kind = "crack", goal = 3, text = "Crack 3 strongboxes" },
+			{ id = "hatch2", kind = "hatch", goal = 2, text = "Hatch 2 eggs" },
+			{ id = "steal1", kind = "steal", goal = 1, text = "Steal a critter from another ranch" },
+			{ id = "lasso2", kind = "lasso", goal = 2, text = "Lasso 2 thieves" },
+			{ id = "collect20", kind = "collect", goal = 20, text = "Collect your ranch cash 20 times" },
+			{ id = "bandit1", kind = "bandit", goal = 1, text = "Rob the Bandit Camp" },
+			{ id = "golden1", kind = "goldenbuy", goal = 1, text = "Buy from the Golden Express" },
+		},
 	},
 
 	streak = {

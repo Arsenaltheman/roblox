@@ -18,4 +18,7 @@ return {
 	-- Dials
 	["econ.incomeScale"] = 1,
 	["vfx.maxTier"] = 4,
+
+	-- Live events: flip on during Saturday admin events (2x income for everyone while true).
+	["event.incomeBoost"] = false,
 }
