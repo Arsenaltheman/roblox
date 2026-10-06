@@ -7,7 +7,19 @@ Last updated: 2026-10-07 (plan v2: "complete everything").
 - It has **never run on a real Roblox server.** This cloud environment can't reach `apis.roblox.com`, and nobody has opened it in Studio yet.
 - The next step is yours (section 2). After it, a new Claude session can publish, upload and smoke-test without you.
 
-## 0. Latest: onboarding, anti-cheat, revenue (round 3)
+## 0. Latest: party play, pets, AFK raids, always-on events (round 4)
+
+All pushed to `main`; 141 unit tests and every check pass. Still never run in Studio.
+
+- **Posse (party of up to 4):** MORE → Posse → invite anyone in the server. Posse mates can't rob or lasso each other, each mate adds +10% cash (shared +30% cap), and every 10 crates run home together pays everyone a spin and Nuggets. A HUD strip shows mates and the bounty.
+  - **Playing with a friend:** they join your server from your Roblox profile (or you invite them with MORE → Invite friends). **Owner step:** in Creator Hub → your experience → Places → *Server Fill*, pick **Reserve slots** (2–4) so a friend or a Roblox Party can always get in. Servers hold 8 players (8 ranches).
+- **Companion pets:** MORE → Wardrobe → COMPANION. One of your own critters follows you around and boosts your cash by rarity (+3% per rarity step, +3% if mutated, up to +24% for a Secret). It still earns in its pen.
+- **AFK raids:** idle for 1 minute and a big red countdown starts; at 5 minutes Bandit Bart raids your ranch and takes a critter, then one every 3 minutes you stay idle. Loot lands in the Bandit Camp stash, where active players rob it back. Tutorial and newcomer-shielded players are exempt. Nobody earns by standing still.
+- **Always something on:** server events every 10 minutes (first after 3 min), each 1.5–5 minutes long, plus weather every 12 minutes; Gold Rush is now +50% (fun, not game-breaking).
+- **Saving and duplication:** progress saves with session locks, atomic transfers and receipt checks; reviewed twice for dupes (none found). Still to verify on real servers once the game is published.
+- **Music and sound:** see the next round (in progress): a music state machine (calm / tense / event / boss / menu), stingers, distance-attenuated world sounds and a settings audit so every setting does what it says. Tracks need licensed picks from the Creator Store (`docs/MUSIC.md` once merged).
+
+## 0a. Round 3: onboarding, anti-cheat, revenue
 
 All pushed to `main`; 140 unit tests and every check pass. Still never run in Studio: the owner's playtest is the next step.
 
