@@ -5,6 +5,7 @@ highlights *inside* an icon (behind its dark outline) are kept. Icons are then f
 blobs, grouped into rows and named in reading order.
 
   python3 -I tools/ui/slice_icons.py assets/ui/source/sheet_a.png assets/ui
+  python3 -I tools/ui/slice_icons.py assets/ui/source/sheet_d.png assets/ui
 """
 
 import sys
@@ -14,16 +15,28 @@ import numpy as np
 from PIL import Image, ImageFilter
 from scipy import ndimage
 
-NAMES = [
-    "coin", "nugget", "wheel", "boots",
-    "shop", "gift", "settings", "moneybag",
-    "crate", "crown", "horseshoe", "scroll",
-    "egg", "book", "lock", "firework",
-]
+# Icon names per sheet, in reading order (4 x 4).
+SHEETS = {
+    "sheet_a": [
+        "coin", "nugget", "wheel", "boots",
+        "shop", "gift", "settings", "moneybag",
+        "crate", "crown", "horseshoe", "scroll",
+        "egg", "book", "lock", "firework",
+    ],
+    "sheet_d": [
+        "sheriffstar", "coins", "magnet", "lasso",
+        "saddlebag", "barn", "lockpick", "clover",
+        "pouch", "chest", "bundle", "smokebomb",
+        "tumbleweed", "beartrap", "ticket", "key",
+    ],
+}
 SIZE = 256  # output icons are SIZE x SIZE with padding
+# Icons with an enclosed see-through hole (white inside a loop that should be transparent).
+HOLES = {"lasso"}
 
 
 def main(sheet_path: str, out_dir: str) -> None:
+    NAMES = SHEETS[Path(sheet_path).stem]
     img = Image.open(sheet_path).convert("RGB")
     rgb = np.asarray(img).astype(np.int16)
     near_white = (rgb.min(axis=2) > 232) & ((rgb.max(axis=2) - rgb.min(axis=2)) < 18)
@@ -69,6 +82,16 @@ def main(sheet_path: str, out_dir: str) -> None:
     out.mkdir(parents=True, exist_ok=True)
     for name, box in zip(NAMES, ordered):
         crop = rgba.crop(tuple(box))
+        if name in HOLES:
+            # Clear large enclosed near-white areas (the hole), keeping small white highlights.
+            region = near_white[box[1] : box[3], box[0] : box[2]]
+            holes, count = ndimage.label(region)
+            a = np.asarray(crop.getchannel("A")).copy()
+            for k in range(1, count + 1):
+                mask = holes == k
+                if mask.sum() > 300:
+                    a[ndimage.binary_dilation(mask, iterations=1)] = 0
+            crop.putalpha(Image.fromarray(a))
         side = max(crop.size)
         canvas = Image.new("RGBA", (side, side), (0, 0, 0, 0))
         canvas.paste(crop, ((side - crop.size[0]) // 2, (side - crop.size[1]) // 2))
