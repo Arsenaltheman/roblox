@@ -77,6 +77,7 @@ local function snapshot(player: Player): { [string]: any }?
 		tutorial = d.Tutorial,
 		pity = d.StrongboxPity,
 		lockpicks = d.Stats.Lockpicks or 0,
+		collected = (d.Stats.ob_FirstCollect or 0) > 0,
 		heists = d.Stats.Heists or 0,
 		boots = d.Stats.Boots or 0,
 		starterPack = d.StarterPack,

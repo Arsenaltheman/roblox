@@ -14,10 +14,14 @@ local Rarities = require("@game/ReplicatedStorage/Shared/Config/Rarities")
 local Species = require("@game/ReplicatedStorage/Shared/Config/Species")
 local CritterRig = require("./CritterRig")
 local Store = require("../Store")
+local TrainView = require("./TrainView")
+local TrainClock = require("@game/ReplicatedStorage/Shared/Sim/TrainClock")
 
 local ANIMATE_DISTANCE = 120
 
 local HeistView = {}
+
+local tutorialGuide: (any) -> { key: string, position: Vector3 }?
 
 type Entry = {
 	pad: BasePart,
@@ -204,6 +208,75 @@ local function clearGuide()
 	guideKey = ""
 end
 
+-- Where the tutorial wants you: your reserved cage (step 0, and the golden ticket in step 1), your
+-- collect plate (step 1 before your first collect), the tutorial bandit (step 2).
+local function myReservedCage(): Vector3?
+	local epoch = Workspace:GetAttribute("TrainEpoch") :: number?
+	if not epoch then
+		return nil
+	end
+	local train = TrainClock.at(epoch, Workspace:GetServerTimeNow())
+	if not train.doorsOpen then
+		return nil
+	end
+	local manifest = TrainView.manifest(train.cycle)
+	if not manifest then
+		return nil
+	end
+	for _, cage in manifest.cages do
+		if cage.o == localPlayer.UserId and not TrainView.isSold(train.cycle, cage.id) then
+			return TrainView.cageWorldPosition(cage.id)
+		end
+	end
+	return nil
+end
+
+local function myRanchPart(name: string): BasePart?
+	local index = localPlayer:GetAttribute("Ranch") :: number?
+	local town = Workspace:FindFirstChild("Town")
+	local ranches = town and town:FindFirstChild("Ranches")
+	if not index or not ranches then
+		return nil
+	end
+	for _, ranch in ranches:GetChildren() do
+		if ranch:GetAttribute("Index") == index then
+			return ranch:FindFirstChild(name, true) :: BasePart?
+		end
+	end
+	return nil
+end
+
+tutorialGuide = function(state: any): { key: string, position: Vector3 }?
+	local step = state.tutorial or 0
+	if step == 1 and not state.collected then
+		local plate = myRanchPart("CollectPlate")
+		return if plate then { key = "plate", position = plate.Position + Vector3.new(0, 2, 0) } else nil
+	end
+	if step <= 1 then
+		local cage = myReservedCage()
+		if cage then
+			return { key = "cage", position = cage }
+		end
+		local p = Layout.platform.center
+		return { key = "platform", position = Vector3.new(p.x, 4, p.z) }
+	end
+	local npcs = Workspace:FindFirstChild("NPCs")
+	if npcs then
+		for _, model in npcs:GetChildren() do
+			if model:GetAttribute("TutorialFor") == localPlayer.UserId then
+				local r = model:FindFirstChild("HumanoidRootPart") :: BasePart?
+				if r then
+					return {
+						key = "bandit" .. math.floor(r.Position.X / 8) .. math.floor(r.Position.Z / 8),
+						position = r.Position,
+					}
+				end
+			end
+		end
+	end
+	return nil
+end
+
 local function updateGuide()
 	local carrying = localPlayer:GetAttribute("HeistCarry") == true
 	local character = localPlayer.Character
@@ -214,7 +287,13 @@ local function updateGuide()
 	if carrying and ranch and Layout.ranches[ranch] then
 		local center = Layout.ranches[ranch].center
 		key, position = "home" .. ranch, Vector3.new(center.x, 3, center.z)
-	elseif state and (state.tutorial or 0) >= 3 and (state.heists or 0) == 0 then
+	elseif state and (state.tutorial or 0) < 3 then
+		-- Tutorial: point at exactly what the hint asks for.
+		local tutorialTarget = tutorialGuide(state)
+		if tutorialTarget then
+			key, position, color = tutorialTarget.key, tutorialTarget.position, Palette.color("red")
+		end
+	elseif state and (state.heists or 0) == 0 then
 		local zone = HeistConfig.zone(1)
 		if zone then
 			key, position, color = "zone1", Vector3.new(zone.x, 3, zone.z), Palette.color("sky")
@@ -225,6 +304,19 @@ local function updateGuide()
 		return
 	end
 	if key == guideKey and guide and guide.Attachment0 and guide.Attachment0.Parent == rootPart then
+		return
+	end
+	-- Same kind of target that moved (the bandit running): slide the target instead of rebuilding.
+	local category = string.match(key, "^%a+")
+	if
+		guide
+		and guideTarget
+		and category == string.match(guideKey, "^%a+")
+		and guide.Attachment0
+		and guide.Attachment0.Parent == rootPart
+	then
+		guideTarget.Position = position
+		guideKey = key
 		return
 	end
 	clearGuide()
@@ -258,6 +350,30 @@ local function updateGuide()
 		NumberSequenceKeypoint.new(1, 0.1),
 	})
 	beam.Parent = target
+	-- A big bouncing arrow over the target so it's obvious even at a glance.
+	local arrow = Instance.new("BillboardGui")
+	arrow.Size = UDim2.fromOffset(70, 70)
+	arrow.StudsOffset = Vector3.new(0, 5, 0)
+	arrow.AlwaysOnTop = true
+	arrow.LightInfluence = 0
+	local glyph = Instance.new("TextLabel")
+	glyph.Size = UDim2.fromScale(1, 1)
+	glyph.BackgroundTransparency = 1
+	glyph.Text = "▼"
+	glyph.TextScaled = true
+	glyph.TextColor3 = color
+	glyph.FontFace = Font.fromEnum(Enum.Font.LuckiestGuy)
+	local stroke = Instance.new("UIStroke")
+	stroke.Thickness = 3
+	stroke.Parent = glyph
+	glyph.Parent = arrow
+	arrow.Parent = target
+	task.spawn(function()
+		while arrow.Parent do
+			arrow.StudsOffset = Vector3.new(0, 5 + math.abs(math.sin(os.clock() * 4)) * 1.5, 0)
+			task.wait()
+		end
+	end)
 	beam.Destroying:Once(function()
 		a0:Destroy()
 	end)

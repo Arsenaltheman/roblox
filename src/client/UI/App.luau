@@ -15,6 +15,7 @@ local WheelConfig = require("@game/ReplicatedStorage/Shared/Config/Wheel")
 local Palette = require("@game/ReplicatedStorage/Shared/Config/Palette")
 local Economy = require("@game/ReplicatedStorage/Shared/Sim/Economy")
 local Luck = require("@game/ReplicatedStorage/Shared/Sim/Luck")
+local TrainClock = require("@game/ReplicatedStorage/Shared/Sim/TrainClock")
 local Almanac = require("@game/ReplicatedStorage/Shared/Sim/Almanac")
 local NumberFormat = require("@game/ReplicatedStorage/Shared/Sim/NumberFormat")
 local Net = require("@game/ReplicatedStorage/Shared/Net/Net")
@@ -1130,15 +1131,34 @@ end
 
 -- First-session hint ("Buy a critter!", "Collect at your ranch"...).
 -- The next thing a new player should try: the tutorial, then the first heist, boots and gear.
+-- Ticks twice a second so hints that depend on the train re-evaluate.
+local hintClock = source(0)
+task.spawn(function()
+	while true do
+		hintClock(os.clock())
+		task.wait(0.5)
+	end
+end)
+
 local function nextHint(): string
+	hintClock()
 	local s = state()
 	local step = s.tutorial or 0
+	local epoch = Workspace:GetAttribute("TrainEpoch") :: number?
+	local train = if epoch then TrainClock.at(epoch, Workspace:GetServerTimeNow()) else nil
+	local trainHere = train ~= nil and train.doorsOpen
 	if step == 0 then
-		return "Tap BUY on your RESERVED cage!"
+		return if trainHere
+			then "Follow the red arrow and tap BUY on your RESERVED cage!"
+			else "The Critter Express is coming! Wait on the platform."
+	elseif step == 1 and not s.collected then
+		return "Your critter earns cash! Step on the gold COLLECT plate at your ranch."
 	elseif step == 1 then
-		return "Grab the GOLDEN TICKET cage on the next train!"
+		return if trainHere
+			then "A GOLDEN TICKET cage is waiting for you! Grab it!"
+			else "Next train brings you a GOLDEN TICKET critter. Head to the platform!"
 	elseif step < 3 then
-		return "Lasso Bandit Bart when he shows up!"
+		return "Watch out! Bandit Bart is coming for your critters. LASSO him!"
 	end
 	if localPlayer:GetAttribute("HeistCarry") == true then
 		return ""

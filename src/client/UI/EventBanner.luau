@@ -8,6 +8,7 @@ local Vide = require("@game/ReplicatedStorage/Packages/Vide")
 local EventsConfig = require("@game/ReplicatedStorage/Shared/Config/Events")
 local Palette = require("@game/ReplicatedStorage/Shared/Config/Palette")
 local NumberFormat = require("@game/ReplicatedStorage/Shared/Sim/NumberFormat")
+local Store = require("../Store")
 local Components = require("./Components")
 local Theme = require("./Theme")
 
@@ -79,8 +80,10 @@ function EventBanner.build(): Instance
 		Position = UDim2.new(1, -16, 0, 320),
 		AnchorPoint = Vector2.new(1, 0),
 		BackgroundColor3 = Color3.new(1, 1, 1),
+		-- Kept out of the way until the tutorial is done (fewer things to read in the first minutes).
 		Visible = function()
-			return secondsToNext() < math.huge or activeId() ~= ""
+			local tutorial = (Store.state() or {}).tutorial or 0
+			return tutorial >= 3 and (secondsToNext() < math.huge or activeId() ~= "")
 		end,
 		Components.corner(UDim.new(0, 16)),
 		Components.stroke(3.5),

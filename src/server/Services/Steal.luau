@@ -707,7 +707,7 @@ function Steal.start()
 		end
 	end)
 
-	-- Tutorial bandit appears ~4 minutes into a brand-new player's first session.
+	-- Tutorial bandit: 20 s after the golden-ticket critter lands (tutorial step 2).
 	Registry.Ranch.critterAdded:Connect(function(player)
 		if Registry.Progression.tutorialStep(player) == 2 then
 			task.delay(20, function()
