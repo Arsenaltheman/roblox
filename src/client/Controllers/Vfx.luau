@@ -415,6 +415,7 @@ local function onFx(kind: string, value: number, position: Vector3?)
 		end
 	elseif kind == "giftReady" then
 		Sound.play("giftReady")
+		Store.toast("A GIFT is ready! Tap the present at the top right.")
 	elseif kind == "grabStart" then
 		Store.grab({ started = os.clock(), duration = value })
 	elseif kind == "caught" then
@@ -652,6 +653,26 @@ local function onFx(kind: string, value: number, position: Vector3?)
 		Sound.play("alarm")
 		Vfx.alarm()
 		Store.toast("Bandit Bart is stealing from your ranch! Follow the red arrow and LASSO him!")
+		-- Red WANTED glow on him, like a real thief.
+		task.spawn(function()
+			for _ = 1, 20 do
+				local npcs = Workspace:FindFirstChild("NPCs")
+				for _, npc in (npcs and npcs:GetChildren()) or {} do
+					if
+						npc:GetAttribute("TutorialFor") == localPlayer.UserId
+						and not npc:FindFirstChildOfClass("Highlight")
+					then
+						local glow = Instance.new("Highlight")
+						glow.FillColor = C("red")
+						glow.OutlineColor = Color3.fromRGB(255, 230, 120)
+						glow.FillTransparency = 0.6
+						glow.Parent = npc
+						return
+					end
+				end
+				task.wait(0.25)
+			end
+		end)
 	elseif kind == "spinEarned" then
 		Sound.play("giftReady")
 		if root then

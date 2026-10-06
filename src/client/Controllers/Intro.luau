@@ -244,7 +244,13 @@ local function play()
 	end)
 	-- Free spin waiting? Straight into the wheel.
 	task.delay(0.6, function()
-		if ((localPlayer:GetAttribute("Spins") :: number?) or 0) > 0 and Store.menu() == "" then
+		local state = Store.state()
+		local tutorialDone = state ~= nil and (state.tutorial or 0) >= 3
+		if
+			tutorialDone
+			and ((localPlayer:GetAttribute("Spins") :: number?) or 0) > 0
+			and Store.menu() == ""
+		then
 			Store.menu("wheel")
 		end
 	end)

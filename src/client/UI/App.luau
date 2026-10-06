@@ -16,6 +16,8 @@ local Palette = require("@game/ReplicatedStorage/Shared/Config/Palette")
 local Economy = require("@game/ReplicatedStorage/Shared/Sim/Economy")
 local Luck = require("@game/ReplicatedStorage/Shared/Sim/Luck")
 local TrainClock = require("@game/ReplicatedStorage/Shared/Sim/TrainClock")
+local TrainConfig = require("@game/ReplicatedStorage/Shared/Config/Train")
+local TrainView = require("../Controllers/TrainView")
 local Almanac = require("@game/ReplicatedStorage/Shared/Sim/Almanac")
 local NumberFormat = require("@game/ReplicatedStorage/Shared/Sim/NumberFormat")
 local Net = require("@game/ReplicatedStorage/Shared/Net/Net")
@@ -243,12 +245,12 @@ local function sideMenu(): Instance
 			return step() >= 3
 		end, nil, Theme.color.purple, "book"),
 		menuButton(-1, "✪", "SPIN", "wheel", function()
-			return true
+			return step() >= 3
 		end, function()
 			return spinsAttr()
 		end, Theme.color.pink, "wheel"),
 		menuButton(0, "»", "BOOTS", "boots", function()
-			return true
+			return step() >= 3
 		end, function()
 			local level = bootsLevel()
 			local cost = HeistConfig.bootsCost(level)
@@ -555,6 +557,10 @@ local function announcements(): Instance
 		Position = UDim2.new(0.5, 0, 0, 112),
 		AnchorPoint = Vector2.new(0.5, 0),
 		BackgroundTransparency = 1,
+		-- New players get the tutorial hint there instead of server chatter.
+		Visible = function()
+			return (state().tutorial or 0) >= 3
+		end,
 		create("UIListLayout")({
 			Padding = UDim.new(0, 6),
 			HorizontalAlignment = Enum.HorizontalAlignment.Center,
@@ -1095,7 +1101,10 @@ end
 -- Welcome back: offline earnings + streak reward.
 local function welcome(): Instance
 	return Components.panel({
-		title = "WELCOME BACK!",
+		title = function()
+			local p = state().pending or {}
+			return if (p.offline or 0) > 0 then "WELCOME BACK!" else "DAILY REWARD!"
+		end,
 		accent = Theme.color.gold,
 		size = UDim2.fromScale(0.5, 0.55),
 		onClose = function()
@@ -1171,18 +1180,48 @@ local function nextHint(): string
 	local epoch = Workspace:GetAttribute("TrainEpoch") :: number?
 	local train = if epoch then TrainClock.at(epoch, Workspace:GetServerTimeNow()) else nil
 	local trainHere = train ~= nil and train.doorsOpen
+	-- Seconds until the doors open on the next train (a real countdown, so the wait feels planned).
+	local eta = 0
+	if train then
+		if train.phase == "arriving" then
+			eta = train.phaseLength - train.inPhase + TrainConfig.doorsOpenDelay
+		elseif train.phase == "departing" then
+			eta = train.phaseLength - train.inPhase + TrainConfig.arriveSeconds + TrainConfig.doorsOpenDelay
+		end
+	end
+	-- Is one of this train's cages reserved for me (I joined before it was rolled)?
+	local mine = false
+	if train and trainHere then
+		local manifest = TrainView.manifest(train.cycle)
+		for _, cage in ((manifest and manifest.cages) or {}) :: { any } do
+			if cage.o == localPlayer.UserId and not TrainView.isSold(train.cycle, cage.id) then
+				mine = true
+			end
+		end
+	end
+	local function waiting(what: string): string
+		if trainHere then
+			return `This train has no cage for you yet. {what} arrives on the next one!`
+		end
+		return `{what} arrives in {math.ceil(eta)}s. Wait on the platform!`
+	end
 	if step == 0 then
-		return if trainHere
+		return if trainHere and mine
 			then "Follow the red arrow and tap BUY on your RESERVED cage!"
-			else "The Critter Express is coming! Wait on the platform."
+			else waiting("Your first critter")
 	elseif step == 1 and not s.collected then
 		return "Your critter earns cash! Step on the gold COLLECT plate at your ranch."
 	elseif step == 1 then
-		return if trainHere
+		return if trainHere and mine
 			then "A GOLDEN TICKET cage is waiting for you! Grab it!"
-			else "Next train brings you a GOLDEN TICKET critter. Head to the platform!"
+			else waiting("Your GOLDEN TICKET critter")
 	elseif step < 3 then
 		return "Watch out! Bandit Bart is coming for your critters. LASSO him!"
+	end
+	for _, g in s.gifts or {} do
+		if g.ready and not g.claimed then
+			return "A GIFT is ready! Tap the present at the top right."
+		end
 	end
 	if localPlayer:GetAttribute("HeistCarry") == true then
 		return ""
@@ -1218,7 +1257,8 @@ local function hint(): Instance
 		TextColor3 = Theme.color.white,
 		FontFace = Theme.font.title,
 		Visible = function()
-			return nextHint() ~= "" and #Store.announcements() == 0
+			-- During the tutorial the hint always wins; later, server announcements take the spot.
+			return nextHint() ~= "" and ((state().tutorial or 0) < 3 or #Store.announcements() == 0)
 		end,
 		Text = nextHint,
 		Components.corner(UDim.new(0, 14)),
@@ -1692,7 +1732,10 @@ function App.build(scale: () -> number): Instance
 			end, TradeUI.invitePopup),
 			show(function()
 				local p = state().pending
-				return p ~= nil and ((p.offline or 0) > 0 or p.streakSlot ~= nil)
+				-- Waits until the tutorial is done (rewards are saved, nothing is lost).
+				return (state().tutorial or 0) >= 3
+					and p ~= nil
+					and ((p.offline or 0) > 0 or p.streakSlot ~= nil)
 			end, welcome),
 			show(function()
 				return Store.odds() ~= nil

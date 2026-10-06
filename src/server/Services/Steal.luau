@@ -498,8 +498,10 @@ local function spawnTutorialBandit(player: Player)
 	end
 	local model = npc :: Model
 	model.Name = "Bandit Bart"
-	local center = Layout.ranches[index].center
-	local start = Vector3.new(center.x, 4, center.z)
+	-- Starts in the gate opening (not inside the fenced yard, where he'd walk into a fence).
+	local ranch = Layout.ranches[index]
+	local center = ranch.center
+	local start = Vector3.new(center.x, 4, center.z + ranch.facing * (Layout.ranchSize / 2 - 1))
 	model:PivotTo(CFrame.new(start))
 	model:SetAttribute("TutorialFor", player.UserId)
 	model:SetAttribute("Wanted", true)

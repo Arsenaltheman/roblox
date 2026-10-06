@@ -141,6 +141,7 @@ end
 local function rollTrain(cycle: number)
 	local slots: { Manifest.PlayerSlot } = {}
 	local tutorial: { [number]: number } = {}
+	local affordable: { [number]: number } = {}
 	for _, player in Players:GetPlayers() do
 		if Registry.Ranch.indexOf(player) then
 			local luck = Train.personalLuck(player)
@@ -153,6 +154,8 @@ local function rollTrain(cycle: number)
 			local step = Registry.Progression.tutorialStep(player)
 			if step <= 1 then
 				tutorial[player.UserId] = step
+				local d = Registry.Data.get(player)
+				affordable[player.UserId] = math.max(1, Economy.tierForBudget(if d then d.Cash else 0))
 			end
 		end
 	end
@@ -170,6 +173,11 @@ local function rollTrain(cycle: number)
 			cage.tier, cage.speciesId, cage.rarity = 1, species.id, Rarities.forTier(1).id
 			cage.price, cage.mutation, cage.goldenTicket = Economy.price(1), nil, false
 		elseif step == 1 then
+			-- Always affordable with the cash they have right now, so the tutorial can't stall.
+			local tier = math.min(cage.tier, affordable[cage.owner] or cage.tier)
+			local species = Species.byTier[tier]
+			cage.tier, cage.speciesId, cage.rarity, cage.price =
+				tier, species.id, Rarities.forTier(tier).id, Economy.price(tier)
 			cage.mutation = "Gold"
 			cage.goldenTicket = true
 		end
