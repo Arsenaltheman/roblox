@@ -272,7 +272,7 @@ local chapters: { Chapter } = {
 			{
 				name = "Mythic Hunter",
 				objectives = {
-					o("almanac", 35, "Discover 35 species"),
+					o("almanac", 32, "Discover 32 species"),
 					o("bestTier", 30, "Own a Mythic critter"),
 				},
 			},
@@ -321,7 +321,7 @@ local chapters: { Chapter } = {
 			{
 				name = "King of the West",
 				objectives = {
-					o("almanac", 40, "Discover every species"),
+					o("almanac", 36, "Discover 36 species"),
 					o("frontier", 8, "Reach Frontier 8"),
 				},
 			},

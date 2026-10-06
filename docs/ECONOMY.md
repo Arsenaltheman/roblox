@@ -76,3 +76,17 @@ Income checkpoints for the free player (median):
 - Egg hatching is instant in the model; in game it takes 2 min.
 
 These assumptions get replaced with real numbers from analytics after the beta.
+
+## The Bounty Trail against the curve
+The Trail (`src/shared/Config/Trail.luau`) has 8 chapters. Chapter n ends at Frontier n, so a free player finishes chapter 7 around 7.2 h and the last chapter around 9.4–10+ h (F8 in the table above). Its checked goals sit inside the simulated curve:
+
+| Goal | Chapter (ends at) | Simulator says |
+|---|---|---|
+| $300K/s | 4 (F4, ~2.4 h) | $344K/s at 2 h |
+| Own a Legendary (t25) | 5 (F5, ~3.4 h) | best tier t25 at 3 h |
+| $40M/s | 6 (F6, ~5.1 h) | $47.5M/s at 5 h |
+| Own a Mythic (t30) | 7 (F7, ~7.2 h) | t30 at 5 h |
+
+The counted goals (80 heists, 6 Bandit King wins and so on) add play on top.
+
+The simulator does **not** model heist income yet, so real progress is a little faster than this table. The Trail's heist and boss counts make up for that in time played.

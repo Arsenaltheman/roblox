@@ -6,6 +6,7 @@
 local Players = game:GetService("Players")
 
 local Cosmetics = require("@game/ReplicatedStorage/Shared/Config/Cosmetics")
+local Species = require("@game/ReplicatedStorage/Shared/Config/Species")
 local TrailConfig = require("@game/ReplicatedStorage/Shared/Config/Trail")
 local Almanac = require("@game/ReplicatedStorage/Shared/Sim/Almanac")
 local NumberFormat = require("@game/ReplicatedStorage/Shared/Sim/NumberFormat")
@@ -16,9 +17,13 @@ local Registry = require("../Registry")
 local Trail = {}
 
 local function facts(player: Player, d: any): TrailSim.Facts
+	-- Regular species only (Robux exclusives don't count toward discovery goals).
 	local almanac = 0
-	for _ in d.Almanac do
-		almanac += 1
+	for id in d.Almanac do
+		local species = Species.byId[id]
+		if species and not species.exclusive then
+			almanac += 1
+		end
 	end
 	local gearOwned = 0
 	for key, owned in d.Owned do
