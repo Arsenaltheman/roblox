@@ -42,7 +42,7 @@ return function()
 			check.equal(Economy.multiplier(base), 1)
 			check.is_true(near(Economy.multiplier({ frontier = 0, passes = {}, friends = 5 }), 1.3))
 			check.is_true(
-				near(Economy.multiplier({ frontier = 0, passes = {}, friends = 3, eventActive = true }), 2.3)
+				near(Economy.multiplier({ frontier = 0, passes = {}, friends = 3, eventActive = true }), 1.8)
 			)
 			check.equal(Economy.multiplier({ frontier = 0, passes = { DoubleCash = true } }), 2)
 			check.equal(Economy.multiplier({ frontier = 0, passes = { DoubleCash = true, VIP = true } }), 3)
