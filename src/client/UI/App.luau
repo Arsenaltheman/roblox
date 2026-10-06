@@ -28,6 +28,7 @@ local Hotbar = require("./Hotbar")
 local SprintButton = require("./SprintButton")
 local EventBanner = require("./EventBanner")
 local Quests = require("./Quests")
+local Wardrobe = require("./Wardrobe")
 local Theme = require("./Theme")
 
 local create = Vide.create :: any
@@ -974,6 +975,22 @@ local function settingsMenu(): Instance
 						Store.menu("trade")
 					end,
 				}),
+				card({
+					order = 0,
+					title = function()
+						return "Wardrobe"
+					end,
+					sub = function()
+						return "Titles, hats, lasso trails, posters, ranch themes"
+					end,
+					color = Theme.color.purple,
+					button = "OPEN",
+					glyph = "♛",
+					onClick = function()
+						Sound.play("click")
+						Store.menu("wardrobe")
+					end,
+				}),
 				volume(1, "Music", "Music volume"),
 				volume(2, "Sfx", "Sound effects"),
 				volume(3, "Voice", "Critter voices"),
@@ -1580,6 +1597,13 @@ function App.build(scale: () -> number): Instance
 			show(function()
 				return Store.menu() == "eggs"
 			end, eggsMenu),
+			show(function()
+				return Store.menu() == "wardrobe"
+			end, function()
+				return Wardrobe.menu(function()
+					Store.menu("")
+				end)
+			end),
 			show(function()
 				return Store.menu() == "quests"
 			end, questsMenu),

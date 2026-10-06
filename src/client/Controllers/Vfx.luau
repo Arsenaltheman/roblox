@@ -8,6 +8,7 @@ local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 local Workspace = game:GetService("Workspace")
 
+local Cosmetics = require("@game/ReplicatedStorage/Shared/Config/Cosmetics")
 local Mutations = require("@game/ReplicatedStorage/Shared/Config/Mutations")
 local Palette = require("@game/ReplicatedStorage/Shared/Config/Palette")
 local Rarities = require("@game/ReplicatedStorage/Shared/Config/Rarities")
@@ -333,6 +334,13 @@ end
 
 -- WANTED glow on thieves (Highlight is pooled: toggled, never destroyed per frame).
 local highlights: { [Player]: Highlight } = {}
+-- Colour of a player's equipped cosmetic in a slot (lasso trail, wanted poster), if any.
+local function cosmeticColor(player: Player?, slot: string): Color3?
+	local id = player and player:GetAttribute("Equip_" .. slot) :: string?
+	local cosmetic = id and Cosmetics.byId[id]
+	return if cosmetic then Color3.fromHex(cosmetic.color) else nil
+end
+
 local function updateWanted(player: Player)
 	local wanted = player:GetAttribute("Wanted") == true
 	local character = player.Character
@@ -348,6 +356,8 @@ local function updateWanted(player: Player)
 			h = created
 		end
 		local highlight = h :: Highlight
+		-- The WANTED glow takes the thief's poster colour when they've equipped one.
+		highlight.FillColor = cosmeticColor(player, "poster") or C("red")
 		highlight.Adornee = character
 		highlight.Parent = effects
 		highlight.Enabled = true
@@ -374,7 +384,8 @@ local function onFx(kind: string, value: number, position: Vector3?)
 	elseif kind == "lasso" then
 		local from = playerRoot(value)
 		if from and position then
-			Vfx.lasso(from.Position, position)
+			local thrower = Players:GetPlayerByUserId(value)
+			Vfx.lasso(from.Position, position, cosmeticColor(thrower, "lassoTrail"))
 		end
 	elseif kind == "wanted" or kind == "stealFailed" then
 		local p = Players:GetPlayerByUserId(value)
