@@ -64,6 +64,11 @@ function Steal.isCarrying(player: Player): boolean
 	return carrying[player] ~= nil
 end
 
+-- Carrying a stolen critter or mid-grab (blocks trading).
+function Steal.isBusy(player: Player): boolean
+	return carrying[player] ~= nil or grabbing[player] ~= nil
+end
+
 -- Temporary speed boosts (Smoke Bomb).
 local burstUntil: { [Player]: { untilTime: number, multiplier: number } } = {}
 

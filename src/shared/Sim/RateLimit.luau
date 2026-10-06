@@ -46,6 +46,12 @@ RateLimit.limits = {
 	HitBoss = { rate = 3, burst = 4 },
 	-- Press + release per sprint; generous so tapping sprint never gets a release dropped.
 	Sprint = { rate = 6, burst = 10 },
+	TradeInvite = { rate = 0.2, burst = 2 },
+	TradeRespond = { rate = 1, burst = 2 },
+	TradeOffer = { rate = 4, burst = 8 },
+	TradeNuggets = { rate = 3, burst = 5 },
+	TradeReady = { rate = 2, burst = 3 },
+	TradeCancel = { rate = 1, burst = 2 },
 } :: { [string]: Limit }
 
 function RateLimit.newBucket(limit: Limit, now: number): Bucket

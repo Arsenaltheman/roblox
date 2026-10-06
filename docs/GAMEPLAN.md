@@ -52,7 +52,7 @@ Status: ✅ built · 🔨 being built now · 📅 next · 🧊 later.
 | Free daily spin | Prize Wheel (free spins only, never sold) | ✅ |
 | Quests | Wanted Board daily quests | ✅ |
 | Leaderboards in the world | Boards for Richest (with a gold statue of the #1), Top Heisters, Most Wanted; this server + all-time | ✅ |
-| Trading | Same-server escrow trading (policy-gated) | 🧊 |
+| Trading | Same-server escrow trading: invite a player (MORE → TRADE), up to 6 critters + Gold Nuggets per side, both READY → 5 s countdown, server swaps atomically. Frontier 1+, 7-day accounts, PolicyService-gated; Branded and Robux-luck critters excluded | ✅ |
 | Potions / boosts | 2x Cash for finishing all daily quests; Luck Potion for beating the Bandit King | ✅ |
 | Image-based, chunky UI | Icon set + gold titles, stripes, mascots | ✅ (icons appear after upload) |
 
@@ -77,7 +77,7 @@ Status: ✅ built · 🔨 being built now · 📅 next · 🧊 later.
 4. 📅 **Bandit King boss** in Ghost Town.
 5. 📅 **Leaderboards** at the station.
 6. 📅 **Almanac set bonuses** and **timed boosts**.
-7. 🧊 **Trading**.
+7. ✅ **Trading** (same-server escrow).
 
 ## 3. Making Robux items purchasable live (owner steps)
 Roblox only sells an item once it exists in Creator Hub, and only the owner can create it.

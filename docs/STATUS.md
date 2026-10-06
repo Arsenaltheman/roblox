@@ -29,6 +29,7 @@ Everything below is pushed to `main`, and every check passes: 119 unit tests, ty
 5. Bandit King: does he leap smoothly? Is the health bar readable? Does the loot arrive?
 6. Leaderboards: are the boards readable from the platform?
 7. Sprint: hold Shift (PC), click L3 (gamepad) or hold/tap the SPRINT button (phone, left of jump). Do you run ~30% faster for 5 s, does the stamina bar drain (faster while carrying) and refill, and does the FOV kick, dust and landing puff feel good? Shift-lock moved to Ctrl.
+8. Trading (2-player test server, both at Frontier 1+): MORE → TRADE → invite. Add critters and nuggets, change an offer while both are READY (the countdown must stop), then finish a trade and check both ranches. Studio skips the account-age and policy checks.
 
 ## 1. What exists
 

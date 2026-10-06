@@ -33,6 +33,12 @@ local Store = {
 	-- Predicted sprint stamina (0..1) and whether we're sprinting (Movement writes, SprintButton reads).
 	stamina = source(1),
 	sprinting = source(false),
+	-- Open trade window view from the server (nil = not trading), see server/Services/Trade.luau.
+	trade = source(nil :: any),
+	-- Pending incoming trade invite.
+	tradeInvite = source(nil :: { from: number, expires: number }?),
+	-- Server time, ticked while a trade is open (countdowns).
+	serverClock = source(0),
 }
 
 local nextId = 0

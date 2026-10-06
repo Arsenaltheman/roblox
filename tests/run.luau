@@ -26,6 +26,7 @@ local specs = {
 	"./unit/Almanac.spec",
 	"./unit/Trail.spec",
 	"./unit/Stamina.spec",
+	"./unit/Trade.spec",
 }
 
 for _, path in specs do

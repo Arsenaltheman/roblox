@@ -50,6 +50,33 @@ end)
 Net.listen("Reveal", function(data)
 	Reveal.push(data)
 end)
+Net.listen("TradeState", function(view)
+	if view and not Store.trade() then
+		Store.menu("")
+		Store.tradeInvite(nil)
+	end
+	Store.serverClock(Workspace:GetServerTimeNow())
+	Store.trade(view)
+end)
+Net.listen("TradeInvited", function(from: number, seconds: number)
+	if seconds > 0 then
+		Store.tradeInvite({ from = from, expires = os.clock() + seconds })
+		loaded.Sound.play("toast")
+	else
+		local current = Store.tradeInvite()
+		if current and current.from == from then
+			Store.tradeInvite(nil)
+		end
+	end
+end)
+task.spawn(function()
+	while true do
+		task.wait(0.2)
+		if Store.trade() then
+			Store.serverClock(Workspace:GetServerTimeNow())
+		end
+	end
+end)
 
 -- Attributes the server sets for quick HUD values.
 local function syncPlayerAttributes()

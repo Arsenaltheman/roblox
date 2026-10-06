@@ -23,6 +23,7 @@ local Sound = require("../Controllers/Sound")
 local Store = require("../Store")
 local Components = require("./Components")
 local Shop = require("./Shop")
+local TradeUI = require("./Trade")
 local Hotbar = require("./Hotbar")
 local SprintButton = require("./SprintButton")
 local EventBanner = require("./EventBanner")
@@ -957,6 +958,22 @@ local function settingsMenu(): Instance
 		end,
 		children = {
 			list({
+				card({
+					order = 0,
+					title = function()
+						return "Trade with players"
+					end,
+					sub = function()
+						return "Safe escrow trades: critters and Gold Nuggets"
+					end,
+					color = Theme.color.teal,
+					button = "TRADE",
+					glyph = "⇄",
+					onClick = function()
+						Sound.play("click")
+						Store.menu("trade")
+					end,
+				}),
 				volume(1, "Music", "Music volume"),
 				volume(2, "Sfx", "Sound effects"),
 				volume(3, "Voice", "Critter voices"),
@@ -1581,6 +1598,19 @@ function App.build(scale: () -> number): Instance
 			show(function()
 				return Store.menu() == "wheel"
 			end, wheelMenu),
+			show(function()
+				return Store.menu() == "trade"
+			end, function()
+				return TradeUI.picker(function()
+					Store.menu("")
+				end)
+			end),
+			show(function()
+				return Store.trade() ~= nil
+			end, TradeUI.window),
+			show(function()
+				return Store.tradeInvite() ~= nil and Store.trade() == nil
+			end, TradeUI.invitePopup),
 			show(function()
 				local p = state().pending
 				return p ~= nil and ((p.offline or 0) > 0 or p.streakSlot ~= nil)

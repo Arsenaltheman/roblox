@@ -32,6 +32,12 @@ return {
 		"UseGear",
 		"HitBoss",
 		"Sprint",
+		"TradeInvite",
+		"TradeRespond",
+		"TradeOffer",
+		"TradeNuggets",
+		"TradeReady",
+		"TradeCancel",
 	},
 	-- Client -> server with a reply (RemoteFunctions). Kept minimal.
 	functions = {
@@ -48,5 +54,7 @@ return {
 		"Toast",
 		"Fx",
 		"WheelResult",
+		"TradeInvited",
+		"TradeState",
 	},
 }
