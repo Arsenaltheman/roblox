@@ -38,6 +38,9 @@ RateLimit.limits = {
 	Lockpick = { rate = 0.5, burst = 1 },
 	ClientLog = { rate = 0.2, burst = 2 },
 	BugReport = { rate = 1 / 60, burst = 1 },
+	HeistGrab = { rate = 2, burst = 3 },
+	BuyBoots = { rate = 1, burst = 2 },
+	SpinWheel = { rate = 0.2, burst = 1 },
 } :: { [string]: Limit }
 
 function RateLimit.newBucket(limit: Limit, now: number): Bucket

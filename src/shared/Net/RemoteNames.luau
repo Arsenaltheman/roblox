@@ -25,6 +25,9 @@ return {
 		"Lockpick",
 		"ClientLog",
 		"BugReport",
+		"HeistGrab",
+		"BuyBoots",
+		"SpinWheel",
 	},
 	-- Client -> server with a reply (RemoteFunctions). Kept minimal.
 	functions = {

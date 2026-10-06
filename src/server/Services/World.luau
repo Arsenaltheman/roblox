@@ -5,8 +5,10 @@
 
 local Workspace = game:GetService("Workspace")
 
+local HeistConfig = require("@game/ReplicatedStorage/Shared/Config/Heist")
 local Layout = require("@game/ReplicatedStorage/Shared/Config/Layout")
 local Palette = require("@game/ReplicatedStorage/Shared/Config/Palette")
+local Rarities = require("@game/ReplicatedStorage/Shared/Config/Rarities")
 
 local World = {}
 
@@ -143,14 +145,16 @@ end
 local function buildTerrain()
 	local terrain = Workspace.Terrain
 	terrain:Clear()
-	-- Base sand layer, top at y = 0.
-	terrain:FillBlock(CFrame.new(0, -6, 75), Vector3.new(1200, 12, 1200), Enum.Material.Sand)
+	terrain.Decoration = false -- animated grass costs frames on phones
+	-- Base sand layer. Its surface sits ~1 stud BELOW y = 0 so the town's floors, pens and plates
+	-- (built at y = 0) always show on top of it instead of being swallowed.
+	terrain:FillBlock(CFrame.new(0, -7, 75), Vector3.new(960, 12, 960), Enum.Material.Sand)
 	-- Main street and the area around the station: packed dirt, so paths read at a glance.
-	terrain:FillBlock(CFrame.new(0, -2, 75), Vector3.new(232, 4, 16), Enum.Material.Ground)
-	terrain:FillBlock(CFrame.new(0, -2, 14), Vector3.new(124, 4, 20), Enum.Material.Ground)
+	terrain:FillBlock(CFrame.new(0, -3, 75), Vector3.new(232, 4, 16), Enum.Material.Ground)
+	terrain:FillBlock(CFrame.new(0, -3, 14), Vector3.new(124, 4, 20), Enum.Material.Ground)
 	-- Dirt aprons in front of the landmark buildings.
 	for _, at: Layout.V3 in Layout.landmarks :: { [string]: Layout.V3 } do
-		terrain:FillBlock(CFrame.new(at.x, -2, at.z), Vector3.new(30, 4, 24), Enum.Material.Ground)
+		terrain:FillBlock(CFrame.new(at.x, -3, at.z), Vector3.new(30, 4, 24), Enum.Material.Ground)
 	end
 
 	local rand = rng(11)
@@ -160,7 +164,9 @@ local function buildTerrain()
 		local dist = 250 + rand() * 120
 		local radius = 18 + rand() * 30
 		local at = Vector3.new(math.cos(angle) * dist, -radius * 0.7, 75 + math.sin(angle) * dist)
-		terrain:FillBall(at, radius, Enum.Material.Sand)
+		if not HeistConfig.insideAnyZone(at.X, at.Z, radius + 12) then
+			terrain:FillBall(at, radius, Enum.Material.Sand)
+		end
 	end
 	-- Canyon cliffs: stacked, slightly offset blocks with alternating rock layers (strata), so the
 	-- horizon has the striped mesas of the Wild West.
@@ -192,8 +198,10 @@ local function buildTerrain()
 		local angle = rand() * math.pi * 2
 		local dist = 220 + rand() * 150
 		local at = Vector3.new(math.cos(angle) * dist, 0, 75 + math.sin(angle) * dist)
-		terrain:FillBall(at, 4 + rand() * 7, Enum.Material.Rock)
-		terrain:FillBall(at + Vector3.new(4, -1, 3), 3 + rand() * 4, Enum.Material.Sandstone)
+		if not HeistConfig.insideAnyZone(at.X, at.Z, 14) then
+			terrain:FillBall(at, 4 + rand() * 7, Enum.Material.Rock)
+			terrain:FillBall(at + Vector3.new(4, -1, 3), 3 + rand() * 4, Enum.Material.Sandstone)
+		end
 	end
 	-- Oasis pond with grass around it, north of the station (outside the train loop).
 	local pond = Vector3.new(70, 0, -120)
@@ -223,7 +231,7 @@ local function buildGround(root: Instance)
 	part({
 		name = "SafetyFloor",
 		size = Vector3.new(900, 2, 900),
-		cframe = CFrame.new(0, -3, 75),
+		cframe = CFrame.new(0, -2.2, 75),
 		color = "sand",
 		transparency = 1,
 		parent = root,
@@ -601,7 +609,10 @@ local function buildScenery(root: Instance)
 	for _ = 1, 45 do
 		local angle = rand() * math.pi * 2
 		local dist = 220 + rand() * 160
-		cactus(scenery, Vector3.new(math.cos(angle) * dist, 0, 75 + math.sin(angle) * dist), 6 + rand() * 7)
+		local at = Vector3.new(math.cos(angle) * dist, 0, 75 + math.sin(angle) * dist)
+		if not HeistConfig.insideAnyZone(at.X, at.Z, 6) then
+			cactus(scenery, at, 6 + rand() * 7)
+		end
 	end
 	-- Lantern posts along both sides of the main street and the platform.
 	for x = -105, 105, 30 do
@@ -628,6 +639,200 @@ local function buildScenery(root: Instance)
 	scenery.Parent = root
 end
 
+-- Heist zones: each gets its own ground, props and a big sign facing town (Heist service adds the
+-- nests and guards). Themes: cactus flats, red canyon walls, a gold mine, a spooky ghost town.
+local function zoneSign(parent: Instance, zone: HeistConfig.Zone)
+	local toTown = (Vector3.new(0, 0, 75) - Vector3.new(zone.x, 0, zone.z)).Unit
+	local at = Vector3.new(zone.x, 0, zone.z) + toTown * (zone.radius + 6)
+	local face = CFrame.lookAt(at, at + toTown)
+	for side = -1, 1, 2 do
+		part({
+			name = "SignPost",
+			size = Vector3.new(0.8, 12, 0.8),
+			cframe = face * CFrame.new(side * 9, 6, 0),
+			color = "woodDark",
+			material = Enum.Material.Wood,
+			parent = parent,
+		})
+	end
+	local board = part({
+		name = "ZoneSign",
+		size = Vector3.new(20, 5, 0.6),
+		cframe = face * CFrame.new(0, 10, 0),
+		color = if zone.theme == "ghost" then "iron" else "paper",
+		parent = parent,
+	})
+	-- Front faces town (the board's -Z side points along `toTown`).
+	local gui = Instance.new("SurfaceGui")
+	gui.Face = Enum.NormalId.Front
+	gui.CanvasSize = Vector2.new(400, 100)
+	gui.LightInfluence = 0.3
+	local title = Instance.new("TextLabel")
+	title.Size = UDim2.fromScale(1, 0.62)
+	title.BackgroundTransparency = 1
+	title.FontFace = Font.fromEnum(Enum.Font.LuckiestGuy)
+	title.TextScaled = true
+	title.Text = string.upper(zone.name)
+	title.TextColor3 = if zone.theme == "ghost" then Color3.fromRGB(150, 255, 210) else C("red")
+	title.Parent = gui
+	local sub = Instance.new("TextLabel")
+	sub.Size = UDim2.fromScale(1, 0.34)
+	sub.Position = UDim2.fromScale(0, 0.64)
+	sub.BackgroundTransparency = 1
+	sub.FontFace = Font.fromEnum(Enum.Font.FredokaOne)
+	sub.TextScaled = true
+	sub.Text = `{string.upper(Rarities.forTier(zone.maxTier).name)} CRITTERS · BOOTS {zone.suggestedBoots}+`
+	sub.TextColor3 = if zone.theme == "ghost" then Color3.fromRGB(220, 255, 240) else C("ink")
+	sub.Parent = gui
+	gui.Parent = board
+end
+
+local function buildZones(root: Instance)
+	local terrain = Workspace.Terrain
+	local zonesFolder = Instance.new("Folder")
+	zonesFolder.Name = "HeistZones"
+	local rand = rng(23)
+	for _, zone in HeistConfig.zones do
+		local c = Vector3.new(zone.x, 0, zone.z)
+		local model = Instance.new("Model")
+		model.Name = zone.name
+		if zone.theme == "flats" then
+			terrain:FillCylinder(CFrame.new(c + Vector3.new(0, -3, 0)), 4, zone.radius, Enum.Material.Ground)
+			for _ = 1, 14 do
+				local a, d = rand() * math.pi * 2, zone.radius * (0.75 + rand() * 0.45)
+				cactus(model, c + Vector3.new(math.cos(a) * d, 0, math.sin(a) * d), 7 + rand() * 6)
+			end
+		elseif zone.theme == "canyon" then
+			terrain:FillCylinder(
+				CFrame.new(c + Vector3.new(0, -3, 0)),
+				4,
+				zone.radius,
+				Enum.Material.Sandstone
+			)
+			-- Red rock walls around the back half, open toward town.
+			for i = 0, 10 do
+				local a = math.pi * (0.15 + i / 10 * 1.7) + math.atan2(75 - zone.z, -zone.x) + math.pi
+				local at = c + Vector3.new(math.cos(a), 0, math.sin(a)) * (zone.radius + 10)
+				terrain:FillBlock(
+					CFrame.new(at + Vector3.new(0, 14, 0)) * CFrame.Angles(0, -a, 0),
+					Vector3.new(16, 28 + rand() * 18, 22),
+					if i % 2 == 0 then Enum.Material.Sandstone else Enum.Material.Rock
+				)
+			end
+		elseif zone.theme == "mine" then
+			terrain:FillCylinder(CFrame.new(c + Vector3.new(0, -3, 0)), 4, zone.radius, Enum.Material.Slate)
+			-- A hill with a timbered mine entrance, rails and gold-glinting rocks.
+			local back = c + Vector3.new(zone.radius * 0.9, 0, 0)
+			terrain:FillBall(back + Vector3.new(14, -6, 0), 34, Enum.Material.Rock)
+			for _, side in { -1, 1 } do
+				part({
+					name = "MineBeam",
+					size = Vector3.new(1.4, 14, 1.4),
+					cframe = CFrame.new(back + Vector3.new(-14, 7, side * 6)),
+					color = "woodDark",
+					material = Enum.Material.WoodPlanks,
+					parent = model,
+				})
+			end
+			part({
+				name = "MineLintel",
+				size = Vector3.new(1.6, 1.6, 14),
+				cframe = CFrame.new(back + Vector3.new(-14, 14, 0)),
+				color = "woodDark",
+				material = Enum.Material.WoodPlanks,
+				parent = model,
+			})
+			part({
+				name = "MineDark",
+				size = Vector3.new(1, 13, 11),
+				cframe = CFrame.new(back + Vector3.new(-13.2, 6.5, 0)),
+				color = "ink",
+				material = Enum.Material.SmoothPlastic,
+				parent = model,
+			})
+			for i = 1, 8 do
+				local a = rand() * math.pi * 2
+				local d = zone.radius * (0.8 + rand() * 0.3)
+				local nugget = part({
+					name = "GoldVein",
+					size = Vector3.new(2 + rand() * 2, 1.5 + rand(), 2 + rand() * 2),
+					cframe = CFrame.new(c + Vector3.new(math.cos(a) * d, 0.8, math.sin(a) * d))
+						* CFrame.Angles(rand(), rand() * 3, rand()),
+					color = "gold",
+					material = Enum.Material.Foil,
+					collide = false,
+					parent = model,
+				})
+				if i % 3 == 0 then
+					local glow = Instance.new("PointLight")
+					glow.Color = C("gold")
+					glow.Range = 10
+					glow.Brightness = 1
+					glow.Parent = nugget
+				end
+			end
+		elseif zone.theme == "ghost" then
+			terrain:FillCylinder(CFrame.new(c + Vector3.new(0, -3, 0)), 4, zone.radius + 6, Enum.Material.Mud)
+			-- Crooked, broken shacks and green ghost lanterns.
+			for i = 1, 6 do
+				local a = i / 6 * math.pi * 2 + 0.3
+				local at = c + Vector3.new(math.cos(a), 0, math.sin(a)) * (zone.radius + 2)
+				local shack = part({
+					name = "Shack",
+					size = Vector3.new(12, 9 + rand() * 4, 10),
+					cframe = CFrame.new(at + Vector3.new(0, 4.5, 0))
+						* CFrame.Angles(0, a + math.pi / 2, math.rad(rand() * 10 - 5)),
+					color = "woodDark",
+					material = Enum.Material.WoodPlanks,
+					parent = model,
+				})
+				shack.Color = Color3.fromRGB(70, 62, 66)
+				local ghostLight = part({
+					name = "GhostLantern",
+					size = Vector3.new(1, 1.4, 1),
+					cframe = CFrame.new(at + Vector3.new(0, 11 + rand() * 2, 0)),
+					color = "sky",
+					material = Enum.Material.Neon,
+					collide = false,
+					parent = model,
+				})
+				ghostLight.Color = Color3.fromRGB(120, 255, 190)
+				local light = Instance.new("PointLight")
+				light.Color = Color3.fromRGB(120, 255, 190)
+				light.Range = 22
+				light.Brightness = 1.6
+				light.Parent = ghostLight
+			end
+			-- Drifting ghost mist.
+			local mistHolder = part({
+				name = "Mist",
+				size = Vector3.new(zone.radius * 2, 1, zone.radius * 2),
+				cframe = CFrame.new(c + Vector3.new(0, 1, 0)),
+				color = "cream",
+				transparency = 1,
+				collide = false,
+				parent = model,
+			})
+			local mist = Instance.new("ParticleEmitter")
+			mist.Texture = "rbxasset://textures/particles/smoke_main.dds"
+			mist.Color = ColorSequence.new(Color3.fromRGB(170, 255, 220))
+			mist.Transparency = NumberSequence.new({
+				NumberSequenceKeypoint.new(0, 1),
+				NumberSequenceKeypoint.new(0.4, 0.75),
+				NumberSequenceKeypoint.new(1, 1),
+			})
+			mist.Size = NumberSequence.new(14)
+			mist.Lifetime = NumberRange.new(6, 9)
+			mist.Rate = 6
+			mist.Speed = NumberRange.new(0.5, 1.5)
+			mist.Parent = mistHolder
+		end
+		zoneSign(model, zone)
+		model.Parent = zonesFolder
+	end
+	zonesFolder.Parent = root
+end
+
 function World.init()
 	local existing = Workspace:FindFirstChild("Town")
 	if existing then
@@ -646,6 +851,7 @@ function World.init()
 	ranches.Parent = town
 	buildLandmarks(town)
 	buildScenery(town)
+	buildZones(town)
 	town.Parent = Workspace
 end
 

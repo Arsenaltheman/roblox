@@ -21,6 +21,7 @@ local ORDER = {
 	"Eggs",
 	"Progression",
 	"Steal",
+	"Heist",
 	"Shop",
 	"LiveOps",
 }

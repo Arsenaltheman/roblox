@@ -5,6 +5,8 @@
 return {
 	-- Kill switches
 	["ff.stealing"] = true,
+	["ff.heist"] = true,
+	["ff.wheel"] = true,
 	["ff.lasso"] = true,
 	["ff.goldenExpress"] = true,
 	["ff.eggs"] = true,

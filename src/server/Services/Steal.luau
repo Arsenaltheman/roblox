@@ -14,6 +14,7 @@ local Workspace = game:GetService("Workspace")
 local Layout = require("@game/ReplicatedStorage/Shared/Config/Layout")
 local Rarities = require("@game/ReplicatedStorage/Shared/Config/Rarities")
 local Species = require("@game/ReplicatedStorage/Shared/Config/Species")
+local HeistConfig = require("@game/ReplicatedStorage/Shared/Config/Heist")
 local BanditClock = require("@game/ReplicatedStorage/Shared/Sim/BanditClock")
 local Economy = require("@game/ReplicatedStorage/Shared/Sim/Economy")
 local StealRules = require("@game/ReplicatedStorage/Shared/Sim/StealRules")
@@ -26,8 +27,6 @@ local CARRY_TIMEOUT = 60
 local LASSO_RANGE = 40
 local LASSO_COOLDOWN = 2
 local STUN_SECONDS = 1.5
-local BASE_SPEED = 16
-local CARRY_SPEED = 0.75
 local BANDIT_COOLDOWN = 10 * 60
 local TUTORIAL_BANDIT_ID = 1
 
@@ -64,24 +63,37 @@ function Steal.isCarrying(player: Player): boolean
 	return carrying[player] ~= nil
 end
 
--- Walk speed from passes and carry state.
+-- Walk speed from Speed Boots, passes and carry state (stealing or a heist crate).
 local function applySpeed(player: Player)
 	local h = humanoid(player)
 	if not h then
 		return
 	end
-	local speed = BASE_SPEED
+	local d = Registry.Data.get(player)
+	local boots = if d then d.Stats.Boots or 0 else 0
 	local spurs = Registry.Monetization.owns(player, "SpeedSpurs")
-	if spurs then
-		speed *= 1.2
-	end
-	if carrying[player] then
-		speed = BASE_SPEED * CARRY_SPEED * (if spurs then 1.15 else 1)
-	end
+	local loaded = carrying[player] ~= nil or Registry.Heist.isCarrying(player)
+	local speed = HeistConfig.walkSpeed(boots, spurs, loaded)
 	if now() < (stunnedUntil[player] or 0) then
 		speed = 0
 	end
 	h.WalkSpeed = speed
+end
+
+-- Other services (Heist) change carry state or boots and ask for the speed to be recomputed.
+function Steal.refreshSpeed(player: Player)
+	applySpeed(player)
+end
+
+-- Freeze a player briefly (guard tackle).
+function Steal.stun(player: Player, seconds: number)
+	stunnedUntil[player] = now() + seconds
+	applySpeed(player)
+	task.delay(seconds, function()
+		if player.Parent == Players then
+			applySpeed(player)
+		end
+	end)
 end
 
 local function setCarryAttributes(player: Player, carry: Carry?)
@@ -436,6 +448,17 @@ local function lasso(player: Player, targetUserId: number)
 	lassoReadyAt[player] = t + (if golden then LASSO_COOLDOWN / 2 else LASSO_COOLDOWN)
 	local target = Players:GetPlayerByUserId(targetUserId)
 	if not target or target == player then
+		return
+	end
+	-- Lassoing someone running a heist crate home snatches the crate.
+	if Registry.Heist.isCarrying(target) then
+		local heistRoot = root(target)
+		if heistRoot and near(player, heistRoot.Position, LASSO_RANGE * (if golden then 1.5 else 1)) then
+			Registry.Ui.fxAll("lasso", player.UserId, heistRoot.Position)
+			if Registry.Heist.transfer(target, player) then
+				Steal.stun(target, STUN_SECONDS)
+			end
+		end
 		return
 	end
 	local carry = carrying[target]
