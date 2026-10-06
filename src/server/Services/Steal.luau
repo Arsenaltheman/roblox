@@ -63,6 +63,9 @@ function Steal.isCarrying(player: Player): boolean
 	return carrying[player] ~= nil
 end
 
+-- Temporary speed boosts (Smoke Bomb).
+local burstUntil: { [Player]: { untilTime: number, multiplier: number } } = {}
+
 -- Walk speed from Speed Boots, passes and carry state (stealing or a heist crate).
 local function applySpeed(player: Player)
 	local h = humanoid(player)
@@ -74,6 +77,10 @@ local function applySpeed(player: Player)
 	local spurs = Registry.Monetization.owns(player, "SpeedSpurs")
 	local loaded = carrying[player] ~= nil or Registry.Heist.isCarrying(player)
 	local speed = HeistConfig.walkSpeed(boots, spurs, loaded)
+	local burst = burstUntil[player]
+	if burst and now() < burst.untilTime then
+		speed *= burst.multiplier
+	end
 	if now() < (stunnedUntil[player] or 0) then
 		speed = 0
 	end
@@ -83,6 +90,23 @@ end
 -- Other services (Heist) change carry state or boots and ask for the speed to be recomputed.
 function Steal.refreshSpeed(player: Player)
 	applySpeed(player)
+end
+
+-- A temporary speed multiplier (Smoke Bomb).
+function Steal.burst(player: Player, seconds: number, multiplier: number)
+	burstUntil[player] = { untilTime = now() + seconds, multiplier = multiplier }
+	applySpeed(player)
+	task.delay(seconds, function()
+		if player.Parent == Players then
+			applySpeed(player)
+		end
+	end)
+end
+
+-- Who `thief` is stealing from, if anyone.
+function Steal.carryingFrom(thief: Player): Player?
+	local carry = carrying[thief]
+	return carry and carry.owner
 end
 
 -- Freeze a player briefly (guard tackle).
@@ -141,6 +165,15 @@ local function returnCarry(thief: Player, reason: string)
 	if reason == "timeout" then
 		Registry.Ui.toast(thief, "Too slow! The critter ran home.")
 	end
+end
+
+-- The owner of the ranch `thief` is stealing from gets the critter back (Bear Trap).
+function Steal.forceReturn(thief: Player): boolean
+	if not carrying[thief] then
+		return false
+	end
+	returnCarry(thief, "trapped")
+	return true
 end
 
 local function deliver(thief: Player)

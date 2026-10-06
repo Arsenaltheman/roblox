@@ -73,7 +73,9 @@ local Schemas: { [string]: { Validator } } = {
 	Lockpick = { V.int(1, 8) },
 	ClientLog = { V.int(1, 4), V.str(160) },
 	BugReport = { V.oneOf({ "stuck", "lost_item", "purchase", "visual", "other" }), V.str(200) },
-	HeistGrab = { V.int(1, 4), V.int(1, 8) }, -- zone, nest
+	HeistGrab = { V.int(0, 4), V.int(1, 100000) }, -- zone (0 = event bonus crate), nest
+	BuyGear = { V.str(24) },
+	UseGear = { V.str(24) },
 	BuyBoots = {},
 	SpinWheel = {},
 	GetOdds = { V.oneOf({ "wild", "reserved", "mutations", "egg", "species" }) },

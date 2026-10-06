@@ -34,6 +34,7 @@ type Guard = {
 	alert: BillboardGui,
 	target: Player?,
 	nextWander: number,
+	stunnedUntil: number,
 }
 
 local nests: { [number]: { Nest } } = {}
@@ -41,6 +42,9 @@ local guards: { Guard } = {}
 local carrying: { [Player]: Carry } = {}
 local grabbing: { [Player]: boolean } = {}
 local folder: Folder
+-- Bonus nests from server events live under this pseudo-zone id.
+local BONUS_ZONE = 0
+local bonusCount = 0
 
 local random = Random.new()
 
@@ -98,6 +102,7 @@ local function emptyNest(nest: Nest)
 end
 
 local function buildNests()
+	nests[BONUS_ZONE] = {}
 	for _, zone in HeistConfig.zones do
 		nests[zone.id] = {}
 		for n = 1, zone.nests do
@@ -258,6 +263,7 @@ local function buildGuard(zone: HeistConfig.Zone, at: Vector3): Guard
 		alert = alert,
 		target = nil,
 		nextWander = 0,
+		stunnedUntil = 0,
 	}
 end
 
@@ -311,7 +317,14 @@ end
 
 local function startCarry(player: Player, nest: Nest)
 	local crate = nest.crate :: Crate
-	emptyNest(nest)
+	if nest.zone == BONUS_ZONE then
+		-- Bonus crates are one-offs: the nest disappears once grabbed.
+		nests[BONUS_ZONE][nest.index] = nil
+		nest.crate = nil
+		nest.pad:Destroy()
+	else
+		emptyNest(nest)
+	end
 	carrying[player] = { zone = nest.zone, nest = nest.index, crate = crate, started = now() }
 	setCarryAttributes(player, carrying[player])
 	Registry.Ui.fxAll("heistGrab", player.UserId, nest.pad.Position)
@@ -383,9 +396,10 @@ local function deliver(player: Player)
 	local r = root(player)
 	Registry.Ui.fxAll("heistDeliver", crate.tier, r and r.Position)
 	if Rarities.indexOf(Rarities.forTier(crate.tier).id) >= 5 then
-		local zone = HeistConfig.zone(carry.zone) :: HeistConfig.Zone
+		local zone = HeistConfig.zone(carry.zone)
+		local where = if zone then zone.name else "the Crate Rain"
 		Registry.Ui.announce(
-			`{player.DisplayName} pulled off a heist: a {Rarities.forTier(crate.tier).name} {name} from {zone.name}!`,
+			`{player.DisplayName} pulled off a heist: a {Rarities.forTier(crate.tier).name} {name} from {where}!`,
 			Rarities.forTier(crate.tier).id
 		)
 	end
@@ -461,18 +475,92 @@ end
 
 -- ------------------------------------------------------------------ loop
 
+local function hidden(player: Player): boolean
+	return ((player:GetAttribute("HiddenUntil") :: number?) or 0) > now()
+end
+
+function Heist.stunGuardsNear(position: Vector3, radius: number, seconds: number): number
+	local count = 0
+	for _, guard in guards do
+		if (guard.root.Position - position).Magnitude <= radius then
+			guard.stunnedUntil = now() + seconds
+			guard.target = nil
+			guard.humanoid:MoveTo(guard.root.Position)
+			count += 1
+		end
+	end
+	return count
+end
+
+-- Every heist nest refills now, `boost` tiers richer than normal (server event).
+function Heist.restockAll(boost: number)
+	for zoneId, zoneNests in nests do
+		if zoneId == BONUS_ZONE then
+			continue
+		end
+		for _, nest in zoneNests do
+			local zone = HeistConfig.zone(nest.zone) :: HeistConfig.Zone
+			local crate = rollCrate(zone)
+			crate.tier = math.min(40, crate.tier + boost)
+			crate.species = (Species.byTier[crate.tier] or Species.byTier[zone.maxTier]).id
+			nest.crate = crate
+			showCrate(nest)
+		end
+	end
+end
+
+-- A temporary, unguarded bonus nest (Crate Rain). It vanishes when grabbed or after `lifetime`.
+function Heist.dropBonus(position: Vector3, tier: number, lifetime: number)
+	local pad = Instance.new("Part")
+	pad.Name = "BonusNest"
+	pad.Shape = Enum.PartType.Cylinder
+	pad.Size = Vector3.new(0.6, 6, 6)
+	pad.CFrame = CFrame.new(position.X, 0.3, position.Z) * CFrame.Angles(0, 0, math.rad(90))
+	pad.Color = Color3.fromRGB(255, 200, 61)
+	pad.Material = Enum.Material.Neon
+	pad.Anchored = true
+	pad.CanCollide = false
+	-- Bonus nests live in zone 0 with their own index (grab looks them up there).
+	bonusCount += 1
+	local index = bonusCount
+	pad:SetAttribute("HeistZone", BONUS_ZONE)
+	pad:SetAttribute("HeistNest", index)
+	pad.Parent = folder
+	local species = Species.byTier[math.clamp(tier, 1, 40)]
+	local nest: Nest = { zone = BONUS_ZONE, index = index, pad = pad, crate = nil, respawnAt = math.huge }
+	nests[BONUS_ZONE][index] = nest
+	nest.crate = { species = species.id, tier = species.tier, mutation = nil }
+	showCrate(nest)
+	Registry.Ui.fxAll("crateDrop", species.tier, pad.Position)
+	task.delay(lifetime, function()
+		if nests[BONUS_ZONE][index] == nest then
+			nests[BONUS_ZONE][index] = nil
+			pad:Destroy()
+		end
+	end)
+end
+
 local function updateGuard(guard: Guard, t: number)
 	local zone = HeistConfig.zone(guard.zone) :: HeistConfig.Zone
 	local center = Vector3.new(zone.x, guard.root.Position.Y, zone.z)
 	local leash = zone.radius * HeistConfig.LEASH
 	local pos = guard.root.Position
+	if t < guard.stunnedUntil then
+		guard.alert.Enabled = false
+		return
+	end
 
-	-- Pick up the nearest carrier (or grabber) in range.
+	-- Pick up the nearest carrier (or grabber) in range. Smoke-bombed players are invisible to them.
 	local best: Player? = guard.target
 	local bestDist = math.huge
 	if best then
 		local br = root(best)
-		if not br or not (carrying[best] or grabbing[best]) or (br.Position - center).Magnitude > leash then
+		if
+			not br
+			or hidden(best)
+			or not (carrying[best] or grabbing[best])
+			or (br.Position - center).Magnitude > leash
+		then
 			best = nil
 		else
 			bestDist = (br.Position - pos).Magnitude
@@ -480,7 +568,7 @@ local function updateGuard(guard: Guard, t: number)
 	end
 	for player in carrying do
 		local pr = root(player)
-		if pr then
+		if pr and not hidden(player) then
 			local d = (pr.Position - pos).Magnitude
 			if d < HeistConfig.AGGRO_RANGE and d < bestDist and (pr.Position - center).Magnitude <= leash then
 				best, bestDist = player, d
@@ -566,7 +654,10 @@ function Heist.start()
 		for _, guard in guards do
 			updateGuard(guard, t)
 		end
-		for _, zoneNests in nests do
+		for zoneId, zoneNests in nests do
+			if zoneId == BONUS_ZONE then
+				continue
+			end
 			for _, nest in zoneNests do
 				if not nest.crate and t >= nest.respawnAt then
 					fillNest(nest)

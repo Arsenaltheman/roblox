@@ -41,6 +41,8 @@ RateLimit.limits = {
 	HeistGrab = { rate = 2, burst = 3 },
 	BuyBoots = { rate = 1, burst = 2 },
 	SpinWheel = { rate = 0.2, burst = 1 },
+	BuyGear = { rate = 1, burst = 2 },
+	UseGear = { rate = 2, burst = 3 },
 } :: { [string]: Limit }
 
 function RateLimit.newBucket(limit: Limit, now: number): Bucket
