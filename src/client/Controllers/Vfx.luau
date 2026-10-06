@@ -203,8 +203,12 @@ local function onFx(kind: string, value: number, position: Vector3?)
 		if kind == "stealFailed" then
 			Sound.play("caught")
 		end
-	elseif kind == "alarm" or kind == "robbed" then
+	elseif kind == "alarm" then
 		Vfx.alarm()
+	elseif kind == "robbed" then
+		Vfx.alarm()
+		Sound.play("stolen")
+		Sound.announce("ann_thief")
 	elseif kind == "lock" then
 		Sound.play("lock")
 		if root then
@@ -246,6 +250,7 @@ local function setWeather(mutation: string)
 			weatherEmitter.Color = ColorSequence.new(C(m.color))
 			weatherEmitter.Rate = if Store.quality() >= 2 then 60 else 20
 			Sound.play("weatherStart")
+			Sound.announce("ann_weather")
 		end
 	else
 		weatherEmitter.Rate = 0

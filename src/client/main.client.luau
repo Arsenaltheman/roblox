@@ -44,6 +44,7 @@ Net.listen("Announce", function(text: string, kind: string)
 	Store.announce(text, kind)
 	if kind == "golden" then
 		loaded.Sound.play("goldenExpress")
+		loaded.Sound.announce("ann_goldenExpress")
 	end
 end)
 Net.listen("Reveal", function(data)

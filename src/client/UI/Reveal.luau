@@ -214,10 +214,11 @@ local function play(data: any)
 				egg.BackgroundColor3 = Theme.rarityColor(Rarities.list[math.max(1, step)].id)
 			end
 		end
-		Sound.play("eggCrack")
+		Sound.play(if data.kind == "strongbox" then "strongboxOpen" else "eggCrack")
 		egg:Destroy()
 	elseif data.kind == "frontier" then
 		Sound.play("frontier")
+		Sound.announce("ann_frontier")
 		wait(if quick then 0.2 else 0.8)
 	end
 
@@ -250,7 +251,13 @@ local function play(data: any)
 		else
 			caption = `Earns {NumberFormat.perSecond(Economy.income(tier))} (before boosts)`
 		end
-		Sound.voice(data.species)
+		-- Legendary and up get the full announcer: "Yeeeehaw! It's..." then the name.
+		if rarityIndex >= 5 and not quick then
+			Sound.announce("ann_itsA")
+			task.delay(1.4, Sound.voice, data.species)
+		else
+			Sound.voice(data.species)
+		end
 	elseif data.kind == "strongbox" then
 		if data.loot == "cash" then
 			title = "+" .. NumberFormat.cash(data.amount or 0)

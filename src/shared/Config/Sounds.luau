@@ -1,6 +1,7 @@
 --!strict
 -- Sound asset ids. Empty until the audio is uploaded (docs/STATUS.md); empty ids play nothing.
--- Generated sounds live in assets/audio/ with their prompts logged in assets/audio/PROMPTS.md.
+-- Each key's file is assets/audio/game/<key>.ogg (voice lines: assets/audio/game/voice/<key>.ogg).
+-- Prompts for every generated sound are logged in assets/audio/PROMPTS.md.
 
 export type SoundDef = { id: string, volume: number?, bus: "sfx" | "ui" | "voice" | "music" | "ambience" }
 
@@ -37,9 +38,17 @@ return {
 	-- World
 	weatherStart = { id = "", bus = "ambience" },
 	goldenExpress = { id = "", bus = "sfx" },
+	-- Announcer (voice bus; ducks the music)
+	ann_itsA = { id = "", bus = "voice" },
+	ann_trainArriving = { id = "", bus = "voice" },
+	ann_goldenExpress = { id = "", bus = "voice" },
+	ann_thief = { id = "", bus = "voice" },
+	ann_frontier = { id = "", bus = "voice" },
+	ann_weather = { id = "", bus = "voice" },
+	ann_strongbox = { id = "", bus = "voice" },
 	-- Music (Creator Store licensed tracks)
 	musicCalm = { id = "", bus = "music", volume = 0.4 },
 	musicChase = { id = "", bus = "music", volume = 0.45 },
-	-- Announcer and critter name callouts are keyed "voice_<SpeciesId>" in VoiceIds below.
+	-- Critter name callouts, keyed by species id (files: assets/audio/game/voice/<SpeciesId>.ogg).
 	VoiceIds = {} :: { [string]: string },
 } :: any

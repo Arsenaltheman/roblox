@@ -15,6 +15,7 @@ local NumberFormat = require("@game/ReplicatedStorage/Shared/Sim/NumberFormat")
 local TrainClock = require("@game/ReplicatedStorage/Shared/Sim/TrainClock")
 local Net = require("@game/ReplicatedStorage/Shared/Net/Net")
 local CritterRig = require("./CritterRig")
+local Sound = require("./Sound")
 local Store = require("../Store")
 
 local C = Palette.color
@@ -43,6 +44,8 @@ local cars: { Model } = {}
 local cageSlots: { [number]: { holder: BasePart, critter: Model?, tag: BillboardGui, key: string } } = {}
 local strongbox: Model
 local shownCycle = -1
+local lastPhase = ""
+local heardArrival = false
 
 local function part(parent: Instance, name: string, size: Vector3, cf: CFrame, color: Color3, material: Enum.Material?, shape: Enum.PartType?): Part
 	local p = Instance.new("Part")
@@ -379,6 +382,9 @@ function TrainView.start()
 		if cycle == shownCycle then
 			fillCages(cycle)
 		end
+		if buyer == Players.LocalPlayer.UserId then
+			Sound.play("buy")
+		end
 	end)
 
 	RunService.RenderStepped:Connect(function()
@@ -398,6 +404,22 @@ function TrainView.start()
 			fillCages(displayCycle)
 		end
 		Store.trainCycle(state.cycle)
+		-- Train sounds on phase changes: whistle on arrival, doors when it stops.
+		if state.phase ~= lastPhase then
+			lastPhase = state.phase
+			if state.phase == "arriving" then
+				Sound.play("whistle", 0.03)
+				local manifest = manifests[state.cycle]
+				if manifest and manifest.strongbox then
+					Sound.announce("ann_strongbox")
+				elseif not heardArrival then
+					Sound.announce("ann_trainArriving")
+				end
+				heardArrival = true
+			elseif state.phase == "dwelling" then
+				Sound.play("doors")
+			end
+		end
 		local s = locomotiveS(state)
 		placeAt(locomotive, s)
 		for i, car in cars do
