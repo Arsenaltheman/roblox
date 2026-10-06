@@ -4,7 +4,7 @@
 
 export type Cosmetic = {
 	id: string,
-	slot: "lassoTrail" | "hat" | "poster" | "ranchTheme" | "title" | "horse",
+	slot: "lassoTrail" | "hat" | "poster" | "ranchTheme" | "title" | "horse" | "cape",
 	name: string,
 	nuggets: number?,
 	-- Shown color/accent for UI and VFX.
@@ -24,6 +24,13 @@ local list: { Cosmetic } = {
 	{ id = "hat_premium", slot = "hat", name = "Premium Top Hat", color = "#2B1D14" },
 	{ id = "hat_club", slot = "hat", name = "Club Stetson", color = "#FFC83D" },
 	{ id = "title_regular", slot = "title", name = "Regular", color = "#3FB7B0" },
+	-- Mastery capes: level 50 in a Trail Skill. Never sold, never traded.
+	{ id = "cape_rustler", slot = "cape", name = "Rustler's Cape", color = "#E2463A" },
+	{ id = "cape_wrangler", slot = "cape", name = "Wrangler's Cape", color = "#E2A93B" },
+	{ id = "cape_trader", slot = "cape", name = "Trader's Cape", color = "#3FB7B0" },
+	{ id = "cape_rancher", slot = "cape", name = "Rancher's Cape", color = "#4E9A4B" },
+	{ id = "cape_gambler", slot = "cape", name = "Gambler's Cape", color = "#9A5AFF" },
+	{ id = "cape_ranger", slot = "cape", name = "Ranger's Cape", color = "#FF8C28" },
 	{ id = "poster_classic", slot = "poster", name = "Classic Wanted", nuggets = 30, color = "#F3E2C0" },
 	{ id = "poster_gold", slot = "poster", name = "Golden Bounty", nuggets = 200, color = "#FFC83D" },
 	{ id = "poster_neon", slot = "poster", name = "Neon Outlaw", nuggets = 350, color = "#3FB7B0" },

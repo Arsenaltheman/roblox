@@ -138,6 +138,7 @@ function Ranch.context(player: Player): Economy.IncomeContext
 		incomeScale = Registry.LiveConfig.get("econ.incomeScale"),
 		almanacSets = if d then Almanac.completedSets(d.Almanac) else 0,
 		companion = Ranch.companion(player),
+		skillBoost = Registry.Skills.perkValue(player, "Rancher") / 100,
 	}
 end
 
@@ -565,7 +566,14 @@ local function sell(player: Player, cid: string)
 		return
 	end
 	Ranch.removeCritter(player, cid)
-	Registry.Wallet.addCash(player, Economy.sellValue({ tier = critter.tier, mutation = critter.m }), "Sell")
+	-- Trader mastery: +4% of the sale per perk.
+	local bonus = 1 + Registry.Skills.perkValue(player, "Trader") / 100
+	Registry.Wallet.addCash(
+		player,
+		Economy.sellValue({ tier = critter.tier, mutation = critter.m }) * bonus,
+		"Sell"
+	)
+	Registry.Progression.questEvent(player, "sell", 1)
 end
 
 local function place(player: Player, cid: string, pen: number)

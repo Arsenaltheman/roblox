@@ -33,6 +33,8 @@ export type IncomeContext = {
 	almanacSets: number?,
 	-- The critter following the player around (Equipped.companion), if any.
 	companion: { tier: number, mutation: string? }?,
+	-- Rancher mastery perk (0.01 per perk), counts toward the free cap.
+	skillBoost: number?,
 }
 
 export type CritterLike = {
@@ -88,6 +90,7 @@ function Economy.multiplier(ctx: IncomeContext): number
 		free += Config.eventBoost
 	end
 	free += Economy.companionBoost(ctx.companion)
+	free += ctx.skillBoost or 0
 	free = math.min(free, Config.freeBoostCap)
 
 	local paid = 1

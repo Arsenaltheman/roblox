@@ -8,6 +8,8 @@ local Vide = require("@game/ReplicatedStorage/Packages/Vide")
 local Progression = require("@game/ReplicatedStorage/Shared/Config/Progression")
 local SeasonConfig = require("@game/ReplicatedStorage/Shared/Config/Season")
 local TrailConfig = require("@game/ReplicatedStorage/Shared/Config/Trail")
+local SkillsConfig = require("@game/ReplicatedStorage/Shared/Config/Skills")
+local SkillsSim = require("@game/ReplicatedStorage/Shared/Sim/Skills")
 local Products = require("@game/ReplicatedStorage/Shared/Config/Products")
 local NumberFormat = require("@game/ReplicatedStorage/Shared/Sim/NumberFormat")
 local Net = require("@game/ReplicatedStorage/Shared/Net/Net")
@@ -885,6 +887,121 @@ local function railPage(): Instance
 	})
 end
 
+-- ---------------------------------------------------------------- skills (masteries)
+
+local function skillsPage(): Instance
+	local rows = {}
+	for i, skill in SkillsConfig.list do
+		local c = Color3.fromHex(skill.color)
+		local function xp(): number
+			return (state().skills or {})[skill.id] or 0
+		end
+		table.insert(
+			rows,
+			create("Frame")({
+				Size = UDim2.new(1, -8, 0, 86),
+				LayoutOrder = i,
+				BackgroundColor3 = Color3.new(1, 1, 1),
+				Components.corner(UDim.new(0, 14)),
+				Components.stroke(3),
+				Components.gradient(Theme.lighten(c, 0.72)),
+				text({
+					Size = UDim2.new(0.5, 0, 0, 28),
+					Position = UDim2.fromOffset(14, 6),
+					TextXAlignment = Enum.TextXAlignment.Left,
+					FontFace = Theme.font.title,
+					TextColor3 = c,
+					Text = function()
+						local level = SkillsSim.levelFor(xp())
+						return `{string.upper(skill.name)} · LV {level}`
+					end,
+					Components.textStroke(2),
+				}),
+				text({
+					Size = UDim2.new(0.5, -14, 0, 22),
+					Position = UDim2.new(0.5, 0, 0, 9),
+					TextXAlignment = Enum.TextXAlignment.Right,
+					FontFace = Theme.font.heading,
+					TextColor3 = Theme.darken(Theme.color.wood, 0.3),
+					Text = function()
+						local level = SkillsSim.levelFor(xp())
+						local perks = SkillsSim.perks(level)
+						if level >= SkillsConfig.MAX_LEVEL then
+							return "MASTERED · cape earned"
+						end
+						local nextPerk = (perks + 1) * SkillsConfig.PERK_EVERY
+						return `Next perk at LV {nextPerk}`
+					end,
+				}),
+				text({
+					Size = UDim2.new(1, -28, 0, 18),
+					Position = UDim2.fromOffset(14, 34),
+					TextXAlignment = Enum.TextXAlignment.Left,
+					TextScaled = false,
+					TextSize = 15,
+					FontFace = Theme.font.body,
+					TextColor3 = Theme.darken(Theme.color.wood, 0.2),
+					Text = function()
+						local level = SkillsSim.levelFor(xp())
+						local now = SkillsSim.perkValue(skill.id, level)
+						local perk = string.gsub(skill.perk, "{n}", tostring(now))
+						return `{skill.blurb}  ·  Now: {perk}`
+					end,
+				}),
+				-- XP bar
+				create("Frame")({
+					Size = UDim2.new(1, -28, 0, 18),
+					Position = UDim2.fromOffset(14, 58),
+					BackgroundColor3 = Theme.darken(Theme.color.cream, 0.15),
+					Components.corner(UDim.new(1, 0)),
+					Components.stroke(2),
+					create("Frame")({
+						Size = function()
+							local _, into, need = SkillsSim.levelFor(xp())
+							return UDim2.fromScale(if need > 0 then math.clamp(into / need, 0, 1) else 1, 1)
+						end,
+						BackgroundColor3 = c,
+						Components.corner(UDim.new(1, 0)),
+						Components.gloss(UDim.new(1, 0)),
+					}),
+					text({
+						Size = UDim2.fromScale(1, 1),
+						ZIndex = 3,
+						FontFace = Theme.font.heading,
+						TextColor3 = Theme.color.white,
+						Text = function()
+							local _, into, need = SkillsSim.levelFor(xp())
+							return `{NumberFormat.short(into)} / {NumberFormat.short(need)} XP`
+						end,
+						Components.textStroke(1.5),
+					}),
+				}),
+			})
+		)
+	end
+	return create("ScrollingFrame")({
+		Size = UDim2.fromScale(1, 1),
+		BackgroundTransparency = 1,
+		ScrollBarThickness = 8,
+		VerticalScrollBarInset = Enum.ScrollBarInset.ScrollBar,
+		AutomaticCanvasSize = Enum.AutomaticSize.Y,
+		CanvasSize = UDim2.new(),
+		create("UIListLayout")({ Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }),
+		Components.padding(4),
+		text({
+			Size = UDim2.new(1, -8, 0, 36),
+			LayoutOrder = 0,
+			TextScaled = false,
+			TextSize = 16,
+			TextWrapped = true,
+			FontFace = Theme.font.body,
+			TextColor3 = Theme.darken(Theme.color.wood, 0.2),
+			Text = "Everything you do levels a skill. Every 10 levels unlocks a perk; level 50 earns a cape nobody can buy.",
+		}),
+		rows :: any,
+	})
+end
+
 function Quests.menu(onClose: () -> ()): Instance
 	local tab = source("rail")
 	local function tabButton(id: string, label: string, color: Color3, order: number): Instance
@@ -893,9 +1010,9 @@ function Quests.menu(onClose: () -> ()): Instance
 			color = function()
 				return if tab() == id then color else Theme.color.wood
 			end,
-			size = UDim2.new(1 / 4, -8, 1, 0),
+			size = UDim2.new(1 / 5, -8, 1, 0),
 			layoutOrder = order,
-			textSize = 24,
+			textSize = 22,
 			onClick = function()
 				Sound.play("click")
 				tab(id)
@@ -921,6 +1038,7 @@ function Quests.menu(onClose: () -> ()): Instance
 				tabButton("trail", "BOUNTY TRAIL", Theme.color.orange, 2),
 				tabButton("daily", "DAILY", Theme.color.red, 3),
 				tabButton("weekly", "WEEKLY", Theme.color.purple, 4),
+				tabButton("skills", "SKILLS", Theme.color.green, 5),
 			}),
 			create("Frame")({
 				Size = UDim2.new(1, 0, 1, -56),
@@ -938,6 +1056,9 @@ function Quests.menu(onClose: () -> ()): Instance
 				show(function()
 					return tab() == "weekly"
 				end, weeklyPage),
+				show(function()
+					return tab() == "skills"
+				end, skillsPage),
 			}),
 		},
 	})

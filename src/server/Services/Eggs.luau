@@ -40,7 +40,10 @@ function Eggs.give(player: Player, parentTier: number, source: string): boolean
 	table.insert(d.Eggs, {
 		tier = math.clamp(parentTier, 1, Rarities.maxTier),
 		laidAt = now,
-		hatchAt = now + Progression.eggs.hatchSeconds,
+		-- Gambler mastery: -5% hatch time per perk.
+		hatchAt = now + math.floor(
+			Progression.eggs.hatchSeconds * (1 - Registry.Skills.perkValue(player, "Gambler") / 100)
+		),
 	})
 	Registry.Ui.fx(player, "egg", #d.Eggs)
 	Registry.Ui.pushState(player)

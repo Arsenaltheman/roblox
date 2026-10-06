@@ -647,7 +647,11 @@ local function updateGuard(guard: Guard, t: number)
 				return
 			end
 			dropCarry(best, "tackled")
-			Registry.Steal.stun(best, HeistConfig.STUN_SECONDS)
+			-- Ranger mastery: shorter guard stuns.
+			Registry.Steal.stun(
+				best,
+				math.max(0.5, HeistConfig.STUN_SECONDS - Registry.Skills.perkValue(best, "Ranger"))
+			)
 			Registry.Ui.fxAll("tackle", best.UserId, br.Position)
 			guard.target = nil
 			guard.nextWander = t + 1.5

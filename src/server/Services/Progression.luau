@@ -80,6 +80,7 @@ function ProgressionService.questEvent(player: Player, kind: string, amount: num
 	end
 	Registry.Trail.event(player, kind, amount)
 	Registry.Season.event(player, kind, amount)
+	Registry.Skills.event(player, kind, amount)
 	ensureQuestDay(player)
 	for _, quest in dailyQuests(today()) do
 		if quest.kind == kind and not d.Quests.Claimed[quest.id] then

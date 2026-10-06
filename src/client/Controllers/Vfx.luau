@@ -690,6 +690,18 @@ local function onFx(kind: string, value: number, position: Vector3?)
 			Vfx.fireworks(root.Position, C("sky"), 4)
 			Vfx.floatText(root.Position + Vector3.new(0, 5, 0), "POSSE BOUNTY!", C("sky"))
 		end
+	elseif kind == "skillUp" then
+		Sound.play("giftReady")
+		if root then
+			Vfx.burst(root.Position + Vector3.new(0, 3, 0), C("purple"), 30, 1.2, 14)
+			Vfx.floatText(root.Position + Vector3.new(0, 6, 0), `SKILL LEVEL {value}!`, C("purple"))
+		end
+	elseif kind == "skillPerk" then
+		Sound.play("frontier")
+		if root then
+			Vfx.fireworks(root.Position, C("purple"), 3)
+			Vfx.floatText(root.Position + Vector3.new(0, 6, 0), "NEW MASTERY PERK!", C("gold"))
+		end
 	elseif kind == "tinStar" and position then
 		Vfx.ring(position, C("gold"), 8)
 		Vfx.burst(position + Vector3.new(0, 3, 0), C("gold"), 30, 1.2, 14)

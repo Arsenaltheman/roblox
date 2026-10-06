@@ -230,6 +230,7 @@ local function execute(ref: Ref)
 		Registry.Ranch.syncAll(player)
 		Registry.Ui.pushState(player)
 		Registry.Ui.fx(player, "tradeDone", 0)
+		Registry.Progression.questEvent(player, "trade", 1)
 		Registry.Telemetry.custom(player, "Trade", #moving[player])
 	end
 	close(ref, "Trade complete! Check your ranch.")

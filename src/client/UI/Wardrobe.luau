@@ -32,6 +32,7 @@ local SLOTS = {
 	{ id = "lassoTrail", label = "LASSOS", icon = "lasso", glyph = "◎" },
 	{ id = "poster", label = "POSTERS", icon = "scroll", glyph = "▤" },
 	{ id = "ranchTheme", label = "RANCH", icon = "barn", glyph = "⌂" },
+	{ id = "cape", label = "CAPES", icon = "scroll", glyph = "▼" },
 }
 
 local function state(): any
@@ -56,6 +57,8 @@ local function howToGet(cosmetic: Cosmetics.Cosmetic): string
 		return "Rail Pass premium tier 20"
 	elseif cosmetic.id == "hat_season" then
 		return "Rail Pass premium tier 40"
+	elseif string.sub(cosmetic.id, 1, 5) == "cape_" then
+		return "Master a Trail Skill (level 50)"
 	elseif string.sub(cosmetic.id, 1, 6) == "title_" then
 		return "Earned on the Bounty Trail"
 	elseif cosmetic.id == "hat_premium" then

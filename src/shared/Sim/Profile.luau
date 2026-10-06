@@ -45,6 +45,8 @@ export type Data = {
 	Quests: { Day: number, Progress: { [string]: number }, Claimed: { [string]: boolean } },
 	-- Bounty Trail campaign (Config/Trail): current chapter/quest and its objective counters.
 	Trail: { Chapter: number, Quest: number, Progress: { [string]: number }, Notified: boolean },
+	-- Trail Skills: total xp per skill id.
+	Skills: { [string]: number },
 	-- Sheriff's Report: who robbed you (steals and AFK raids), newest last.
 	RaidLog: { { t: number, by: number, byName: string, species: string, tier: number, kind: string } },
 	-- Revenge bounties you posted: thief userId (string) -> expiry (unix).
@@ -90,7 +92,7 @@ export type Data = {
 local Profile = {}
 
 Profile.CURRENT_VERSION = 1
-Profile.CURRENT_MINOR = 3
+Profile.CURRENT_MINOR = 4
 Profile.MAX_RECEIPTS = 100
 
 function Profile.template(): Data
@@ -108,6 +110,7 @@ function Profile.template(): Data
 		Quests = { Day = -1, Progress = {}, Claimed = {} },
 		Trail = { Chapter = 1, Quest = 1, Progress = {}, Notified = false },
 		RaidLog = {},
+		Skills = {},
 		Bounties = {},
 		Weekly = { Week = -1, Progress = {}, Claimed = {}, Bonus = false },
 		Season = {

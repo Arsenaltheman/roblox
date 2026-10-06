@@ -70,6 +70,7 @@ local function snapshot(player: Player): { [string]: any }?
 		trail = Registry.Trail.view(player),
 		season = Registry.Season.view(player),
 		streak = d.Streak,
+		skills = d.Skills,
 		gifts = Registry.Progression.giftView(player),
 		owned = d.Owned,
 		equipped = d.Equipped,

@@ -121,6 +121,10 @@ local function applySpeed(player: Player)
 	local boots = if d then d.Stats.Boots or 0 else 0
 	local spurs = Registry.Monetization.owns(player, "SpeedSpurs")
 	local speed = HeistConfig.walkSpeed(boots, spurs, loaded(player))
+	if loaded(player) then
+		-- Rustler mastery: +3% carry speed per perk.
+		speed *= 1 + Registry.Skills.perkValue(player, "Rustler") / 100
+	end
 	local burst = burstUntil[player]
 	if burst and now() < burst.untilTime then
 		speed *= burst.multiplier
@@ -778,7 +782,9 @@ local function lasso(player: Player, targetUserId: number)
 	-- Lassoing someone running a heist crate home snatches the crate.
 	if Registry.Heist.isCarrying(target) then
 		local heistRoot = root(target)
-		if heistRoot and near(player, heistRoot.Position, LASSO_RANGE * (if golden then 1.5 else 1)) then
+		local heistReach = (LASSO_RANGE + Registry.Skills.perkValue(player, "Wrangler"))
+			* (if golden then 1.5 else 1)
+		if heistRoot and near(player, heistRoot.Position, heistReach) then
 			Registry.Ui.fxAll("lasso", player.UserId, heistRoot.Position)
 			if Registry.Heist.transfer(target, player) then
 				Steal.stun(target, STUN_SECONDS)
@@ -791,7 +797,9 @@ local function lasso(player: Player, targetUserId: number)
 		return
 	end
 	local targetRoot = root(target)
-	if not targetRoot or not near(player, targetRoot.Position, LASSO_RANGE * (if golden then 1.5 else 1)) then
+	-- Wrangler mastery: +2 studs of lasso range per perk.
+	local reach = (LASSO_RANGE + Registry.Skills.perkValue(player, "Wrangler")) * (if golden then 1.5 else 1)
+	if not targetRoot or not near(player, targetRoot.Position, reach) then
 		return
 	end
 	local critter = ownerCritter(carry)

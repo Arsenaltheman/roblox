@@ -233,6 +233,62 @@ local function hat(player: Player, character: Model)
 	end
 end
 
+-- ---------------------------------------------------------------- capes
+
+local function cape(player: Player, character: Model)
+	local torso = (character:FindFirstChild("UpperTorso") or character:FindFirstChild("Torso")) :: BasePart?
+	local old = character:FindFirstChild("LooksCape")
+	if old then
+		old:Destroy()
+	end
+	local id = player:GetAttribute("Equip_cape") :: string?
+	local cosmetic = if id and id ~= "" then Cosmetics.byId[id] else nil
+	if not torso or not cosmetic then
+		return
+	end
+	local c = Color3.fromHex(cosmeticHex(cosmetic))
+	local model = Instance.new("Model")
+	model.Name = "LooksCape"
+	-- A flat panel hanging off the back, slightly flared, with a dark collar band.
+	local panel = hatPart(
+		model,
+		Vector3.new(2.2, 3.1, 0.14),
+		torso.CFrame * CFrame.new(0, -0.55, 0.62) * CFrame.Angles(math.rad(-8), 0, 0),
+		c,
+		nil,
+		Enum.Material.Fabric
+	)
+	local weld = Instance.new("WeldConstraint")
+	weld.Part0 = torso
+	weld.Part1 = panel
+	weld.Parent = panel
+	local collar = hatPart(
+		model,
+		Vector3.new(2.3, 0.3, 0.3),
+		torso.CFrame * CFrame.new(0, 0.95, 0.5),
+		Color3.fromRGB(43, 29, 20),
+		nil,
+		Enum.Material.SmoothPlastic
+	)
+	local weld2 = Instance.new("WeldConstraint")
+	weld2.Part0 = torso
+	weld2.Part1 = collar
+	weld2.Parent = collar
+	local star = hatPart(
+		model,
+		Vector3.new(0.5, 0.5, 0.08),
+		torso.CFrame * CFrame.new(0, -1.5, 0.72),
+		Color3.fromRGB(255, 225, 120),
+		nil,
+		Enum.Material.Neon
+	)
+	local weld3 = Instance.new("WeldConstraint")
+	weld3.Part0 = torso
+	weld3.Part1 = star
+	weld3.Parent = star
+	model.Parent = character
+end
+
 -- ---------------------------------------------------------------- ranch themes
 
 local originalColors: { [BasePart]: Color3 } = {}
@@ -285,6 +341,7 @@ local function watchPlayer(player: Player)
 		if character then
 			pcall(nameTag, player, character)
 			pcall(hat, player, character)
+			pcall(cape, player, character)
 		end
 	end
 	player.CharacterAdded:Connect(function(character)
@@ -293,7 +350,7 @@ local function watchPlayer(player: Player)
 		refresh()
 	end)
 	player.AttributeChanged:Connect(function(name)
-		if name == "Equip_title" or name == "Equip_hat" or name == "Bounty" then
+		if name == "Equip_title" or name == "Equip_hat" or name == "Equip_cape" or name == "Bounty" then
 			refresh()
 		elseif name == "Equip_ranchTheme" then
 			pcall(refreshRanches)
