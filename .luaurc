@@ -1,0 +1,6 @@
+{
+	"languageMode": "strict",
+	"aliases": {
+		"frktest": "vendor/frktest/src"
+	}
+}

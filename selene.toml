@@ -1,0 +1,6 @@
+std = "roblox_min"
+exclude = ["vendor/*"]
+
+[lints]
+# Luau type annotations and `continue` are fine; these lints misfire on them.
+mixed_table = "allow"

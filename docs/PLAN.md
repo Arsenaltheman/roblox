@@ -3,6 +3,14 @@
 > Repo: `arsenaltheman/roblox` (empty today, cloned at `/home/user/roblox`). Built as a Rojo project from this cloud session.
 > Your decisions so far: **Rob-a-Train Western concept** · **upgrade Figma** · **unblock Roblox in this cloud environment** · **no art budget (I build all art)**.
 
+## Decision log (these override anything below that conflicts)
+| Date | Decision | Effect on the plan |
+|---|---|---|
+| 2026-10-06 | **Pay-to-win at Steal a Brainrot level** | Paid income boosts **multiply** (no shared cap). Robux gear with real steal/defend power: Golden Lasso, Speed Spurs, Iron Lock, Lockpick, Heavy Saddlebag, Bigger Ranch. **Sheriff's Star** pass (4,999 R$) unlocks server-wide Sheriff Powers (Golden Express, Summon Weather, Stampede) with a cooldown. Robux-only exclusive critters (Branded: can't be stolen, survive Frontier resets). Simulator gate changes from "payer ≤ 1.6× non-payer" to "**whale ≥ 2.5× faster than a free player**, while free pacing stays the same". Hard Roblox rules still apply: odds shown and policy gating for anything that changes random outcomes; no deceptive copy or fake timers. No paid commands that target or harm other players (griefing/harassment risk). |
+| 2026-10-06 | **Theft harsher** | **Cut:** Payback (victim arrow/speed/lock bypass), bounty rewards, fair-value band, 2-robberies-per-hour cap, post-robbery immunity. **Kept:** 15-min newbie shield, Safe Pens (1 at F3, 2 at F6), Branded (Robux) critters unstealable, ranch Lock, carrying slows and glows, carry limit by Frontier. **Lasso stays as the counter**: owner lassos the carrier → critter returns home; anyone else lassos the carrier → they grab it and become the new carrier. |
+| 2026-10-06 | **Active Luck meter** | Luck grows for every minute a player is active in the server (not idle) and resets when they leave. It gates rare cages (Outlaw/Secret) and multiplies with other luck; shown live in the odds panel. |
+| 2026-10-06 | **Owner is AFK: no more questions** | I proceed on my own with sensible defaults, and keep a list of steps that need the owner (accounts, keys, Figma seat, playtests) in `docs/STATUS.md`. |
+
 ---
 
 ## 0. Context
