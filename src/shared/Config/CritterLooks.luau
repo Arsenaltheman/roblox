@@ -13,7 +13,7 @@ export type Look = {
 }
 
 return {
-	CactusCarl = { body = "#4E9A4B", accent = "#2B1D14", features = { "mustache", "spikes", "hat" } },
+	CactusCarl = { body = "#4E9A4B", accent = "#2B1D14", features = { "mustache", "spikes", "hat" }, shape = { 0.8, 1.3, 0.8 } },
 	TumbleweedTim = { body = "#C9A26B", accent = "#7A5A33", features = { "spikes", "spikes" }, shape = { 1, 1, 1 } },
 	SirHayBale = { body = "#E8C55A", accent = "#9C6B2F", features = { "hat", "mustache" }, shape = { 1.2, 0.8, 0.9 } },
 	PebbleProspector = { body = "#9A928A", accent = "#5B3A26", features = { "hat", "boots" }, shape = { 1, 0.85, 0.9 } },
