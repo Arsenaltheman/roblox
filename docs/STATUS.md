@@ -1,11 +1,33 @@
 # Status and owner checklist
 
-Last updated: 2026-10-06.
+Last updated: 2026-10-07 (overnight build).
 
 **Short version:**
 - The game is fully written: code, economy, 43 critter models, sound and voice.
 - It has **never run on a real Roblox server.** This cloud environment can't reach `apis.roblox.com`, and nobody has opened it in Studio yet.
 - The next step is yours (section 2). After it, a new Claude session can publish, upload and smoke-test without you.
+
+## 0. Good morning: what was built overnight
+
+Everything below is pushed to `main`, and every check passes: 119 unit tests, types, lint, place lint, economy gates. Plan and status: `docs/OVERNIGHT.md`.
+
+| New | Try it in Studio |
+|---|---|
+| **Store redesign.** Tabs: Passes, Boosts, Cash, Critters, Gear, Nuggets. Picture cards with price tags. Tap a card for a big preview with an effect that matches the item: coin shower, gold glitter, clovers, speed lines, shield rings, smoke, rolling tumbleweed, trap snap, a rarity beam behind a live 3D critter, egg wobble | Open SHOP and tap through every tab and card |
+| **Gear hotbar.** Keys 1/2/3 or tap, with a cooldown sweep. Smoke cloud, tumbleweed shockwave, bear trap snap | Buy the Smoke Bomb ($2,500) in the Gear tab and press 1 near a heist guard |
+| **Server events** every 25 min, with a real countdown banner (right side): Crate Rain, Gold Rush (2× cash), Jackpot Restock, Bandit King | In Studio the first event fires **45 s** after you press Play |
+| **Bandit King boss** in Ghost Town. He leaps every few seconds; dodge the red ring. Everyone lassoes him together (button: LASSO KING!). Loot for every helper, and a rare critter for the top lassoer | Wait for the event, or play a few events in a row |
+| **Leaderboards** with a gold statue of the all-time #1: Richest (west end of the platform), Top Heisters (east end), Most Wanted (Bandit Camp) | Walk to the platform ends. "All-time" only fills in once the game is published |
+| **Almanac sets.** Find every species of a rarity for +5% income, forever. Earned boosts: finish all daily quests → 15 min 2× Cash; help beat the Bandit King → 10 min Luck Potion | Open ALMANAC to see the set strip |
+| Tonight's code also got a review pass, and the bugs it found are fixed | — |
+
+**Playtest checklist for the new parts** (screenshots of anything odd help a lot):
+1. Shop: does every card show a picture? Icons stay as glyphs until the image upload in section 2. 3D critters show now.
+2. Preview: do the effects look good, and does the buy button work? In Studio every Robux item is granted free as **[STUDIO TEST]**.
+3. Gear: is the hotbar visible after buying? Do the 1/2/3 keys work?
+4. Events: does the banner count down? Do Crate Rain crates land on Main Street, and can you grab and run them home?
+5. Bandit King: does he leap smoothly? Is the health bar readable? Does the loot arrive?
+6. Leaderboards: are the boards readable from the platform?
 
 ## 1. What exists
 
