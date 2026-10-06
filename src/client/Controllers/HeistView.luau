@@ -187,36 +187,55 @@ function HeistView.nearestCrate(position: Vector3): (number?, number?, string?, 
 		(best.pad:GetAttribute("Tier") :: number?) or 0
 end
 
--- The glowing "this way home" arc while carrying a crate.
+-- The glowing guide arc: gold "this way home" while carrying a crate, and teal "go here" toward
+-- Cactus Flats until you've done your first heist (after the tutorial).
 local guide: Beam? = nil
 local guideTarget: Part? = nil
+local guideKey = ""
+local function clearGuide()
+	if guide then
+		guide:Destroy()
+		guide = nil
+	end
+	if guideTarget then
+		guideTarget:Destroy()
+		guideTarget = nil
+	end
+	guideKey = ""
+end
+
 local function updateGuide()
 	local carrying = localPlayer:GetAttribute("HeistCarry") == true
 	local character = localPlayer.Character
 	local rootPart = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
 	local ranch = localPlayer:GetAttribute("Ranch") :: number?
-	if not carrying or not rootPart or not ranch or not Layout.ranches[ranch] then
-		if guide then
-			guide:Destroy()
-			guide = nil
+	local state = Store.state()
+	local key, position, color = "", Vector3.zero, Palette.color("gold")
+	if carrying and ranch and Layout.ranches[ranch] then
+		local center = Layout.ranches[ranch].center
+		key, position = "home" .. ranch, Vector3.new(center.x, 3, center.z)
+	elseif state and (state.tutorial or 0) >= 3 and (state.heists or 0) == 0 then
+		local zone = HeistConfig.zone(1)
+		if zone then
+			key, position, color = "zone1", Vector3.new(zone.x, 3, zone.z), Palette.color("sky")
 		end
-		if guideTarget then
-			guideTarget:Destroy()
-			guideTarget = nil
-		end
+	end
+	if key == "" or not rootPart then
+		clearGuide()
 		return
 	end
-	if guide then
+	if key == guideKey and guide and guide.Attachment0 and guide.Attachment0.Parent == rootPart then
 		return
 	end
-	local center = Layout.ranches[ranch].center
+	clearGuide()
+	guideKey = key
 	local target = Instance.new("Part")
 	target.Anchored = true
 	target.CanCollide = false
 	target.CanQuery = false
 	target.Transparency = 1
 	target.Size = Vector3.new(1, 1, 1)
-	target.Position = Vector3.new(center.x, 3, center.z)
+	target.Position = position
 	target.Parent = Workspace
 	local a0 = Instance.new("Attachment")
 	a0.Parent = rootPart
@@ -232,7 +251,7 @@ local function updateGuide()
 	beam.FaceCamera = true
 	beam.LightEmission = 1
 	beam.Segments = 24
-	beam.Color = ColorSequence.new(Palette.color("gold"))
+	beam.Color = ColorSequence.new(color)
 	beam.Transparency = NumberSequence.new({
 		NumberSequenceKeypoint.new(0, 0.85),
 		NumberSequenceKeypoint.new(0.5, 0.35),
@@ -259,6 +278,12 @@ function HeistView.start()
 	localPlayer.CharacterAdded:Connect(function()
 		task.wait(0.2)
 		updateGuide()
+	end)
+	task.spawn(function()
+		while true do
+			task.wait(1)
+			updateGuide()
+		end
 	end)
 
 	RunService.RenderStepped:Connect(function()

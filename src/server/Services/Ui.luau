@@ -75,6 +75,8 @@ local function snapshot(player: Player): { [string]: any }?
 		tutorial = d.Tutorial,
 		pity = d.StrongboxPity,
 		lockpicks = d.Stats.Lockpicks or 0,
+		heists = d.Stats.Heists or 0,
+		boots = d.Stats.Boots or 0,
 		starterPack = d.StarterPack,
 		pending = Registry.Progression.pendingView(player),
 		shop = Registry.Shop.stockView(player),

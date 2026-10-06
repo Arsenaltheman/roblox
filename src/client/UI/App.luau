@@ -1133,6 +1133,40 @@ local function welcome(): Instance
 end
 
 -- First-session hint ("Buy a critter!", "Collect at your ranch"...).
+-- The next thing a new player should try: the tutorial, then the first heist, boots and gear.
+local function nextHint(): string
+	local s = state()
+	local step = s.tutorial or 0
+	if step == 0 then
+		return "Tap BUY on your RESERVED cage!"
+	elseif step == 1 then
+		return "Grab the GOLDEN TICKET cage on the next train!"
+	elseif step < 3 then
+		return "Lasso Bandit Bart when he shows up!"
+	end
+	if localPlayer:GetAttribute("HeistCarry") == true then
+		return ""
+	end
+	local heists = s.heists or 0
+	if heists == 0 then
+		return "HEIST TIME! Follow the teal arc to Cactus Flats and GRAB a crate!"
+	end
+	local bootsCost = HeistConfig.bootsCost(s.boots or 0)
+	if heists < 4 and (s.boots or 0) == 0 and bootsCost and (s.cash or 0) >= bootsCost then
+		return "Buy SPEED BOOTS to outrun the guards!"
+	end
+	local anyGear = false
+	for key in s.owned or {} do
+		if string.sub(key, 1, 5) == "gear:" then
+			anyGear = true
+		end
+	end
+	if not anyGear and (s.cash or 0) >= 2500 and heists < 10 then
+		return "New: buy a SMOKE BOMB in the Shop's GEAR tab!"
+	end
+	return ""
+end
+
 local function hint(): Instance
 	return text({
 		Name = "Hint",
@@ -1144,17 +1178,9 @@ local function hint(): Instance
 		TextColor3 = Theme.color.white,
 		FontFace = Theme.font.title,
 		Visible = function()
-			return (state().tutorial or 0) < 3 and #Store.announcements() == 0
+			return nextHint() ~= "" and #Store.announcements() == 0
 		end,
-		Text = function()
-			local step = state().tutorial or 0
-			if step == 0 then
-				return "Tap BUY on your RESERVED cage!"
-			elseif step == 1 then
-				return "Grab the GOLDEN TICKET cage on the next train!"
-			end
-			return "Lasso Bandit Bart when he shows up!"
-		end,
+		Text = nextHint,
 		Components.corner(UDim.new(0, 14)),
 		Components.stroke(4),
 		Components.textStroke(2.5),

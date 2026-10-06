@@ -22,3 +22,12 @@ Rules that stay in force:
 - Every random paid thing shows odds.
 - No fake timers.
 - Our own art only: generated icon sheets made for this game, Blender, or 3D critters in a ViewportFrame.
+
+## Phase 2 (after the plan above was finished)
+
+| # | Work | Status |
+|---|---|---|
+| 8 | **Onboarding for the new loop.** After the tutorial, a teal arc and a hint lead to the first heist, then hints for Speed Boots and the first gear | ✅ |
+| 9 | **Rarity-based juice for heist deliveries.** Bigger fanfare for rarer crates, and a server-wide shout for Legendary and up | 📅 |
+| 10 | **Performance pass.** Cap particles and effects on Low quality; check every loop exits | 📅 |
+| 11 | **Final rebuild** of `build/CritterExpress.rbxl` | 📅 |
