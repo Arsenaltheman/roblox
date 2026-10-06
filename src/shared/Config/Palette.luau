@@ -20,6 +20,7 @@ local Palette = {
 	paper = "#F3E2C0",
 	ink = "#2B1D14",
 	red = "#E2463A",
+	purple = "#9A5AFF",
 	cream = "#FFF4DD",
 	rock = "#B06A45",
 	rockDark = "#8A4E33",

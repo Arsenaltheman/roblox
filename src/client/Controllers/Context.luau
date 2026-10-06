@@ -258,6 +258,28 @@ local function banditAction(rootPos: Vector3): Action?
 	return nil
 end
 
+-- LASSO the Bandit King during his raid (Config/Boss).
+local BOSS_RANGE = 45
+local function bossAction(rootPos: Vector3): Action?
+	local king = Workspace:FindFirstChild("BanditKing")
+	local root = king and king:FindFirstChild("Root") :: BasePart?
+	if not king or not root then
+		return nil
+	end
+	local hp = (king:GetAttribute("Hp") :: number?) or 0
+	if hp <= 0 or (root.Position - rootPos).Magnitude > BOSS_RANGE then
+		return nil
+	end
+	return {
+		kind = "lasso",
+		label = "LASSO KING!",
+		sub = `{hp} / {(king:GetAttribute("MaxHp") :: number?) or hp} HP`,
+		run = function()
+			Net.request("HitBoss")
+		end,
+	}
+end
+
 -- GRAB a crate off a heist nest (the server starts the guards chasing).
 local function heistAction(rootPos: Vector3): Action?
 	if
@@ -362,6 +384,7 @@ function Context.start()
 		end
 		local pos = root.Position
 		local action = lassoAction(pos)
+			or bossAction(pos)
 			or cageAction(pos)
 			or crackAction(pos)
 			or stealAction(pos)

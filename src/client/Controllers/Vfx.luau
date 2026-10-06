@@ -455,6 +455,54 @@ local function onFx(kind: string, value: number, position: Vector3?)
 		Sound.play("goldenExpress")
 		Vfx.fireworks(Vector3.new(0, 14, 72), C("gold"), 10)
 		Vfx.shake(0.8, 0.4)
+	elseif kind == "bossSpawn" and position then
+		Vfx.fireworks(position, C("purple"), 8)
+		Vfx.ring(position, C("purple"), 40)
+		Sound.play("alarm")
+		Sound.play("goldenExpress")
+	elseif kind == "bossWarn" and position then
+		-- Red danger ring where he'll land (value = stomp radius).
+		local warn = anchoredPart(
+			Vector3.new(0.2, value * 2, value * 2),
+			CFrame.new(position + Vector3.new(0, 0.3, 0)) * CFrame.Angles(0, 0, math.rad(90)),
+			C("red")
+		)
+		warn.Shape = Enum.PartType.Cylinder
+		warn.Transparency = 0.6
+		TweenService
+			:Create(warn, TweenInfo.new(0.3, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), {
+				Transparency = 0.25,
+			})
+			:Play()
+		task.delay(1.3, function()
+			warn:Destroy()
+		end)
+	elseif kind == "bossStomp" and position then
+		Vfx.ring(position, Color3.fromRGB(214, 170, 110), value)
+		Vfx.burst(position + Vector3.new(0, 1, 0), Color3.fromRGB(214, 170, 110), 60, 2, 28)
+		Sound.play("caught")
+		if root and (root.Position - position).Magnitude < 60 then
+			Vfx.shake(2, 0.45)
+		end
+	elseif kind == "bossHit" and position then
+		local from = playerRoot(value)
+		if from then
+			Vfx.lasso(from.Position, position + Vector3.new(0, 6, 0), C("gold"))
+		end
+		Vfx.burst(position + Vector3.new(0, 6, 0), C("gold"), 16, 1.2, 14)
+		if value == localPlayer.UserId then
+			Sound.play("lassoCatch", 0.1)
+			Vfx.floatText(position + Vector3.new(0, 14, 0), "-1", C("red"))
+		end
+	elseif kind == "bossDefeat" and position then
+		Vfx.fireworks(position, C("gold"), 14)
+		Vfx.fireworks(position, C("purple"), 8)
+		Vfx.burst(position + Vector3.new(0, 5, 0), C("gold"), 120, 2, 34)
+		Sound.play("revealLegendary")
+		Vfx.shake(1.2, 0.5)
+	elseif kind == "bossEscape" and position then
+		Vfx.smoke(position, 2)
+		Sound.play("whistle")
 	elseif kind == "spinEarned" then
 		Sound.play("giftReady")
 		if root then

@@ -39,6 +39,14 @@ local list: { Event } = {
 		color = "red",
 		weight = 25,
 	},
+	{
+		id = "BanditKing",
+		name = "BANDIT KING",
+		blurb = "The Bandit King is raiding Ghost Town! Everyone lasso him for loot!",
+		duration = 150,
+		color = "purple",
+		weight = 25,
+	},
 }
 
 local byId: { [string]: Event } = {}

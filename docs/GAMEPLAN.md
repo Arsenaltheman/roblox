@@ -35,7 +35,7 @@ Status: ✅ built · 🔨 being built now · 📅 next · 🧊 later.
 | Speed training to reach harder biomes | **Speed Boots** (10 levels; the panel shows which zones you can outrun) | ✅ |
 | Harder biomes with better eggs | Cactus Flats → Rattlesnake Canyon → Gold Mine → Ghost Town | ✅ |
 | Hatch eggs into pets | Eggs + Hatchery with reveal cinematics | ✅ |
-| **Weekly bosses** | **Bandit King** boss raid in Ghost Town (server co-op, big loot) | 📅 |
+| **Weekly bosses** | **Bandit King** boss raid in Ghost Town (server co-op, big loot) (a server event, about every hour or two) | ✅ |
 
 ### From Grow a Garden (offline progress and check-ins)
 | Their mechanic | Our version | Status |

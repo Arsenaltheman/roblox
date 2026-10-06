@@ -51,13 +51,22 @@ local function run(event: EventsConfig.Event)
 		crateRain()
 	elseif event.id == "JackpotRestock" then
 		Registry.Heist.restockAll(EventsConfig.RESTOCK_BOOST)
+	elseif event.id == "BanditKing" then
+		Registry.Boss.spawn(event.duration)
 	elseif event.id == "GoldRush" then
 		-- Ranch income reads Events.goldRush() through LiveOps.incomeEventActive; push fresh numbers.
 		for _, player in Players:GetPlayers() do
 			Registry.Ui.pushState(player)
 		end
 	end
-	task.wait(event.duration)
+	local ends = now() + event.duration
+	while now() < ends do
+		-- The Bandit King event ends early once he's beaten (or escapes).
+		if event.id == "BanditKing" and now() > ends - event.duration + 2 and not Registry.Boss.alive() then
+			break
+		end
+		task.wait(1)
+	end
 	active = nil
 	Workspace:SetAttribute("EventId", "")
 	if event.id == "GoldRush" then

@@ -26,6 +26,7 @@ local ORDER = {
 	"Gear",
 	"Shop",
 	"LiveOps",
+	"Boss",
 	"Events",
 }
 

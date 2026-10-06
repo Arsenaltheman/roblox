@@ -23,6 +23,7 @@ local ICON: { [string]: { string } } = {
 	CrateRain = { "crate", "▣" },
 	GoldRush = { "moneybag", "$" },
 	JackpotRestock = { "chest", "♛" },
+	BanditKing = { "crown", "♚" },
 }
 
 function EventBanner.build(): Instance
