@@ -22,6 +22,7 @@ local ORDER = {
 	"Progression",
 	"Steal",
 	"Heist",
+	"Wheel",
 	"Shop",
 	"LiveOps",
 }

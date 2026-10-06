@@ -378,6 +378,7 @@ local function deliver(player: Player)
 	if d then
 		d.Stats.Heists = (d.Stats.Heists or 0) + 1
 	end
+	Registry.Wheel.heistDelivered(player)
 	Registry.Data.saveNow(player)
 	local r = root(player)
 	Registry.Ui.fxAll("heistDeliver", crate.tier, r and r.Position)

@@ -43,5 +43,6 @@ return {
 		"Announce",
 		"Toast",
 		"Fx",
+		"WheelResult",
 	},
 }

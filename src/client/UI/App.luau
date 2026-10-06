@@ -14,6 +14,8 @@ local Progression = require("@game/ReplicatedStorage/Shared/Config/Progression")
 local Rarities = require("@game/ReplicatedStorage/Shared/Config/Rarities")
 local Species = require("@game/ReplicatedStorage/Shared/Config/Species")
 local HeistConfig = require("@game/ReplicatedStorage/Shared/Config/Heist")
+local WheelConfig = require("@game/ReplicatedStorage/Shared/Config/Wheel")
+local Palette = require("@game/ReplicatedStorage/Shared/Config/Palette")
 local Economy = require("@game/ReplicatedStorage/Shared/Sim/Economy")
 local Luck = require("@game/ReplicatedStorage/Shared/Sim/Luck")
 local NumberFormat = require("@game/ReplicatedStorage/Shared/Sim/NumberFormat")
@@ -197,6 +199,11 @@ local function bootsLevel(): number
 	return bootsAttr()
 end
 
+local spinsAttr = source((localPlayer:GetAttribute("Spins") :: number?) or 0)
+localPlayer:GetAttributeChangedSignal("Spins"):Connect(function()
+	spinsAttr((localPlayer:GetAttribute("Spins") :: number?) or 0)
+end)
+
 local function sideMenu(): Instance
 	local step = function()
 		return state().tutorial or 0
@@ -224,6 +231,11 @@ local function sideMenu(): Instance
 		menuButton(4, "▤", "ALMANAC", "almanac", function()
 			return step() >= 3
 		end, nil, Theme.color.purple),
+		menuButton(-1, "✪", "SPIN", "wheel", function()
+			return true
+		end, function()
+			return spinsAttr()
+		end, Theme.color.pink),
 		menuButton(0, "»", "BOOTS", "boots", function()
 			return true
 		end, function()
@@ -1340,6 +1352,199 @@ local function bootsMenu(): Instance
 	})
 end
 
+-- ---------------------------------------------------------------- Prize Wheel
+-- A ring of prize bubbles; a light chases around, slows down and lands on the server's result.
+local wheelLit = source(0)
+local wheelBusy = source(false)
+local wheelPrize = source("")
+
+local function playWheel(index: number, prizeText: string)
+	wheelBusy(true)
+	wheelPrize("")
+	local count = #WheelConfig.segments
+	local current = math.max(wheelLit(), 1)
+	local steps = count * 3 + ((index - current) % count)
+	task.spawn(function()
+		for step = 1, steps do
+			current = current % count + 1
+			wheelLit(current)
+			Sound.play("click", 0.15)
+			-- Ease out: quick at first, then slower and slower ticks.
+			local p = step / steps
+			task.wait(0.035 + 0.38 * p ^ 3)
+		end
+		local segment = WheelConfig.segments[index]
+		local big = segment.kind == "critter"
+		Sound.play(if big then "revealLegendary" else "revealRare")
+		wheelPrize(`YOU WON {prizeText}`)
+		for _ = 1, 3 do
+			wheelLit(0)
+			task.wait(0.12)
+			wheelLit(index)
+			task.wait(0.18)
+		end
+		wheelBusy(false)
+	end)
+end
+
+Net.listen("WheelResult", function(index: number, prizeText: string)
+	Store.menu("wheel")
+	playWheel(index, prizeText)
+end)
+
+local function wheelMenu(): Instance
+	local bubbles = {}
+	local count = #WheelConfig.segments
+	local odds = WheelConfig.odds()
+	for i, segment in WheelConfig.segments do
+		local angle = (i - 1) / count * math.pi * 2 - math.pi / 2
+		local color = Palette.color(segment.color)
+		table.insert(
+			bubbles,
+			create("Frame")({
+				Name = "Bubble" .. i,
+				Size = UDim2.fromScale(0.21, 0.21),
+				Position = UDim2.fromScale(0.5 + math.cos(angle) * 0.37, 0.5 + math.sin(angle) * 0.37),
+				AnchorPoint = Vector2.new(0.5, 0.5),
+				BackgroundColor3 = Color3.new(1, 1, 1),
+				ZIndex = 3,
+				Components.corner(UDim.new(1, 0)),
+				create("UIStroke")({
+					Thickness = function()
+						return if wheelLit() == i then 7 else 3
+					end,
+					Color = function()
+						return if wheelLit() == i then Color3.new(1, 1, 1) else Theme.color.ink
+					end,
+				}),
+				Components.gradient(function()
+					return if wheelLit() == i then Theme.lighten(color, 0.35) else color
+				end),
+				Components.gloss(UDim.new(1, 0)),
+				create("UIScale")({
+					Scale = spring(function()
+						return if wheelLit() == i then 1.28 else 1
+					end, 0.12, 0.5),
+				}),
+				text({
+					Size = UDim2.fromScale(0.8, 0.5),
+					Position = UDim2.fromScale(0.5, 0.36),
+					AnchorPoint = Vector2.new(0.5, 0.5),
+					Text = segment.glyph,
+					FontFace = Theme.font.title,
+					TextColor3 = Theme.color.white,
+					ZIndex = 4,
+					Components.textStroke(2.5),
+				}),
+				text({
+					Size = UDim2.fromScale(1.3, 0.26),
+					Position = UDim2.fromScale(0.5, 0.78),
+					AnchorPoint = Vector2.new(0.5, 0.5),
+					Text = segment.label,
+					FontFace = Theme.font.title,
+					TextColor3 = Theme.color.white,
+					ZIndex = 4,
+					Components.textStroke(2),
+				}),
+				text({
+					Size = UDim2.fromScale(1, 0.2),
+					Position = UDim2.fromScale(0.5, 1.12),
+					AnchorPoint = Vector2.new(0.5, 0.5),
+					Text = string.format("%.1f%%", odds[i]),
+					FontFace = Theme.font.number,
+					TextColor3 = Theme.color.white,
+					ZIndex = 4,
+					Components.textStroke(1.5),
+				}),
+			})
+		)
+	end
+	return Components.panel({
+		title = "PRIZE WHEEL",
+		accent = Theme.color.pink,
+		size = UDim2.fromScale(0.5, 0.86),
+		onClose = function()
+			if not wheelBusy() then
+				Store.menu("")
+			end
+		end,
+		children = {
+			create("Frame")({
+				Name = "Ring",
+				Size = UDim2.fromScale(1, 1),
+				SizeConstraint = Enum.SizeConstraint.RelativeYY,
+				Position = UDim2.fromScale(0.5, 0.5),
+				AnchorPoint = Vector2.new(0.5, 0.5),
+				BackgroundColor3 = Color3.new(1, 1, 1),
+				Components.corner(UDim.new(1, 0)),
+				Components.stroke(5),
+				Components.gradient(Theme.color.ink:Lerp(Theme.color.purple, 0.55)),
+				-- Slowly rotating sunburst glow behind the bubbles.
+				create("Frame")({
+					Size = UDim2.fromScale(0.62, 0.62),
+					Position = UDim2.fromScale(0.5, 0.5),
+					AnchorPoint = Vector2.new(0.5, 0.5),
+					BackgroundColor3 = Theme.color.gold,
+					BackgroundTransparency = 0.55,
+					Components.corner(UDim.new(1, 0)),
+					Components.idle(25, 6),
+				}),
+				bubbles :: any,
+				Components.button({
+					name = "Spin",
+					text = function()
+						return if wheelBusy() then "..." else `SPIN! ({spinsAttr()})`
+					end,
+					color = function()
+						return if spinsAttr() > 0 and not wheelBusy()
+							then Theme.color.green
+							else Theme.color.wood
+					end,
+					size = UDim2.fromScale(0.36, 0.17),
+					position = UDim2.fromScale(0.5, 0.5),
+					anchor = Vector2.new(0.5, 0.5),
+					textSize = 34,
+					shine = true,
+					pulse = true,
+					onClick = function()
+						if not wheelBusy() then
+							Net.request("SpinWheel")
+						end
+					end,
+				}),
+			}),
+			show(function()
+				return wheelPrize() ~= ""
+			end, function()
+				return text({
+					Size = UDim2.new(0.9, 0, 0, 56),
+					Position = UDim2.new(0.5, 0, 1, 10),
+					AnchorPoint = Vector2.new(0.5, 1),
+					BackgroundTransparency = 0,
+					BackgroundColor3 = Theme.color.gold,
+					TextColor3 = Theme.color.white,
+					FontFace = Theme.font.title,
+					ZIndex = 8,
+					Text = wheelPrize,
+					Components.corner(UDim.new(0, 14)),
+					Components.stroke(4),
+					Components.textStroke(3),
+					Components.padding(8),
+					Components.popIn(),
+				})
+			end),
+			text({
+				Size = UDim2.new(1, 0, 0, 22),
+				Position = UDim2.new(0.5, 0, 0, -6),
+				AnchorPoint = Vector2.new(0.5, 1),
+				FontFace = Theme.font.heading,
+				TextColor3 = Theme.color.ink,
+				Text = "Free spins: 1 a day, +1 every 3 heists, +1 every 20 min played. Never sold.",
+			}),
+		},
+	})
+end
+
 -- Big pulsing banner while you carry a heist crate.
 local function runBanner(): any
 	local carrying = source(localPlayer:GetAttribute("HeistCarry") == true)
@@ -1434,6 +1639,9 @@ function App.build(scale: () -> number): Instance
 			show(function()
 				return Store.menu() == "boots"
 			end, bootsMenu),
+			show(function()
+				return Store.menu() == "wheel"
+			end, wheelMenu),
 			show(function()
 				local p = state().pending
 				return p ~= nil and ((p.offline or 0) > 0 or p.streakSlot ~= nil)
