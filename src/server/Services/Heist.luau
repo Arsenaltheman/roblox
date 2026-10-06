@@ -25,7 +25,8 @@ local Heist = {}
 
 type Crate = { species: string, tier: number, mutation: string? }
 type Nest = { zone: number, index: number, pad: BasePart, crate: Crate?, respawnAt: number }
-type Carry = { zone: number, nest: number, crate: Crate, started: number }
+-- origin: where the carry began (the nest, or where it was snatched); deliveries need plausible travel.
+type Carry = { zone: number, nest: number, crate: Crate, started: number, origin: Vector3 }
 type Guard = {
 	zone: number,
 	model: Model,
@@ -330,7 +331,8 @@ local function startCarry(player: Player, nest: Nest)
 	else
 		emptyNest(nest)
 	end
-	carrying[player] = { zone = nest.zone, nest = nest.index, crate = crate, started = now() }
+	carrying[player] =
+		{ zone = nest.zone, nest = nest.index, crate = crate, started = now(), origin = nest.pad.Position }
 	setCarryAttributes(player, carrying[player])
 	Registry.Ui.fxAll("heistGrab", player.UserId, nest.pad.Position)
 	local name = Species.byId[crate.species].name
@@ -346,6 +348,10 @@ function Heist.transfer(from: Player, to: Player): boolean
 	carrying[from] = nil
 	setCarryAttributes(from, nil)
 	carry.started = now()
+	local fromRoot = root(from)
+	if fromRoot then
+		carry.origin = fromRoot.Position
+	end
 	carrying[to] = carry
 	setCarryAttributes(to, carry)
 	Registry.Ui.toast(from, `{to.DisplayName} lassoed your crate!`)
@@ -428,7 +434,7 @@ local function grab(player: Player, zoneId: number, nestIndex: number)
 	if not nest or not nest.crate or not r or grabbing[player] then
 		return
 	end
-	if carrying[player] or Registry.Steal.isCarrying(player) then
+	if carrying[player] or Registry.Steal.isBusy(player) or Registry.Session.isSuspicious(player) then
 		return
 	end
 	if (r.Position - nest.pad.Position).Magnitude > HeistConfig.GRAB_REACH then
@@ -707,7 +713,22 @@ function Heist.start()
 		end
 		for player, carry in carrying do
 			if insideOwnRanch(player) then
-				deliver(player)
+				-- Travel-time gate: nobody covers nest-to-ranch faster than ~110 studs/s; a position
+				-- jump also marks the player suspicious for a few seconds.
+				local index = Registry.Ranch.indexOf(player)
+				local center = index and Layout.ranches[index].center
+				local dist = if center
+					then (carry.origin - Vector3.new(center.x, carry.origin.Y, center.z)).Magnitude
+					else 0
+				local minimum = math.max(1.5, dist / 110)
+				if Registry.Session.isSuspicious(player) or t - carry.started < minimum then
+					if Registry.Session.isSuspicious(player) then
+						dropCarry(player, "cheat")
+						Registry.Guard.strike(player, "heist:teleport")
+					end
+				else
+					deliver(player)
+				end
 			elseif t - carry.started > HeistConfig.CARRY_TIMEOUT then
 				dropCarry(player, "timeout")
 			end

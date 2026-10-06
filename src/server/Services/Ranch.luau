@@ -583,8 +583,17 @@ local function frontier(player: Player)
 	if not Economy.canFrontier(d.Frontier, d.Cash, Profile.bestTier(d)) then
 		return
 	end
+	for _, critter in d.Critters do
+		if critter.it then
+			Registry.Ui.toast(
+				player,
+				"A thief is carrying one of your critters. Get it back (or wait) before the Frontier."
+			)
+			return
+		end
+	end
 	local n = d.Frontier + 1
-	-- Reset: keep only Branded critters (and nothing mid-steal).
+	-- Reset: keep only Branded critters.
 	for cid, critter in d.Critters do
 		if not critter.br and not critter.it then
 			d.Critters[cid] = nil

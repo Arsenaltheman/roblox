@@ -383,6 +383,20 @@ function Train.start()
 	Net.on("BuyCage", buyCage)
 	Net.on("CrackStart", crackStart)
 	Net.onInvoke("GetOdds", getOdds)
+	-- Clients ask for the trains once they're ready (a message sent before they listen is lost).
+	Net.onInvoke("GetManifests", function(_player: Player)
+		local out: { { any } } = {}
+		for _, cycle in { currentCycle, currentCycle + 1 } do
+			local manifest = manifests[cycle]
+			if manifest then
+				table.insert(
+					out,
+					{ cycle, compactCages(manifest), manifest.golden, manifest.strongbox } :: { any }
+				)
+			end
+		end
+		return out
+	end)
 
 	-- The next train's cages are rolled while the current train is behind the ranches (late in its
 	-- departing run), so cage contents never visibly swap in front of players.

@@ -87,6 +87,7 @@ local Schemas: { [string]: { Validator } } = {
 	TradeReady = { V.bool() },
 	TradeCancel = {},
 	GetOdds = { V.oneOf({ "wild", "reserved", "mutations", "egg", "species" }) },
+	GetManifests = {},
 }
 
 -- True when `args` exactly match the schema for `name` (no missing, no extra arguments).

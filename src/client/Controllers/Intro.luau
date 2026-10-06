@@ -98,8 +98,9 @@ local function buildTitle(): (ScreenGui, TextButton)
 	local skip = Instance.new("TextButton")
 	skip.Name = "Skip"
 	skip.Size = UDim2.fromOffset(120, 44)
-	skip.Position = UDim2.new(1, -20, 1, -20)
-	skip.AnchorPoint = Vector2.new(1, 1)
+	-- Top right, clear of the jump button on phones.
+	skip.Position = UDim2.new(1, -20, 0, 90)
+	skip.AnchorPoint = Vector2.new(1, 0)
 	skip.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 	skip.BackgroundTransparency = 0.3
 	skip.Text = "SKIP ▶"

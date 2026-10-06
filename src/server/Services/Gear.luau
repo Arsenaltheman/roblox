@@ -96,33 +96,34 @@ local function placeTrap(player: Player, position: Vector3)
 	trap:SetAttribute("Owner", player.UserId)
 	trap.Parent = Workspace
 	traps[player] = trap
+	-- Checked by the server (a thief's client could simply not report Touched).
 	local sprung = false
-	trap.Touched:Connect(function(hit)
-		if sprung then
-			return
-		end
-		local victim = Players:GetPlayerFromCharacter(hit.Parent)
-		if not victim or victim == player then
-			return
-		end
-		-- Only thieves trip it: someone carrying a critter stolen from this ranch, or anyone who isn't
-		-- the owner while they're carrying anything.
-		local from = Registry.Steal.carryingFrom(victim)
-		if from ~= player then
-			return
-		end
-		sprung = true
-		Registry.Steal.forceReturn(victim)
-		Registry.Steal.stun(victim, GearConfig.TRAP_STUN)
-		Registry.Ui.fxAll("trapSnap", victim.UserId, trap.Position)
-		Registry.Ui.toast(victim, "SNAP! A bear trap! The critter ran home.")
-		Registry.Ui.toast(player, `Your bear trap caught {victim.DisplayName}!`)
-		task.delay(1, function()
-			trap:Destroy()
-			if traps[player] == trap then
-				traps[player] = nil
+	task.spawn(function()
+		while not sprung and trap.Parent do
+			for _, victim in Players:GetPlayers() do
+				local vr = if victim ~= player then root(victim) else nil
+				if
+					vr
+					and (vr.Position - trap.Position).Magnitude <= 3
+					and Registry.Steal.carryingFrom(victim) == player
+				then
+					sprung = true
+					Registry.Steal.forceReturn(victim)
+					Registry.Steal.stun(victim, GearConfig.TRAP_STUN)
+					Registry.Ui.fxAll("trapSnap", victim.UserId, trap.Position)
+					Registry.Ui.toast(victim, "SNAP! A bear trap! The critter ran home.")
+					Registry.Ui.toast(player, `Your bear trap caught {victim.DisplayName}!`)
+					task.delay(1, function()
+						trap:Destroy()
+						if traps[player] == trap then
+							traps[player] = nil
+						end
+					end)
+					break
+				end
 			end
-		end)
+			task.wait(0.1)
+		end
 	end)
 	task.delay(GearConfig.TRAP_LIFETIME, function()
 		if traps[player] == trap then
@@ -160,9 +161,12 @@ local function use(player: Player, key: string)
 		local hitCount = 0
 		for _, other in Players:GetPlayers() do
 			local orr = root(other)
+			-- Only thieves and crate carriers are knocked out (never bystanders at the station).
+			local carrier = Registry.Steal.isCarrying(other) or Registry.Heist.isCarrying(other)
 			if
 				other ~= player
 				and orr
+				and carrier
 				and (orr.Position - r.Position).Magnitude <= GearConfig.TUMBLE_RADIUS
 			then
 				Registry.Steal.stun(other, GearConfig.TUMBLE_STUN)
@@ -185,6 +189,7 @@ local function use(player: Player, key: string)
 		Registry.Ui.toast(player, "Bear trap set! The next thief who grabs from you gets caught.")
 	elseif key == "GrappleHook" then
 		-- The client owns its character's physics, so the dash impulse is applied there.
+		Registry.Session.grantDash(player, 2)
 		Registry.Ui.fx(player, "dash", GearConfig.DASH_SPEED)
 		Registry.Ui.fxAll("dashTrail", player.UserId, r.Position)
 	elseif key == "DynamiteDecoy" then

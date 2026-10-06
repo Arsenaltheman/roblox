@@ -34,6 +34,7 @@ RateLimit.limits = {
 	Setting = { rate = 5, burst = 6 },
 	Sticker = { rate = 1 / 3, burst = 2 },
 	GetOdds = { rate = 1, burst = 3 },
+	GetManifests = { rate = 0.5, burst = 2 },
 	SheriffPower = { rate = 0.2, burst = 1 },
 	Lockpick = { rate = 0.5, burst = 1 },
 	ClientLog = { rate = 0.2, burst = 2 },

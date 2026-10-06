@@ -42,6 +42,7 @@ return {
 	-- Client -> server with a reply (RemoteFunctions). Kept minimal.
 	functions = {
 		"GetOdds",
+		"GetManifests",
 	},
 	-- Server -> client messages.
 	serverToClient = {

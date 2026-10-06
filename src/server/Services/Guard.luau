@@ -14,7 +14,7 @@ local STRIKE_WINDOW = 60
 
 local Guard = {}
 
-Guard.activity = Signal.new() :: Signal.Signal<Player>
+Guard.activity = Signal.new() :: Signal.Signal<Player, string>
 
 local limiters: { [Player]: RateLimit.Limiter } = {}
 local strikes: { [Player]: { number } } = {}
@@ -47,7 +47,7 @@ function Guard.allow(player: Player, name: string): boolean
 		-- for it is worse than ignoring a few extra requests. Malformed requests still strike.
 		return false
 	end
-	Guard.activity:Fire(player)
+	Guard.activity:Fire(player, name)
 	return true
 end
 

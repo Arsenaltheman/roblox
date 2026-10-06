@@ -321,7 +321,14 @@ local function play(data: any)
 			then `{data.name} · new title: {cosmetic.name} · bonus spins, Nuggets and 2x Cash`
 			else `{data.name} · bonus spins, Nuggets and 2x Cash`
 	elseif data.kind == "gift" then
-		title = "GIFT!"
+		title = if data.gift == "egg"
+			then "AN EGG!"
+			elseif data.gift == "nuggets" then "GOLD NUGGETS!"
+			else "CASH GIFT!"
+		caption = if data.gift == "egg"
+			then "Hatch it in EGGS (left menu) in 2 minutes. It becomes a critter!"
+			elseif data.gift == "nuggets" then "Nuggets buy eggs and cosmetics in the Trading Post."
+			else "Added to your wallet."
 	elseif data.kind == "streak" then
 		title = `DAY {data.slot} STREAK!`
 	elseif data.kind == "cosmetic" then

@@ -38,6 +38,8 @@ type Carry = {
 	ownerId: number,
 	cid: string,
 	started: number,
+	-- Where the critter was grabbed; delivery needs plausible travel time from here.
+	origin: Vector3?,
 }
 
 local carrying: { [Player]: Carry } = {}
@@ -401,7 +403,7 @@ local function stealStart(player: Player, ranchIndex: number, cid: string)
 	if not Registry.LiveConfig.enabled("ff.stealing") then
 		return
 	end
-	if loaded(player) or grabbing[player] then
+	if loaded(player) or grabbing[player] or Registry.Session.isSuspicious(player) then
 		return
 	end
 	if ranchIndex == 9 then
@@ -461,7 +463,13 @@ local function stealStart(player: Player, ranchIndex: number, cid: string)
 		end
 		again.critter.it = true
 		Registry.Ranch.syncCritter(again.owner, cid)
-		local carry = { owner = again.owner, ownerId = again.owner.UserId, cid = cid, started = now() }
+		local carry = {
+			owner = again.owner,
+			ownerId = again.owner.UserId,
+			cid = cid,
+			started = now(),
+			origin = padPosition(ranchIndex, again.critter.p),
+		}
 		carrying[player] = carry
 		setCarryAttributes(player, carry)
 		Registry.Ui.toast(
@@ -515,8 +523,14 @@ local function spawnTutorialBandit(player: Player)
 	Registry.Ui.fx(player, "tutorialBandit", 0)
 	if h then
 		h.WalkSpeed = 9
+		-- Out to Main Street first (so he never hugs a fence), then off toward the Bandit Camp.
 		local camp = Layout.landmarks.banditCamp
-		h:MoveTo(Vector3.new(camp.x, 3, camp.z))
+		h:MoveTo(Vector3.new(center.x, 3, 75))
+		h.MoveToFinished:Once(function()
+			if model.Parent then
+				h:MoveTo(Vector3.new(camp.x, 3, camp.z))
+			end
+		end)
 	end
 	task.delay(30, function()
 		if tutorialBandits[player] == model then
@@ -556,6 +570,9 @@ local function lasso(player: Player, targetUserId: number)
 	end
 	local t = now()
 	if t < (lassoReadyAt[player] or 0) or t < (stunnedUntil[player] or 0) then
+		return
+	end
+	if Registry.Session.isSuspicious(player) then
 		return
 	end
 	local golden = Registry.Monetization.owns(player, "GoldenLasso")
@@ -721,14 +738,26 @@ function Steal.start()
 			if t - carry.started > CARRY_TIMEOUT then
 				returnCarry(thief, "timeout")
 			elseif insideOwnRanch(thief) then
-				deliver(thief)
+				-- Travel-time gate (see Heist): a teleporting thief never delivers.
+				local index = Registry.Ranch.indexOf(thief)
+				local center = index and Layout.ranches[index].center
+				local origin = carry.origin
+				local dist = if origin and center
+					then (origin - Vector3.new(center.x, origin.Y, center.z)).Magnitude
+					else 0
+				if Registry.Session.isSuspicious(thief) then
+					returnCarry(thief, "cheat")
+					Registry.Guard.strike(thief, "steal:teleport")
+				elseif t - carry.started >= math.max(3, dist / 110) then
+					deliver(thief)
+				end
 			end
 		end
 	end)
 
-	-- Tutorial bandit: 20 s after the golden-ticket critter lands (tutorial step 2).
-	Registry.Ranch.critterAdded:Connect(function(player)
-		if Registry.Progression.tutorialStep(player) == 2 then
+	-- Tutorial bandit: 20 s after the golden-ticket buy moves the tutorial to step 2.
+	Registry.Progression.tutorialAdvanced:Connect(function(player: Player, to: number)
+		if to == 2 then
 			task.delay(20, function()
 				if player.Parent == Players and Registry.Progression.tutorialStep(player) == 2 then
 					spawnTutorialBandit(player)

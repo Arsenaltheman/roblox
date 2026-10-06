@@ -4,6 +4,7 @@
 
 local Players = game:GetService("Players")
 local SocialService = game:GetService("SocialService")
+local UserInputService = game:GetService("UserInputService")
 local Workspace = game:GetService("Workspace")
 
 local Vide = require("@game/ReplicatedStorage/Packages/Vide")
@@ -122,6 +123,9 @@ local function goalPill(): Instance
 	local smooth = spring(progress, 0.6, 0.9)
 	return create("TextButton")({
 		Name = "Goal",
+		Visible = function()
+			return (state().tutorial or 0) >= 3
+		end,
 		Size = UDim2.fromOffset(380, 34),
 		Position = UDim2.new(0.5, 0, 0, 70),
 		AnchorPoint = Vector2.new(0.5, 0),
@@ -371,7 +375,7 @@ local function statusBadges(): Instance
 			end,
 			Theme.color.green,
 			function()
-				return true
+				return (state().tutorial or 0) >= 3
 			end
 		),
 		badge(
@@ -453,7 +457,10 @@ local function actionButton(): Instance
 	return create("Frame")({
 		Name = "Action",
 		Size = UDim2.fromOffset(170, 170),
-		Position = UDim2.new(1, -150, 1, -190),
+		-- Above Roblox's own jump button on touch screens.
+		Position = if UserInputService.TouchEnabled
+			then UDim2.new(1, -150, 1, -270)
+			else UDim2.new(1, -150, 1, -190),
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		BackgroundTransparency = 1,
 		create("UIScale")({
@@ -1234,6 +1241,14 @@ local function nextHint(): string
 		end
 		return `{what} arrives in {math.ceil(eta)}s. Wait on the platform!`
 	end
+	-- A ready gift is worth a mention whenever the train isn't the thing to do right now.
+	if not trainHere then
+		for _, g in s.gifts or {} do
+			if g.ready and not g.claimed then
+				return "A GIFT is ready! Tap the present at the top right."
+			end
+		end
+	end
 	if step == 0 then
 		return if trainHere and mine
 			then "Follow the red arrow and tap BUY on your RESERVED cage!"
@@ -1251,6 +1266,9 @@ local function nextHint(): string
 		if g.ready and not g.claimed then
 			return "A GIFT is ready! Tap the present at the top right."
 		end
+	end
+	if readyEggs() > 0 then
+		return "An egg is ready to HATCH! Open EGGS on the left."
 	end
 	if localPlayer:GetAttribute("HeistCarry") == true then
 		return ""

@@ -522,18 +522,25 @@ end
 local smokeCache: ParticleEmitter? = nil
 
 function TrainView.start()
-	Net.listen(
-		"TrainManifest",
-		function(cycle: number, cages: { CageInfo }, golden: boolean, hasStrongbox: boolean)
-			manifests[cycle] = { cycle = cycle, cages = cages, golden = golden, strongbox = hasStrongbox }
-			sold[cycle] = sold[cycle] or {}
-			manifests[cycle - 3] = nil
-			sold[cycle - 3] = nil
-			if cycle == shownCycle then
-				fillCages(cycle)
+	local function onManifest(cycle: number, cages: { CageInfo }, golden: boolean, hasStrongbox: boolean)
+		manifests[cycle] = { cycle = cycle, cages = cages, golden = golden, strongbox = hasStrongbox }
+		sold[cycle] = sold[cycle] or {}
+		manifests[cycle - 3] = nil
+		sold[cycle - 3] = nil
+		if cycle == shownCycle then
+			fillCages(cycle)
+		end
+	end
+	Net.listen("TrainManifest", onManifest)
+	-- Ask for the current trains now that we're listening (slow phones miss the join-time send).
+	task.spawn(function()
+		local list = Net.invoke("GetManifests")
+		for _, m in (list or {}) :: { any } do
+			if not manifests[m[1]] then
+				onManifest(m[1], m[2], m[3], m[4])
 			end
 		end
-	)
+	end)
 	Net.listen("CageSold", function(cycle: number, cageId: number, buyer: number)
 		sold[cycle] = sold[cycle] or {}
 		sold[cycle][cageId] = buyer

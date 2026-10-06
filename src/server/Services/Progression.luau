@@ -10,6 +10,7 @@ local Economy = require("@game/ReplicatedStorage/Shared/Sim/Economy")
 local Rng = require("@game/ReplicatedStorage/Shared/Sim/Rng")
 local Streak = require("@game/ReplicatedStorage/Shared/Sim/Streak")
 local Net = require("@game/ReplicatedStorage/Shared/Net/Net")
+local Signal = require("@game/ReplicatedStorage/Shared/Util/Signal")
 local Registry = require("../Registry")
 
 local ProgressionService = {}
@@ -130,11 +131,15 @@ function ProgressionService.tutorialStep(player: Player): number
 	return if d then d.Tutorial else 99
 end
 
+-- Fired after the step is stored (Steal spawns the tutorial bandit on step 2).
+ProgressionService.tutorialAdvanced = Signal.new() :: Signal.Signal<Player, number>
+
 function ProgressionService.advanceTutorial(player: Player, to: number)
 	local d = Registry.Data.get(player)
 	if d and d.Tutorial < to then
 		d.Tutorial = to
 		Registry.Ui.pushState(player)
+		ProgressionService.tutorialAdvanced:Fire(player, to)
 	end
 end
 
