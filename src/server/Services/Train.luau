@@ -75,7 +75,9 @@ end
 -- Sheriff Power / schedule: the next train becomes the Golden Express.
 function Train.callGoldenExpress(byName: string?)
 	local state = TrainClock.at(epoch, now())
-	goldenCycle = state.cycle + 1
+	-- The next train may already be rolled (late in this cycle); then target the one after.
+	local rollAheadAt = TrainConfig.arriveSeconds + TrainConfig.dwellSeconds + 8
+	goldenCycle = state.cycle + (if state.inCycle >= rollAheadAt - 0.5 then 2 else 1)
 	Workspace:SetAttribute("GoldenCycle", goldenCycle)
 	Registry.Ui.announce(
 		if byName then `Sheriff {byName} called the GOLDEN EXPRESS! Next train!` else "The GOLDEN EXPRESS is coming! Next train!",
@@ -106,6 +108,29 @@ end
 local function cageWorld(cageId: number): Vector3
 	local p = Layout.cagePosition(cageId)
 	return Vector3.new(p.x, p.y, p.z)
+end
+
+local function compactCages(manifest: Manifest.Manifest): { any }
+	local compact = {}
+	for _, cage in manifest.cages do
+		table.insert(compact, {
+			id = cage.id,
+			s = cage.speciesId,
+			t = cage.tier,
+			m = cage.mutation,
+			o = cage.owner,
+			p = cage.price,
+			g = cage.goldenTicket,
+		})
+	end
+	return compact
+end
+
+local function sendManifest(player: Player, cycle: number)
+	local manifest = manifests[cycle]
+	if manifest then
+		Net.send(player, "TrainManifest", cycle, compactCages(manifest), manifest.golden, manifest.strongbox)
+	end
 end
 
 local function rollTrain(cycle: number)
@@ -152,19 +177,7 @@ local function rollTrain(cycle: number)
 	sold[cycle - 3] = nil
 	cracked[cycle - 3] = nil
 
-	local compact = {}
-	for _, cage in manifest.cages do
-		table.insert(compact, {
-			id = cage.id,
-			s = cage.speciesId,
-			t = cage.tier,
-			m = cage.mutation,
-			o = cage.owner,
-			p = cage.price,
-			g = cage.goldenTicket,
-		})
-	end
-	Net.broadcast("TrainManifest", cycle, compact, manifest.golden, manifest.strongbox)
+	Net.broadcast("TrainManifest", cycle, compactCages(manifest), manifest.golden, manifest.strongbox)
 end
 
 local function nearPosition(player: Player, position: Vector3, reach: number): boolean
@@ -352,38 +365,35 @@ function Train.start()
 	Net.on("CrackStart", crackStart)
 	Net.onInvoke("GetOdds", getOdds)
 
+	-- The next train's cages are rolled while the current train is behind the ranches (late in its
+	-- departing run), so cage contents never visibly swap in front of players.
+	local ROLL_AHEAD_AT = TrainConfig.arriveSeconds + TrainConfig.dwellSeconds + 8
+	local rolledUpTo = -1
 	RunService.Heartbeat:Connect(function()
 		local state = TrainClock.at(epoch, now())
-		if state.cycle ~= currentCycle then
-			currentCycle = state.cycle
-			rollTrain(currentCycle)
-			scheduleGolden(currentCycle)
-			if currentCycle == goldenCycle - 1 then
+		if rolledUpTo < state.cycle then
+			rolledUpTo = state.cycle
+			rollTrain(state.cycle)
+		end
+		if state.inCycle >= ROLL_AHEAD_AT and rolledUpTo < state.cycle + 1 then
+			rolledUpTo = state.cycle + 1
+			scheduleGolden(state.cycle + 1)
+			rollTrain(state.cycle + 1)
+			if state.cycle + 2 == goldenCycle then
 				Registry.Ui.announce("The GOLDEN EXPRESS arrives on the next train!", "golden")
 			end
 		end
+		currentCycle = state.cycle
 	end)
 	Players.PlayerRemoving:Connect(function(player)
 		cracking[player] = nil
 	end)
-	-- New players get the current train's manifest right away.
+	-- New players get the current (and already-rolled next) train right away.
 	Players.PlayerAdded:Connect(function(player)
 		task.wait(3)
-		local manifest = manifests[currentCycle]
-		if manifest and player.Parent == Players then
-			local compact = {}
-			for _, cage in manifest.cages do
-				table.insert(compact, {
-					id = cage.id,
-					s = cage.speciesId,
-					t = cage.tier,
-					m = cage.mutation,
-					o = cage.owner,
-					p = cage.price,
-					g = cage.goldenTicket,
-				})
-			end
-			Net.send(player, "TrainManifest", currentCycle, compact, manifest.golden, manifest.strongbox)
+		if player.Parent == Players then
+			sendManifest(player, currentCycle)
+			sendManifest(player, currentCycle + 1)
 		end
 	end)
 end
