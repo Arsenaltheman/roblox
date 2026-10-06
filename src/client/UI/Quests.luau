@@ -6,7 +6,9 @@ local Workspace = game:GetService("Workspace")
 
 local Vide = require("@game/ReplicatedStorage/Packages/Vide")
 local Progression = require("@game/ReplicatedStorage/Shared/Config/Progression")
+local SeasonConfig = require("@game/ReplicatedStorage/Shared/Config/Season")
 local TrailConfig = require("@game/ReplicatedStorage/Shared/Config/Trail")
+local Products = require("@game/ReplicatedStorage/Shared/Config/Products")
 local NumberFormat = require("@game/ReplicatedStorage/Shared/Sim/NumberFormat")
 local Net = require("@game/ReplicatedStorage/Shared/Net/Net")
 local Sound = require("../Controllers/Sound")
@@ -29,6 +31,34 @@ end
 
 local function trail(): any
 	return state().trail or {}
+end
+
+local function season(): any
+	return state().season or {}
+end
+
+-- A server-time source ticking once a second (for real countdowns).
+local function clock(): () -> number
+	local now = source(Workspace:GetServerTimeNow())
+	action(function()
+		local alive = true
+		task.spawn(function()
+			while alive do
+				now(Workspace:GetServerTimeNow())
+				task.wait(1)
+			end
+		end)
+		cleanup(function()
+			alive = false
+		end)
+	end)
+	return now
+end
+
+local function countdown(seconds: number): string
+	local left = math.max(0, seconds)
+	local days = math.floor(left / 86400)
+	return if days > 0 then `{days}d {NumberFormat.clock(left % 86400)}` else NumberFormat.clock(left)
 end
 
 local function text(props: { [any]: any }): Instance
@@ -446,15 +476,424 @@ local function weeklyPage(): Instance
 	})
 end
 
+-- ---------------------------------------------------------------- rail pass
+
+local GLYPH = {
+	cash = "$",
+	nuggets = "◆",
+	spins = "☸",
+	luck = "♣",
+	doubleCash = "2x",
+	title = "✎",
+	hat = "▲",
+}
+
+-- One reward cell of a tier card. Locked (tier not reached / no pass), claimable or claimed.
+local function rewardCell(get: () -> any, premium: boolean, order: number): Instance
+	local function reward(): any
+		return (if premium then get().premium else get().free) or nil
+	end
+	local function claimed(): boolean
+		return if premium then get().premiumClaimed == true else get().freeClaimed == true
+	end
+	local function reached(): boolean
+		return (season().tier or 0) >= (get().tier or 1)
+	end
+	local function claimable(): boolean
+		return reward() ~= nil and reached() and not claimed() and (not premium or season().premium == true)
+	end
+	return create("TextButton")({
+		Size = UDim2.new(1, 0, 0.5, -3),
+		LayoutOrder = order,
+		AutoButtonColor = false,
+		Text = "",
+		Visible = function()
+			return reward() ~= nil
+		end,
+		BackgroundColor3 = function()
+			if claimed() then
+				return Theme.lighten(Theme.color.green, 0.55)
+			elseif claimable() then
+				return Theme.color.green
+			elseif premium and season().premium ~= true then
+				return Theme.lighten(Theme.color.purple, 0.5)
+			end
+			return if reached() then Theme.color.white else Theme.lighten(Theme.color.wood, 0.55)
+		end,
+		Activated = function()
+			if claimable() then
+				Sound.play("buy")
+				Net.request("SeasonClaim", get().tier, premium)
+			end
+		end,
+		Components.corner(UDim.new(0, 10)),
+		Components.stroke(2.5),
+		text({
+			Size = UDim2.new(1, -8, 0.45, 0),
+			Position = UDim2.new(0, 4, 0, 2),
+			FontFace = Theme.font.title,
+			TextColor3 = function()
+				return if claimable() then Theme.color.white else Theme.color.ink
+			end,
+			Text = function()
+				local r = reward()
+				if not r then
+					return ""
+				end
+				if claimed() then
+					return "✔"
+				elseif premium and season().premium ~= true then
+					return "🔒"
+				end
+				return GLYPH[r.kind] or "★"
+			end,
+		}),
+		text({
+			Size = UDim2.new(1, -8, 0.4, 0),
+			Position = UDim2.new(0, 4, 0.5, 0),
+			FontFace = Theme.font.heading,
+			TextColor3 = function()
+				return if claimable() then Theme.color.white else Theme.color.ink
+			end,
+			Text = function()
+				local r = reward()
+				if not r then
+					return ""
+				end
+				return if claimable() then "CLAIM" else r.text
+			end,
+		}),
+	})
+end
+
+local function tierCard(get: () -> any, order: number): Instance
+	return create("Frame")({
+		Size = UDim2.new(0, 112, 1, 0),
+		LayoutOrder = order,
+		BackgroundColor3 = Color3.new(1, 1, 1),
+		Components.corner(UDim.new(0, 12)),
+		create("UIStroke")({
+			Thickness = function()
+				return if (season().tier or 0) == get().tier then 4 else 2.5
+			end,
+			Color = function()
+				return if (season().tier or 0) == get().tier then Theme.color.yellow else Theme.color.shadow
+			end,
+		}),
+		Components.gradient(function()
+			return if (season().tier or 0) >= get().tier
+				then Theme.color.cream
+				else Theme.lighten(Theme.color.wood, 0.4)
+		end),
+		Components.padding(6),
+		create("UIListLayout")({ Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder }),
+		text({
+			Size = UDim2.new(1, 0, 0, 22),
+			LayoutOrder = 1,
+			FontFace = Theme.font.title,
+			TextColor3 = function()
+				return if (season().tier or 0) >= get().tier then Theme.color.orange else Theme.color.wood
+			end,
+			Text = function()
+				return `TIER {get().tier}`
+			end,
+		}),
+		create("Frame")({
+			Size = UDim2.new(1, 0, 1, -26),
+			LayoutOrder = 2,
+			BackgroundTransparency = 1,
+			create("UIListLayout")({ Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }),
+			rewardCell(get, false, 1),
+			rewardCell(get, true, 2),
+		}),
+	})
+end
+
+local function railPage(): Instance
+	local now = clock()
+	return create("ScrollingFrame")({
+		Size = UDim2.fromScale(1, 1),
+		BackgroundTransparency = 1,
+		ScrollBarThickness = 8,
+		VerticalScrollBarInset = Enum.ScrollBarInset.ScrollBar,
+		AutomaticCanvasSize = Enum.AutomaticSize.Y,
+		CanvasSize = UDim2.new(),
+		create("UIListLayout")({ Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }),
+		Components.padding(4),
+		-- Season banner: number, real countdown, tier and XP bar.
+		create("Frame")({
+			Size = UDim2.new(1, -8, 0, 104),
+			LayoutOrder = 1,
+			BackgroundColor3 = Color3.new(1, 1, 1),
+			ClipsDescendants = true,
+			Components.corner(UDim.new(0, 16)),
+			Components.stroke(3.5),
+			Components.gradient(function()
+				local hex = season().color
+				return if hex then Color3.fromHex(hex) else Theme.color.sky
+			end),
+			Components.stripes(UDim.new(0, 16), 0.1),
+			Components.sparkles(5, Theme.color.yellow),
+			text({
+				Size = UDim2.new(0.6, 0, 0.3, 0),
+				Position = UDim2.fromOffset(16, 8),
+				TextXAlignment = Enum.TextXAlignment.Left,
+				TextColor3 = Theme.color.white,
+				FontFace = Theme.font.title,
+				ZIndex = 3,
+				Text = function()
+					return `RAIL PASS · SEASON {season().season or 1}`
+				end,
+				Components.goldText(),
+				Components.textStroke(3),
+			}),
+			text({
+				Size = UDim2.new(0.38, -16, 0.26, 0),
+				Position = UDim2.new(1, -16, 0, 10),
+				AnchorPoint = Vector2.new(1, 0),
+				TextXAlignment = Enum.TextXAlignment.Right,
+				TextColor3 = Theme.color.white,
+				FontFace = Theme.font.heading,
+				ZIndex = 3,
+				Text = function()
+					return `Season ends in {countdown((season().endsAt or 0) - now())}`
+				end,
+				Components.textStroke(2),
+			}),
+			text({
+				Size = UDim2.new(0.6, 0, 0.26, 0),
+				Position = UDim2.new(0, 16, 0.36, 0),
+				TextXAlignment = Enum.TextXAlignment.Left,
+				TextColor3 = Theme.color.white,
+				FontFace = Theme.font.heading,
+				ZIndex = 3,
+				Text = function()
+					local sn = season()
+					local tier = sn.tier or 0
+					if tier >= SeasonConfig.PREMIUM_TIERS then
+						return `TIER {tier} · track complete!`
+					end
+					return `TIER {tier} · {NumberFormat.short(sn.into or 0)} / {NumberFormat.short(
+						sn.next or 0
+					)} XP to tier {tier + 1}`
+				end,
+				Components.textStroke(2),
+			}),
+			text({
+				Size = UDim2.new(0.38, -16, 0.22, 0),
+				Position = UDim2.new(1, -16, 0.38, 0),
+				AnchorPoint = Vector2.new(1, 0),
+				TextXAlignment = Enum.TextXAlignment.Right,
+				TextColor3 = Theme.color.white,
+				FontFace = Theme.font.body,
+				ZIndex = 3,
+				Text = function()
+					return `today's XP {season().xpToday or 0}/{SeasonConfig.XP_DAY_CAP}`
+				end,
+				Components.textStroke(1.5),
+			}),
+			-- XP bar
+			create("Frame")({
+				Size = UDim2.new(1, -32, 0, 18),
+				Position = UDim2.new(0, 16, 1, -14),
+				AnchorPoint = Vector2.new(0, 1),
+				BackgroundColor3 = Theme.color.woodDark,
+				ZIndex = 3,
+				Components.corner(UDim.new(1, 0)),
+				create("Frame")({
+					Size = function()
+						local sn = season()
+						local size = sn.next or 0
+						return UDim2.fromScale(
+							if size > 0 then math.clamp((sn.into or 0) / size, 0, 1) else 1,
+							1
+						)
+					end,
+					BackgroundColor3 = Color3.new(1, 1, 1),
+					ZIndex = 3,
+					Components.corner(UDim.new(1, 0)),
+					Components.gradient(Theme.color.gold),
+				}),
+			}),
+		}),
+		-- Buy / claim-all row.
+		create("Frame")({
+			Size = UDim2.new(1, -8, 0, 52),
+			LayoutOrder = 2,
+			BackgroundTransparency = 1,
+			create("UIListLayout")({
+				FillDirection = Enum.FillDirection.Horizontal,
+				Padding = UDim.new(0, 8),
+				SortOrder = Enum.SortOrder.LayoutOrder,
+			}),
+			Components.button({
+				text = function()
+					local price = Products.byKey.RailPass and Products.byKey.RailPass.price or 399
+					return `GET THE RAIL PASS  {price} R$ · retroactive`
+				end,
+				color = Theme.color.purple,
+				size = UDim2.new(0.5, -4, 1, 0),
+				layoutOrder = 1,
+				shine = true,
+				textSize = 22,
+				visible = function()
+					return season().premium ~= true
+				end,
+				onClick = function()
+					Sound.play("click")
+					Net.request("ShopBuy", "RailPass", 1)
+				end,
+			}),
+			text({
+				Size = UDim2.new(0.5, -4, 1, 0),
+				LayoutOrder = 1,
+				FontFace = Theme.font.heading,
+				Visible = function()
+					return season().premium == true
+				end,
+				Text = function()
+					return `✔ Rail Pass active for season {season().season or 1} · +2 contracts`
+				end,
+			}),
+			Components.button({
+				text = function()
+					return `CLAIM FREE ({season().freeClaimable or 0})`
+				end,
+				color = function()
+					return if (season().freeClaimable or 0) > 0
+						then Theme.color.green
+						else Color3.fromRGB(130, 130, 140)
+				end,
+				size = UDim2.new(0.25, -4, 1, 0),
+				layoutOrder = 2,
+				textSize = 20,
+				onClick = function()
+					if (season().freeClaimable or 0) > 0 then
+						Sound.play("buy")
+						Net.request("SeasonClaim", 0, false)
+					end
+				end,
+			}),
+			Components.button({
+				text = function()
+					return `CLAIM PASS ({season().premiumClaimable or 0})`
+				end,
+				color = function()
+					return if (season().premiumClaimable or 0) > 0
+						then Theme.color.green
+						else Color3.fromRGB(130, 130, 140)
+				end,
+				size = UDim2.new(0.25, -4, 1, 0),
+				layoutOrder = 3,
+				textSize = 20,
+				onClick = function()
+					if (season().premiumClaimable or 0) > 0 then
+						Sound.play("buy")
+						Net.request("SeasonClaim", 0, true)
+					end
+				end,
+			}),
+		}),
+		text({
+			Size = UDim2.new(1, -8, 0, 20),
+			LayoutOrder = 3,
+			TextXAlignment = Enum.TextXAlignment.Left,
+			FontFace = Theme.font.heading,
+			TextColor3 = Theme.darken(Theme.color.wood, 0.2),
+			Text = `Top row: free track ({SeasonConfig.FREE_TIERS} tiers). Bottom row: Rail Pass track ({SeasonConfig.PREMIUM_TIERS} tiers). Perks and looks only, never heist power.`,
+		}),
+		-- The track: 40 tier cards, scrolled sideways.
+		create("ScrollingFrame")({
+			Size = UDim2.new(1, -8, 0, 190),
+			LayoutOrder = 4,
+			BackgroundTransparency = 1,
+			ScrollBarThickness = 8,
+			ScrollingDirection = Enum.ScrollingDirection.X,
+			AutomaticCanvasSize = Enum.AutomaticSize.X,
+			CanvasSize = UDim2.new(),
+			create("UIListLayout")({
+				FillDirection = Enum.FillDirection.Horizontal,
+				Padding = UDim.new(0, 8),
+				SortOrder = Enum.SortOrder.LayoutOrder,
+			}),
+			Components.padding(4),
+			indexes(function()
+				return season().tiers or {}
+			end, function(t, i)
+				return tierCard(t, i)
+			end),
+		}),
+		-- Weekly contracts.
+		text({
+			Size = UDim2.new(1, -8, 0, 26),
+			LayoutOrder = 5,
+			TextXAlignment = Enum.TextXAlignment.Left,
+			FontFace = Theme.font.title,
+			TextColor3 = Theme.color.orange,
+			Text = function()
+				return `CONTRACTS · each +{SeasonConfig.CONTRACT_XP} XP & Nuggets · new in {countdown(
+					(season().weekEndsAt or 0) - now()
+				)}`
+			end,
+			Components.textStroke(2),
+		}),
+		indexes(function()
+			return season().contracts or {}
+		end, function(w, i)
+			return create("Frame")({
+				Size = UDim2.new(1, -8, 0, 72),
+				LayoutOrder = 10 + i,
+				BackgroundTransparency = 1,
+				objectiveRow(function()
+					local v: any = w()
+					return { text = v.text, have = v.have, goal = v.goal, done = v.have >= v.goal }
+				end, 0, 46),
+				Components.button({
+					text = function()
+						return if w().claimed
+							then "DONE"
+							elseif w().have >= w().goal then "CLAIM"
+							else `+{w().nuggets} ◆ +{SeasonConfig.CONTRACT_XP} XP`
+					end,
+					color = function()
+						return if w().have >= w().goal and not w().claimed
+							then Theme.color.green
+							else Color3.fromRGB(130, 130, 140)
+					end,
+					size = UDim2.new(0.34, 0, 0, 22),
+					position = UDim2.new(1, 0, 1, 0),
+					anchor = Vector2.new(1, 1),
+					textSize = 18,
+					onClick = function()
+						Net.request("ContractClaim", w().slot)
+					end,
+				}),
+			})
+		end),
+		show(function()
+			return season().premium ~= true
+		end, function()
+			return text({
+				Size = UDim2.new(1, -8, 0, 22),
+				LayoutOrder = 30,
+				TextXAlignment = Enum.TextXAlignment.Left,
+				FontFace = Theme.font.body,
+				TextColor3 = Theme.darken(Theme.color.wood, 0.2),
+				Text = "Rail Pass holders get 2 more contracts a week.",
+			})
+		end),
+	})
+end
+
 function Quests.menu(onClose: () -> ()): Instance
-	local tab = source("trail")
+	local tab = source("rail")
 	local function tabButton(id: string, label: string, color: Color3, order: number): Instance
 		return Components.button({
 			text = label,
 			color = function()
 				return if tab() == id then color else Theme.color.wood
 			end,
-			size = UDim2.new(1 / 3, -8, 1, 0),
+			size = UDim2.new(1 / 4, -8, 1, 0),
 			layoutOrder = order,
 			textSize = 24,
 			onClick = function()
@@ -478,14 +917,18 @@ function Quests.menu(onClose: () -> ()): Instance
 					Padding = UDim.new(0, 8),
 					SortOrder = Enum.SortOrder.LayoutOrder,
 				}),
-				tabButton("trail", "BOUNTY TRAIL", Theme.color.orange, 1),
-				tabButton("daily", "DAILY", Theme.color.red, 2),
-				tabButton("weekly", "WEEKLY", Theme.color.purple, 3),
+				tabButton("rail", "RAIL PASS", Theme.color.sky, 1),
+				tabButton("trail", "BOUNTY TRAIL", Theme.color.orange, 2),
+				tabButton("daily", "DAILY", Theme.color.red, 3),
+				tabButton("weekly", "WEEKLY", Theme.color.purple, 4),
 			}),
 			create("Frame")({
 				Size = UDim2.new(1, 0, 1, -56),
 				Position = UDim2.fromOffset(0, 56),
 				BackgroundTransparency = 1,
+				show(function()
+					return tab() == "rail"
+				end, railPage),
 				show(function()
 					return tab() == "trail"
 				end, trailPage),
@@ -566,6 +1009,28 @@ function Quests.tracker(visible: () -> boolean): Instance
 				Components.textStroke(1),
 			})
 		end),
+		-- Rail Pass line: tier and XP into the next one.
+		text({
+			Size = UDim2.new(1, 0, 0, 18),
+			LayoutOrder = 50,
+			TextXAlignment = Enum.TextXAlignment.Left,
+			TextColor3 = Theme.color.sky,
+			FontFace = Theme.font.heading,
+			Visible = function()
+				return season().tier ~= nil
+			end,
+			Text = function()
+				local sn = season()
+				local tier = sn.tier or 0
+				if tier >= SeasonConfig.PREMIUM_TIERS then
+					return `Rail Pass tier {tier} · complete`
+				end
+				return `Rail Pass tier {tier} · {NumberFormat.short(sn.into or 0)}/{NumberFormat.short(
+					sn.next or 0
+				)} XP`
+			end,
+			Components.textStroke(1),
+		}),
 		action(function()
 			local alive = true
 			task.spawn(function()

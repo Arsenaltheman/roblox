@@ -127,6 +127,9 @@ function Monetization.canOffer(player: Player, key: string): (boolean, string?)
 	if key == "InstantHatch" and not Registry.Eggs.hasUnready(player) then
 		return false, "No egg is waiting to hatch."
 	end
+	if key == "RailPass" and Registry.Season.hasPremium(player) then
+		return false, "You already have the Rail Pass for this season."
+	end
 	return true, nil
 end
 
@@ -239,6 +242,9 @@ local function grant(player: Player, product: Products.Product): boolean
 		return true
 	elseif key == "GoldenLocomotive" or key == "DiamondDesperado" then
 		return Registry.Ranch.grantExclusive(player, key)
+	elseif key == "RailPass" then
+		-- Per-season ownership lives in the profile (a Developer Product can be bought every season).
+		return Registry.Season.grantPremium(player)
 	end
 	warn("[Monetization] no grant for product " .. key)
 	return false

@@ -251,6 +251,17 @@ local list: { Product } = {
 		description = "Your next egg is ready to hatch right now.",
 	},
 	{
+		key = "RailPass",
+		category = "passes",
+		icon = "ticket",
+		fx = "gold",
+		-- A Developer Product (not a pass): bought again each season, ownership is kept in the profile.
+		kind = "product",
+		price = 399,
+		name = "Rail Pass (this season)",
+		description = "Unlocks the premium track for THIS season only, retroactively: every premium tier you've already passed is claimable at once. +2 weekly contracts.",
+	},
+	{
 		key = "SheriffClub",
 		category = "passes",
 		icon = "sheriffstar",

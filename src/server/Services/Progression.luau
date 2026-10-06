@@ -6,6 +6,7 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 
 local Progression = require("@game/ReplicatedStorage/Shared/Config/Progression")
+local SeasonConfig = require("@game/ReplicatedStorage/Shared/Config/Season")
 local Economy = require("@game/ReplicatedStorage/Shared/Sim/Economy")
 local Rng = require("@game/ReplicatedStorage/Shared/Sim/Rng")
 local Streak = require("@game/ReplicatedStorage/Shared/Sim/Streak")
@@ -78,6 +79,7 @@ function ProgressionService.questEvent(player: Player, kind: string, amount: num
 		return
 	end
 	Registry.Trail.event(player, kind, amount)
+	Registry.Season.event(player, kind, amount)
 	ensureQuestDay(player)
 	for _, quest in dailyQuests(today()) do
 		if quest.kind == kind and not d.Quests.Claimed[quest.id] then
@@ -249,6 +251,7 @@ local function claim(player: Player, what: string, index: number)
 		d.Quests.Claimed[quest.id] = true
 		grantReward(player, "cash", Progression.quests.cashSeconds, "Quest", 500)
 		Registry.Wallet.addNuggets(player, Progression.quests.nuggets, "Quest")
+		Registry.Season.addXp(player, SeasonConfig.DAILY_QUEST_XP, "daily quest")
 		ProgressionService.onboard(player, "FirstQuest")
 		-- All of today's quests claimed: a free 2x Cash boost.
 		local all = true

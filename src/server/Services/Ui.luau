@@ -68,6 +68,7 @@ local function snapshot(player: Player): { [string]: any }?
 		almanac = d.Almanac,
 		quests = Registry.Progression.questView(player),
 		trail = Registry.Trail.view(player),
+		season = Registry.Season.view(player),
 		streak = d.Streak,
 		gifts = Registry.Progression.giftView(player),
 		owned = d.Owned,
