@@ -53,14 +53,14 @@ local function pickVictim(d: any): string?
 	return candidates[math.random(1, #candidates)]
 end
 
-local function raid(player: Player, d: any)
+local function raid(player: Player, d: any): boolean
 	local cid = pickVictim(d)
 	if not cid then
-		return
+		return false
 	end
 	local critter = Registry.Ranch.removeCritter(player, cid)
 	if not critter then
-		return
+		return false
 	end
 	Registry.Steal.stashAdd({ s = critter.s, tier = critter.tier, m = critter.m })
 	local name = Species.byId[critter.s] and Species.byId[critter.s].name or "critter"
@@ -74,6 +74,7 @@ local function raid(player: Player, d: any)
 	)
 	Registry.Telemetry.custom(player, "AfkRaid", critter.tier)
 	Registry.Data.saveNow(player)
+	return true
 end
 
 local function tick()
@@ -83,7 +84,13 @@ local function tick()
 			continue
 		end
 		local idle = Registry.Session.idleSeconds(player)
-		if idle < Afk.WARN_AFTER or exempt(player, d) then
+		-- Nothing to take (all branded, safe or none placed), or busy in a trade: no countdown.
+		if
+			idle < Afk.WARN_AFTER
+			or exempt(player, d)
+			or pickVictim(d) == nil
+			or Registry.Trade.inTrade(player)
+		then
 			if nextRaidAt[player] then
 				nextRaidAt[player] = nil
 				player:SetAttribute("AfkRaidAt", nil)
@@ -97,9 +104,13 @@ local function tick()
 			player:SetAttribute("AfkRaidAt", at)
 		end
 		if now() >= at then
-			raid(player, d)
-			nextRaidAt[player] = now() + Afk.RAID_EVERY
-			player:SetAttribute("AfkRaidAt", nextRaidAt[player])
+			if raid(player, d) then
+				nextRaidAt[player] = now() + Afk.RAID_EVERY
+				player:SetAttribute("AfkRaidAt", nextRaidAt[player])
+			else
+				nextRaidAt[player] = nil
+				player:SetAttribute("AfkRaidAt", nil)
+			end
 		end
 	end
 end

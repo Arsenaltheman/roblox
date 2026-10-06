@@ -65,6 +65,19 @@ local ACTIVE_REMOTES = {
 	Hatch = true,
 	UseGear = true,
 	SpinWheel = true,
+	ShopBuy = true,
+	Equip = true,
+	Claim = true,
+	Sell = true,
+	TradeInvite = true,
+	TradeRespond = true,
+	TradeOffer = true,
+	TradeNuggets = true,
+	TradeReady = true,
+	PosseInvite = true,
+	PosseRespond = true,
+	BuyGear = true,
+	BuyBoots = true,
 }
 
 function Session.touch(player: Player, remote: string?)

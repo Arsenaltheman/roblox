@@ -64,7 +64,9 @@ local function remove(player: Player, reason: string)
 		end
 		publish(group)
 	end
-	Registry.Ui.pushState(player)
+	if player.Parent == Players then
+		Registry.Ui.pushState(player)
+	end
 end
 
 function Posse.sameGroup(a: Player, b: Player): boolean
@@ -130,6 +132,11 @@ local function respond(player: Player, fromId: number, accept: boolean)
 		return
 	end
 	local g = memberOf[from]
+	if g and g.leader ~= from then
+		-- The inviter joined someone else's posse meanwhile; their leader never agreed to this.
+		Registry.Ui.toast(player, "That invite expired.")
+		return
+	end
 	if not g then
 		g = { leader = from, members = { from }, heists = 0 }
 		groups[from] = g

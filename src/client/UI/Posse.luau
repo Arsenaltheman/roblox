@@ -83,7 +83,8 @@ function Posse.hud(visible: () -> boolean): Instance
 		Name = "PosseHud",
 		Size = UDim2.fromOffset(240, 0),
 		AutomaticSize = Enum.AutomaticSize.Y,
-		Position = UDim2.new(0, 112, 0, 60),
+		-- Below the hint/announcement band and above the Trail tracker.
+		Position = UDim2.new(0, 112, 0, 160),
 		BackgroundColor3 = Color3.new(0, 0, 0),
 		BackgroundTransparency = 0.45,
 		Visible = function()
@@ -126,14 +127,19 @@ end
 -- ---------------------------------------------------------------- invite popup
 
 function Posse.invitePopup(): Instance
+	-- Everything reads invite() live, so a newer invite replaces the old one in place.
+	local function current(): { from: number, expires: number }
+		return invite() or { from = 0, expires = 0 }
+	end
+	local function fromName(): string
+		local from = Players:GetPlayerByUserId(current().from)
+		return if from then from.DisplayName else "Someone"
+	end
 	return show(function()
 		local inv = invite()
 		tick()
 		return inv ~= nil and os.clock() < inv.expires
 	end, function()
-		local inv = invite() :: { from: number, expires: number }
-		local from = Players:GetPlayerByUserId(inv.from)
-		local name = if from then from.DisplayName else "Someone"
 		return create("Frame")({
 			Name = "PosseInvite",
 			Size = UDim2.fromOffset(420, 120),
@@ -150,7 +156,9 @@ function Posse.invitePopup(): Instance
 				Position = UDim2.fromOffset(10, 10),
 				FontFace = Theme.font.title,
 				TextColor3 = Theme.color.white,
-				Text = `{name} wants you in their POSSE!`,
+				Text = function()
+					return `{fromName()} wants you in their POSSE!`
+				end,
 				ZIndex = 31,
 				Components.goldText(),
 				Components.textStroke(3),
@@ -164,7 +172,7 @@ function Posse.invitePopup(): Instance
 				textSize = 22,
 				onClick = function()
 					Sound.play("buy")
-					Net.request("PosseRespond", inv.from, true)
+					Net.request("PosseRespond", current().from, true)
 					invite(nil)
 				end,
 			}),
@@ -176,7 +184,7 @@ function Posse.invitePopup(): Instance
 				anchor = Vector2.new(1, 1),
 				textSize = 22,
 				onClick = function()
-					Net.request("PosseRespond", inv.from, false)
+					Net.request("PosseRespond", current().from, false)
 					invite(nil)
 				end,
 			}),
@@ -189,7 +197,7 @@ function Posse.invitePopup(): Instance
 					tick()
 					return `Posse mates can't rob each other and boost each other's cash · {math.max(
 						0,
-						math.ceil(inv.expires - os.clock())
+						math.ceil(current().expires - os.clock())
 					)}s`
 				end,
 			}),
