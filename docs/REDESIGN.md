@@ -1,4 +1,16 @@
-# Redesign: Steal-a-Brainrot loop, original meme characters
+# Redesign
+
+> **Update (2026-10-06, after the second playtest):** the owner now wants the **Wild West theme
+> kept** and the **Steal An Egg loop**: go out, grab from guarded spots, run it home, and don't get
+> caught, instead of only farming. That's built:
+> - **Heist zones** (`Config/Heist.luau`, `Services/Heist.luau`, `Controllers/HeistView.luau`) with guards and Speed Boots.
+> - The **Prize Wheel** (free spins only).
+> - The **login cinematic**.
+> - A big **UI and VFX** pass.
+>
+> The brainrot-character plan below is on hold.
+
+## Original redesign notes (on hold): Steal-a-Brainrot loop, original meme characters
 
 Owner decisions (2026-10-06), after seeing the first build in Studio:
 - **The first build felt bad:** soulless, no fun, no music, no cool UI or VFX, no lobby, and too much like a tycoon.

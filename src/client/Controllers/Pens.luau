@@ -6,6 +6,10 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
 
+local Palette = require("@game/ReplicatedStorage/Shared/Config/Palette")
+local Rarities = require("@game/ReplicatedStorage/Shared/Config/Rarities")
+local Economy = require("@game/ReplicatedStorage/Shared/Sim/Economy")
+local NumberFormat = require("@game/ReplicatedStorage/Shared/Sim/NumberFormat")
 local CritterRig = require("./CritterRig")
 local Store = require("../Store")
 
@@ -16,6 +20,54 @@ local Pens = {}
 type Entry = { pad: BasePart, model: Model?, key: string, seed: number }
 
 local entries: { [BasePart]: Entry } = {}
+
+-- Pads are cylinders lying on their side, so their height is Size.X; critters stand on the top.
+local function padTop(pad: BasePart): Vector3
+	return pad.Position + Vector3.new(0, pad.Size.X / 2, 0)
+end
+
+-- Rarity glow ring around the pedestal plus a floating income tag (removed with the critter).
+local function decorate(pad: BasePart, model: Model, tier: number, mutation: string?)
+	local rarity = Rarities.forTier(math.max(1, tier))
+	local color = Palette.color(rarity.color)
+	local ring = Instance.new("Part")
+	ring.Name = "Glow"
+	ring.Shape = Enum.PartType.Cylinder
+	ring.Size = Vector3.new(0.25, pad.Size.Y + 1.2, pad.Size.Z + 1.2)
+	ring.CFrame = CFrame.new(padTop(pad) - Vector3.new(0, 0.05, 0)) * CFrame.Angles(0, 0, math.rad(90))
+	ring.Color = color
+	ring.Material = Enum.Material.Neon
+	ring.Transparency = if Rarities.indexOf(rarity.id) >= 3 then 0.25 else 0.55
+	ring.Anchored = true
+	ring.CanCollide = false
+	ring.CanQuery = false
+	ring.CastShadow = false
+	ring.Parent = pad
+	local tag = Instance.new("BillboardGui")
+	tag.Name = "IncomeTag"
+	tag.Size = UDim2.fromScale(5, 1.2)
+	tag.StudsOffsetWorldSpace = Vector3.new(0, 5.2, 0)
+	tag.MaxDistance = 60
+	tag.LightInfluence = 0
+	tag.Adornee = pad
+	local label = Instance.new("TextLabel")
+	label.Size = UDim2.fromScale(1, 1)
+	label.BackgroundTransparency = 1
+	label.FontFace = Font.fromEnum(Enum.Font.LuckiestGuy)
+	label.TextScaled = true
+	label.TextColor3 = Color3.fromRGB(150, 245, 110)
+	label.Text = "+" .. NumberFormat.perSecond(Economy.critterIncome({ tier = tier, mutation = mutation }))
+	local stroke = Instance.new("UIStroke")
+	stroke.Thickness = 2.5
+	stroke.Color = Palette.color("ink")
+	stroke.Parent = label
+	label.Parent = tag
+	tag.Parent = pad
+	model.Destroying:Once(function()
+		ring:Destroy()
+		tag:Destroy()
+	end)
+end
 local carried: { [Player]: { model: Model, key: string } } = {}
 
 local function refresh(entry: Entry)
@@ -42,8 +94,9 @@ local function refresh(entry: Entry)
 		-- Pads are cylinders lying on their side, so build an upright frame instead of copying theirs.
 		-- Far-away critters are never re-posed, so this first placement has to be right.
 		local r = (model:GetAttribute("Radius") :: number?) or 1
-		model:PivotTo(CritterRig.pose(CFrame.new(pad.Position + Vector3.new(0, 0.2, 0)), 0, entry.seed, r))
+		model:PivotTo(CritterRig.pose(CFrame.new(padTop(pad)), 0, entry.seed, r))
 		model.Parent = pad
+		decorate(pad, model, tier, mutation)
 		entry.model = model
 		-- Branded (Robux) critters wear a gold ring so thieves know not to bother.
 		if pad:GetAttribute("Branded") then
@@ -152,7 +205,7 @@ function Pens.start()
 				if (pad.Position - camPos).Magnitude < ANIMATE_DISTANCE then
 					local r = (model:GetAttribute("Radius") :: number?) or 1
 					-- Pads are cylinders lying on their side; build an upright frame at the pad.
-					local base = CFrame.new(pad.Position + Vector3.new(0, 0.2, 0))
+					local base = CFrame.new(padTop(pad))
 					model:PivotTo(CritterRig.pose(base, t, entry.seed, r))
 					CritterRig.updateRainbow(model, t)
 				end

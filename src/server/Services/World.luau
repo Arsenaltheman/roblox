@@ -395,10 +395,11 @@ local function buildRanch(root: Instance, info: { index: number, center: Layout.
 		local o = Layout.penOffset(i)
 		local pad = part({
 			name = "Pen" .. i,
-			size = Vector3.new(0.4, 5, 5),
-			cframe = frame * CFrame.new(o.x, 0.7, o.z) * CFrame.Angles(0, 0, math.rad(90)),
-			color = "woodLight",
-			material = Enum.Material.WoodPlanks,
+			-- A raised pedestal (cylinder on its side: X is its height) so critters sit on display.
+			size = Vector3.new(1.6, 5.2, 5.2),
+			cframe = frame * CFrame.new(o.x, 0.8, o.z) * CFrame.Angles(0, 0, math.rad(90)),
+			color = "paper",
+			material = Enum.Material.Sandstone,
 			shape = Enum.PartType.Cylinder,
 			parent = pens,
 		})
