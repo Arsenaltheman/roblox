@@ -144,6 +144,46 @@ function Vfx.shake(strength: number, duration: number)
 	end)
 end
 
+-- A thick cloud of smoke that hangs for a few seconds (Smoke Bomb).
+function Vfx.smoke(position: Vector3, seconds: number)
+	local holder = anchoredPart(Vector3.new(6, 1, 6), CFrame.new(position), Color3.new(1, 1, 1))
+	holder.Transparency = 1
+	local emitter = Instance.new("ParticleEmitter")
+	emitter.Texture = "rbxasset://textures/particles/smoke_main.dds"
+	emitter.Color = ColorSequence.new(Color3.fromRGB(200, 205, 215), Color3.fromRGB(120, 125, 140))
+	emitter.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 4), NumberSequenceKeypoint.new(1, 14) })
+	emitter.Transparency =
+		NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.1), NumberSequenceKeypoint.new(1, 1) })
+	emitter.Lifetime = NumberRange.new(2, 3.5)
+	emitter.Speed = NumberRange.new(3, 8)
+	emitter.SpreadAngle = Vector2.new(180, 30)
+	emitter.RotSpeed = NumberRange.new(-40, 40)
+	emitter.Rate = if Store.quality() >= 2 then 40 else 18
+	emitter.Parent = holder
+	emitter:Emit(30)
+	task.delay(seconds, function()
+		emitter.Enabled = false
+	end)
+	task.delay(seconds + 4, function()
+		holder:Destroy()
+	end)
+end
+
+-- An expanding ring on the ground (shockwaves).
+function Vfx.ring(position: Vector3, color: Color3, radius: number)
+	local ring =
+		anchoredPart(Vector3.new(0.3, 2, 2), CFrame.new(position) * CFrame.Angles(0, 0, math.rad(90)), color)
+	ring.Shape = Enum.PartType.Cylinder
+	ring.Transparency = 0.2
+	TweenService:Create(ring, TweenInfo.new(0.45, Enum.EasingStyle.Quad), {
+		Size = Vector3.new(0.3, radius * 2, radius * 2),
+		Transparency = 1,
+	}):Play()
+	task.delay(0.5, function()
+		ring:Destroy()
+	end)
+end
+
 -- "+$1.2K" that pops up and floats away.
 function Vfx.floatText(position: Vector3, text: string, color: Color3)
 	local holder = anchoredPart(Vector3.new(0.2, 0.2, 0.2), CFrame.new(position), color)
@@ -367,6 +407,54 @@ local function onFx(kind: string, value: number, position: Vector3?)
 		if root and (root.Position - position).Magnitude < 90 then
 			Vfx.floatText(position + Vector3.new(0, 7, 0), "!", C("red"))
 			Sound.play("whistle", 0.2)
+		end
+	elseif kind == "smoke" and position then
+		Vfx.smoke(position, 5)
+		Vfx.burst(position, Color3.fromRGB(220, 220, 230), 40, 2, 16)
+		Sound.play("doors", 0.1)
+		if value == localPlayer.UserId then
+			Store.toast("POOF! Guards lost you. RUN!")
+		end
+	elseif kind == "tumbleweed" and position then
+		Vfx.ring(position, Color3.fromRGB(214, 170, 110), 16)
+		Vfx.burst(position, Color3.fromRGB(214, 170, 110), 70, 1.8, 30)
+		Vfx.floatText(position + Vector3.new(0, 5, 0), "BOOM!", C("gold"))
+		Sound.play("caught")
+		if root and (root.Position - position).Magnitude < 40 then
+			Vfx.shake(1.6, 0.4)
+		end
+	elseif kind == "trapSet" then
+		if root then
+			Vfx.burst(root.Position - Vector3.new(0, 2.5, 0), Color3.fromRGB(150, 150, 160), 20, 1, 10)
+		end
+		Sound.play("lock")
+	elseif kind == "trapSnap" and position then
+		Vfx.burst(position + Vector3.new(0, 1, 0), C("red"), 60, 1.5, 26)
+		Vfx.ring(position, C("red"), 10)
+		Vfx.floatText(position + Vector3.new(0, 5, 0), "SNAP!", C("red"))
+		Sound.play("lock")
+		Sound.play("caught")
+		if value == localPlayer.UserId then
+			Vfx.shake(2.5, 0.5)
+			Vfx.alarm()
+		end
+	elseif kind == "gearBought" then
+		if root then
+			Vfx.fireworks(root.Position, C("gold"), 4)
+			Vfx.floatText(root.Position + Vector3.new(0, 5, 0), "NEW GEAR!", C("gold"))
+		end
+		Sound.play("frontier")
+	elseif kind == "crateDrop" and position then
+		local rarity = Rarities.forTier(math.max(1, value))
+		Vfx.ring(position, C(rarity.color), 12)
+		Vfx.burst(position + Vector3.new(0, 2, 0), C(rarity.color), 50, 1.6, 24)
+		if root and (root.Position - position).Magnitude < 120 then
+			Sound.play("strongboxOpen", 0.1)
+		end
+	elseif kind == "spinEarned" then
+		Sound.play("giftReady")
+		if root then
+			Vfx.burst(root.Position + Vector3.new(0, 3, 0), C("gold"), 30, 1.2, 16)
 		end
 	elseif kind == "bootsUp" then
 		if root then

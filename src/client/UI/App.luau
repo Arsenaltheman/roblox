@@ -23,6 +23,7 @@ local Sound = require("../Controllers/Sound")
 local Store = require("../Store")
 local Components = require("./Components")
 local Shop = require("./Shop")
+local Hotbar = require("./Hotbar")
 local Theme = require("./Theme")
 
 local create = Vide.create :: any
@@ -1473,6 +1474,7 @@ function App.build(scale: () -> number): Instance
 			actionButton(),
 			toasts(),
 			runBanner(),
+			Hotbar.build(),
 		}),
 		create("Frame")({
 			Name = "Menus",
