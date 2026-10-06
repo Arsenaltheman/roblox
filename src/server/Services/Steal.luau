@@ -335,8 +335,12 @@ local function stealBandit(player: Player, lootPen: string)
 	if not n or n < 1 or n > 3 then
 		return
 	end
-	if now() < (banditReadyAt[player] or 0) then
-		local wait = math.ceil(((banditReadyAt[player] or 0) - now()) / 60)
+	local bd = Registry.Data.get(player)
+	-- Saved so leaving and rejoining doesn't skip the cooldown.
+	local readyAt =
+		math.max(banditReadyAt[player] or 0, (bd and bd.Stats.BanditReadyAt or 0) - os.time() + now())
+	if now() < readyAt then
+		local wait = math.ceil((readyAt - now()) / 60)
 		Registry.Ui.toast(player, `The bandits are on alert. Try again in {wait} min.`)
 		return
 	end
@@ -367,6 +371,9 @@ local function stealBandit(player: Player, lootPen: string)
 			return
 		end
 		banditReadyAt[player] = now() + BANDIT_COOLDOWN
+		if bd then
+			bd.Stats.BanditReadyAt = os.time() + BANDIT_COOLDOWN
+		end
 		local band = Registry.Ranch.band(player)
 		local tier = math.clamp(band + 1, 1, math.min(Economy.carryLimit(0, {}) + 10, Rarities.maxTier))
 		local species = Species.byTier[tier]
@@ -385,7 +392,7 @@ local function stealStart(player: Player, ranchIndex: number, cid: string)
 	if not Registry.LiveConfig.enabled("ff.stealing") then
 		return
 	end
-	if carrying[player] or grabbing[player] then
+	if loaded(player) or grabbing[player] then
 		return
 	end
 	if ranchIndex == 9 then
@@ -436,7 +443,7 @@ local function stealStart(player: Player, ranchIndex: number, cid: string)
 		local reason2 = StealRules.canSteal({
 			frontier = d2.Frontier,
 			passes = Registry.Monetization.passes(player),
-			carrying = carrying[player] ~= nil,
+			carrying = loaded(player),
 			stunnedUntil = stunnedUntil[player] or 0,
 			isOwner = false,
 		}, again.info, now())
@@ -584,7 +591,7 @@ local function lasso(player: Player, targetUserId: number)
 		critter.tier,
 		d.Frontier,
 		Registry.Monetization.passes(player),
-		carrying[player] ~= nil
+		loaded(player)
 	)
 	d.Stats.Lassos = (d.Stats.Lassos or 0) + 1
 	Registry.Progression.questEvent(player, "lasso", 1)
@@ -680,6 +687,7 @@ function Steal.start()
 		stamina[player] = nil
 		lassoReadyAt[player] = nil
 		banditReadyAt[player] = nil
+		burstUntil[player] = nil
 	end)
 
 	-- 10 Hz: deliveries, timeouts and sprint drain.

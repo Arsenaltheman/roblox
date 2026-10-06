@@ -326,11 +326,11 @@ local function hit(player: Player)
 		table.insert(f.order, player)
 	end
 	f.hits[player] = (f.hits[player] or 0) + 1
-	Registry.Progression.questEvent(player, "boss", 1)
 	f.hp -= 1
 	f.model:SetAttribute("Hp", f.hp)
 	f.bar.Size = UDim2.fromScale(math.max(0, f.hp / f.maxHp), 1)
 	Registry.Ui.fxAll("bossHit", player.UserId, f.root.Position)
+	task.spawn(Registry.Progression.questEvent, player, "boss", 1)
 	if f.hp <= 0 then
 		finish(f, true)
 	end

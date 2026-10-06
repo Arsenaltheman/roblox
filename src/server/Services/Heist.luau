@@ -530,7 +530,8 @@ function Heist.restockAll(boost: number)
 		for _, nest in zoneNests do
 			local zone = HeistConfig.zone(nest.zone) :: HeistConfig.Zone
 			local crate = rollCrate(zone)
-			crate.tier = math.min(40, crate.tier + boost)
+			-- Never above the top non-secret tier (Secrets come from the train only).
+			crate.tier = math.min(38, crate.tier + boost)
 			crate.species = (Species.byTier[crate.tier] or Species.byTier[zone.maxTier]).id
 			nest.crate = crate
 			showCrate(nest)

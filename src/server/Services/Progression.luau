@@ -195,6 +195,7 @@ local function claim(player: Player, what: string, index: number)
 		end
 		local reward = Progression.streak.rewards[p.streakSlot]
 		p.streakSlot = nil
+		d.Stats.PendingStreakSlot = 0
 		grantReward(player, reward.kind, reward.amount, "Streak", 300)
 		Registry.Ui.reveal(player, { kind = "streak", slot = d.Streak.count })
 	elseif what == "offline" then
@@ -204,6 +205,7 @@ local function claim(player: Player, what: string, index: number)
 		end
 		local amount = p.offline
 		p.offline = 0
+		d.Stats.PendingOffline = 0
 		Registry.Wallet.addCash(player, amount, "Offline")
 		Registry.Ui.fx(player, "collect", amount)
 	elseif what == "trail" or what == "weekly" then
@@ -260,6 +262,13 @@ function ProgressionService.playerReady(player: Player)
 	if result.reward then
 		p.streakSlot = result.slot
 	end
+	-- Unclaimed rewards from a previous visit are saved, so leaving or a crash never loses them.
+	p.offline += d.Stats.PendingOffline or 0
+	if not p.streakSlot and (d.Stats.PendingStreakSlot or 0) > 0 then
+		p.streakSlot = d.Stats.PendingStreakSlot
+	end
+	d.Stats.PendingOffline = p.offline
+	d.Stats.PendingStreakSlot = p.streakSlot or 0
 	pending[player] = p
 	ensureQuestDay(player)
 	ProgressionService.onboard(player, "Spawned")
@@ -268,16 +277,18 @@ end
 
 function ProgressionService.init() end
 
+local fifteen: { [Player]: boolean } = {}
+
 function ProgressionService.start()
 	Net.on("Claim", claim)
 	Players.PlayerRemoving:Connect(function(player)
 		pending[player] = nil
 		giftSeconds[player] = nil
 		giftClaimed[player] = nil
+		fifteen[player] = nil
 	end)
 	-- Gift timers advance only while the player is active (paused when idle).
 	local accumulator = 0
-	local fifteen: { [Player]: boolean } = {}
 	RunService.Heartbeat:Connect(function(dt)
 		accumulator += dt
 		if accumulator < 1 then

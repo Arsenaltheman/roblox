@@ -77,6 +77,12 @@ function Monetization.canOffer(player: Player, key: string): (boolean, string?)
 			return false, "Already claimed"
 		end
 	end
+	if
+		(key == "GoldenLocomotive" or key == "DiamondDesperado")
+		and not Registry.Ranch.canPlaceExclusive(player)
+	then
+		return false, "Every pen holds a branded critter. Get more pens first."
+	end
 	return true, nil
 end
 
@@ -155,12 +161,13 @@ local function grant(player: Player, product: Products.Product): boolean
 		Registry.Ranch.grantExclusive(player, "DeputyDuck")
 		return true
 	elseif key == "GoldenLocomotive" or key == "DiamondDesperado" then
-		Registry.Ranch.grantExclusive(player, key)
-		return true
+		return Registry.Ranch.grantExclusive(player, key)
 	end
 	warn("[Monetization] no grant for product " .. key)
 	return false
 end
+
+local granting: { [string]: boolean } = {}
 
 local function processReceipt(receipt): Enum.ProductPurchaseDecision
 	local player = Players:GetPlayerByUserId(receipt.PlayerId)
@@ -180,7 +187,14 @@ local function processReceipt(receipt): Enum.ProductPurchaseDecision
 	-- Idempotency: a purchase id is granted at most once, even if Roblox retries.
 	local alreadyHad = table.find(d.Receipts, purchaseId) ~= nil
 	if not alreadyHad then
-		if not grant(player, product) then
+		-- Guard against Roblox re-invoking for the same purchase while grant() is running.
+		if granting[purchaseId] then
+			return Enum.ProductPurchaseDecision.NotProcessedYet
+		end
+		granting[purchaseId] = true
+		local ok, granted = pcall(grant, player, product)
+		granting[purchaseId] = nil
+		if not ok or not granted then
 			return Enum.ProductPurchaseDecision.NotProcessedYet
 		end
 		Profile.recordReceipt(d, purchaseId)

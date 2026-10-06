@@ -120,6 +120,8 @@ local function equip(player: Player, slot: string, id: string)
 	end
 	if id == "" then
 		d.Equipped[slot] = nil
+		-- applyEquipped only sets slots that are still equipped, so clear this one for everyone.
+		player:SetAttribute("Equip_" .. slot, nil)
 	else
 		local cosmetic = Cosmetics.byId[id]
 		local vipTrail = id == "trail_gold" and Registry.Monetization.owns(player, "VIP")

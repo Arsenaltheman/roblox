@@ -89,6 +89,14 @@ end
 
 -- Hatchery: buy an egg with Gold Nuggets (earned only).
 function Eggs.buyHatchery(player: Player): boolean
+	local d = Registry.Data.get(player)
+	if not d or not Registry.LiveConfig.enabled("ff.eggs") then
+		return false
+	end
+	if #d.Eggs >= HARD_CAP then
+		Registry.Ui.toast(player, "Your egg basket is full! Hatch some eggs first.")
+		return false
+	end
 	if not Registry.Wallet.trySpendNuggets(player, Progression.eggs.hatcheryCost, "Hatchery") then
 		Registry.Ui.toast(player, "Not enough Gold Nuggets.")
 		return false

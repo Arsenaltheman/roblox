@@ -36,8 +36,12 @@ local function sheriffPower(player: Player, power: string, arg: string)
 		return
 	end
 	local t = os.clock()
-	if t < (sheriffReadyAt[player] or 0) then
-		local minutes = math.ceil(((sheriffReadyAt[player] or 0) - t) / 60)
+	local sd = Registry.Data.get(player)
+	-- Saved so leaving and rejoining doesn't reset the recharge.
+	local readyAt =
+		math.max(sheriffReadyAt[player] or 0, (sd and sd.Stats.SheriffReadyAt or 0) - os.time() + t)
+	if t < readyAt then
+		local minutes = math.ceil((readyAt - t) / 60)
 		Registry.Ui.toast(player, `Your Sheriff Powers recharge in {minutes} min.`)
 		return
 	end
@@ -54,6 +58,9 @@ local function sheriffPower(player: Player, power: string, arg: string)
 		return
 	end
 	sheriffReadyAt[player] = t + Products.sheriffPowers.cooldownSeconds
+	if sd then
+		sd.Stats.SheriffReadyAt = os.time() + Products.sheriffPowers.cooldownSeconds
+	end
 	player:SetAttribute(
 		"SheriffReadyAt",
 		Workspace:GetServerTimeNow() + Products.sheriffPowers.cooldownSeconds

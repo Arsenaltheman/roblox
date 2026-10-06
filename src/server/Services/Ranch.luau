@@ -109,14 +109,22 @@ end
 
 local friendCache: { [Player]: { count: number, at: number } } = {}
 
+-- Never yields: returns the cached count and refreshes it in the background (income is computed
+-- inside Heartbeat loops and UI snapshots, which must not pause on web calls).
+local refreshing: { [Player]: boolean } = {}
 local function friends(player: Player): number
 	local cached = friendCache[player]
-	if cached and os.clock() - cached.at < 30 then
-		return cached.count
+	if (not cached or os.clock() - cached.at >= 30) and not refreshing[player] then
+		refreshing[player] = true
+		task.spawn(function()
+			local count = friendsInServer(player)
+			refreshing[player] = nil
+			if player.Parent == Players then
+				friendCache[player] = { count = count, at = os.clock() }
+			end
+		end)
 	end
-	local count = friendsInServer(player)
-	friendCache[player] = { count = count, at = os.clock() }
-	return count
+	return if cached then cached.count else 0
 end
 
 function Ranch.context(player: Player): Economy.IncomeContext
@@ -382,7 +390,25 @@ function Ranch.removeCritter(player: Player, cid: string): Profile.Critter?
 	return critter
 end
 
-function Ranch.grantExclusive(player: Player, speciesId: string)
+-- Can a Robux exclusive be placed right now (a free pen, or a non-branded critter to replace)?
+function Ranch.canPlaceExclusive(player: Player): boolean
+	local d = Registry.Data.get(player)
+	if not d then
+		return false
+	end
+	local pens = Economy.pens(d.Frontier, Registry.Monetization.passes(player))
+	local used = pensUsed(d)
+	for pen = 1, pens do
+		if not used[pen] then
+			return true
+		end
+	end
+	return weakest(player, d) ~= nil
+end
+
+-- Returns false if it couldn't be placed (every pen holds a branded critter); the receipt then stays
+-- unprocessed and Roblox retries it later, so nothing paid for is lost.
+function Ranch.grantExclusive(player: Player, speciesId: string): boolean
 	local species = Species.byId[speciesId]
 	assert(species and species.exclusive, "not an exclusive species: " .. speciesId)
 	local cid = Ranch.addCritter(player, {
@@ -399,13 +425,21 @@ function Ranch.grantExclusive(player: Player, speciesId: string)
 			if victim then
 				Ranch.removeCritter(player, victim)
 			end
-			Ranch.addCritter(
+			cid = Ranch.addCritter(
 				player,
 				{ species = speciesId, tier = species.tier, src = "robux", branded = true }
 			)
 		end
 	end
+	if not cid then
+		Registry.Ui.toast(
+			player,
+			"Every pen holds a branded critter! Your purchase will arrive once a pen is free."
+		)
+		return false
+	end
 	Registry.Ui.reveal(player, { kind = "exclusive", species = speciesId, tier = species.tier })
+	return true
 end
 
 function Ranch.isLocked(index: number): boolean
@@ -735,7 +769,8 @@ function Ranch.start()
 				s.uncollected = math.min(s.uncollected + inc * step, math.max(cap, s.uncollected))
 				-- Standing on the plate collects automatically.
 				if s.uncollected > 0 and nearPlate(player, "CollectPlate") then
-					Ranch.collect(player)
+					-- Counted as automatic (quests count it at most once a minute).
+					Ranch.collect(player, true)
 				end
 			end
 			player:SetAttribute("Income", inc)
