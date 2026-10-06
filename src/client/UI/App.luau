@@ -13,6 +13,7 @@ local Products = require("@game/ReplicatedStorage/Shared/Config/Products")
 local Progression = require("@game/ReplicatedStorage/Shared/Config/Progression")
 local Rarities = require("@game/ReplicatedStorage/Shared/Config/Rarities")
 local Species = require("@game/ReplicatedStorage/Shared/Config/Species")
+local HeistConfig = require("@game/ReplicatedStorage/Shared/Config/Heist")
 local Economy = require("@game/ReplicatedStorage/Shared/Sim/Economy")
 local Luck = require("@game/ReplicatedStorage/Shared/Sim/Luck")
 local NumberFormat = require("@game/ReplicatedStorage/Shared/Sim/NumberFormat")
@@ -187,6 +188,15 @@ local function readyEggs(): number
 	return count
 end
 
+-- Speed Boots level (server mirrors it to a player attribute).
+local bootsAttr = source((localPlayer:GetAttribute("Boots") :: number?) or 0)
+localPlayer:GetAttributeChangedSignal("Boots"):Connect(function()
+	bootsAttr((localPlayer:GetAttribute("Boots") :: number?) or 0)
+end)
+local function bootsLevel(): number
+	return bootsAttr()
+end
+
 local function sideMenu(): Instance
 	local step = function()
 		return state().tutorial or 0
@@ -214,6 +224,13 @@ local function sideMenu(): Instance
 		menuButton(4, "▤", "ALMANAC", "almanac", function()
 			return step() >= 3
 		end, nil, Theme.color.purple),
+		menuButton(0, "»", "BOOTS", "boots", function()
+			return true
+		end, function()
+			local level = bootsLevel()
+			local cost = HeistConfig.bootsCost(level)
+			return if cost and (state().cash or 0) >= cost then 1 else 0
+		end, Theme.color.blue),
 		menuButton(5, "⚙", "MORE", "settings", function()
 			return true
 		end, nil, Theme.color.teal),
@@ -1219,6 +1236,137 @@ local function hint(): Instance
 	})
 end
 
+-- Speed Boots: the heist progression. Shows your speed, the next upgrade, and which zones'
+-- guards you can outrun while carrying a crate.
+local function bootsMenu(): Instance
+	local rows = {}
+	for i, zone in HeistConfig.zones do
+		table.insert(
+			rows,
+			create("Frame")({
+				Size = UDim2.new(1, -10, 0, 54),
+				LayoutOrder = 10 + i,
+				BackgroundColor3 = Color3.new(1, 1, 1),
+				Components.corner(UDim.new(0, 12)),
+				Components.stroke(3),
+				Components.gradient(function()
+					local fast = HeistConfig.walkSpeed(bootsLevel(), false, true) > zone.chaseSpeed
+					return if fast
+						then Theme.lighten(Theme.color.green, 0.55)
+						else Theme.lighten(Theme.color.red, 0.6)
+				end),
+				text({
+					Size = UDim2.new(0.55, 0, 0.8, 0),
+					Position = UDim2.new(0, 14, 0.1, 0),
+					Text = string.upper(zone.name),
+					FontFace = Theme.font.title,
+					TextColor3 = Theme.color.white,
+					TextXAlignment = Enum.TextXAlignment.Left,
+					Components.textStroke(2.5),
+				}),
+				text({
+					Size = UDim2.new(0.42, 0, 0.7, 0),
+					Position = UDim2.new(1, -12, 0.15, 0),
+					AnchorPoint = Vector2.new(1, 0),
+					FontFace = Theme.font.heading,
+					TextXAlignment = Enum.TextXAlignment.Right,
+					Text = function()
+						local fast = HeistConfig.walkSpeed(bootsLevel(), false, true) > zone.chaseSpeed
+						return if fast then "YOU CAN OUTRUN THEM" else `NEED BOOTS {zone.suggestedBoots}`
+					end,
+				}),
+			})
+		)
+	end
+	return Components.panel({
+		title = "SPEED BOOTS",
+		accent = Theme.color.blue,
+		onClose = function()
+			Store.menu("")
+		end,
+		children = {
+			list({
+				create("Frame")({
+					Size = UDim2.new(1, -10, 0, 120),
+					LayoutOrder = 1,
+					BackgroundTransparency = 1,
+					text({
+						Size = UDim2.new(0.6, 0, 0.42, 0),
+						Position = UDim2.new(0, 8, 0, 4),
+						FontFace = Theme.font.title,
+						TextColor3 = Theme.color.white,
+						TextXAlignment = Enum.TextXAlignment.Left,
+						Text = function()
+							return `LEVEL {bootsLevel()} / {HeistConfig.MAX_BOOTS}`
+						end,
+						Components.textStroke(3),
+					}),
+					text({
+						Size = UDim2.new(0.6, 0, 0.3, 0),
+						Position = UDim2.new(0, 8, 0.5, 0),
+						FontFace = Theme.font.heading,
+						TextXAlignment = Enum.TextXAlignment.Left,
+						Text = function()
+							local level = bootsLevel()
+							local now = HeistConfig.walkSpeed(level, false, false)
+							local nextLevel = math.min(level + 1, HeistConfig.MAX_BOOTS)
+							return `Speed {now} → {HeistConfig.walkSpeed(nextLevel, false, false)}`
+						end,
+					}),
+					Components.button({
+						text = function()
+							local cost = HeistConfig.bootsCost(bootsLevel())
+							return if cost then `UPGRADE {NumberFormat.cash(cost)}` else "MAXED!"
+						end,
+						color = function()
+							local cost = HeistConfig.bootsCost(bootsLevel())
+							return if cost and (state().cash or 0) >= cost
+								then Theme.color.green
+								else Theme.color.wood
+						end,
+						size = UDim2.new(0.38, 0, 0, 70),
+						position = UDim2.new(1, -8, 0.5, 0),
+						anchor = Vector2.new(1, 0.5),
+						textSize = 30,
+						shine = true,
+						onClick = function()
+							Net.request("BuyBoots")
+						end,
+					}),
+				}),
+				rows,
+			}),
+		},
+	})
+end
+
+-- Big pulsing banner while you carry a heist crate.
+local function runBanner(): any
+	local carrying = source(localPlayer:GetAttribute("HeistCarry") == true)
+	localPlayer:GetAttributeChangedSignal("HeistCarry"):Connect(function()
+		carrying(localPlayer:GetAttribute("HeistCarry") == true)
+	end)
+	return show(carrying, function()
+		return text({
+			Name = "RunBanner",
+			Size = UDim2.fromOffset(560, 64),
+			Position = UDim2.new(0.5, 0, 0, 150),
+			AnchorPoint = Vector2.new(0.5, 0),
+			BackgroundTransparency = 0,
+			BackgroundColor3 = Theme.color.red,
+			TextColor3 = Theme.color.white,
+			FontFace = Theme.font.title,
+			Text = "RUN IT HOME! FOLLOW THE GOLD ARC!",
+			Components.corner(UDim.new(0, 16)),
+			Components.stroke(4),
+			Components.textStroke(3),
+			Components.padding(8),
+			Components.popIn(),
+			Components.idle(2, 0.5),
+		})
+	end)
+end
+
 function App.mount()
 	local playerGui = localPlayer:WaitForChild("PlayerGui")
 	local scale = source(1)
@@ -1258,6 +1406,7 @@ function App.build(scale: () -> number): Instance
 			statusBadges(),
 			actionButton(),
 			toasts(),
+			runBanner(),
 		}),
 		create("Frame")({
 			Name = "Menus",
@@ -1282,6 +1431,9 @@ function App.build(scale: () -> number): Instance
 			show(function()
 				return Store.menu() == "settings"
 			end, settingsMenu),
+			show(function()
+				return Store.menu() == "boots"
+			end, bootsMenu),
 			show(function()
 				local p = state().pending
 				return p ~= nil and ((p.offline or 0) > 0 or p.streakSlot ~= nil)

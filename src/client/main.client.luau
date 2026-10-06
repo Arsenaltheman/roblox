@@ -12,7 +12,7 @@ local App = require("./UI/App")
 local Reveal = require("./UI/Reveal")
 
 local controllers = script.Parent:WaitForChild("Controllers")
-local ORDER = { "Quality", "Sound", "Vfx", "TrainView", "Pens", "Context" }
+local ORDER = { "Quality", "Sound", "Vfx", "TrainView", "Pens", "HeistView", "Context" }
 local loaded = {}
 for _, name in ORDER do
 	loaded[name] = (require :: any)(controllers:WaitForChild(name))

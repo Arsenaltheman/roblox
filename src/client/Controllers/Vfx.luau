@@ -10,6 +10,7 @@ local Workspace = game:GetService("Workspace")
 
 local Mutations = require("@game/ReplicatedStorage/Shared/Config/Mutations")
 local Palette = require("@game/ReplicatedStorage/Shared/Config/Palette")
+local Rarities = require("@game/ReplicatedStorage/Shared/Config/Rarities")
 local NumberFormat = require("@game/ReplicatedStorage/Shared/Sim/NumberFormat")
 local Net = require("@game/ReplicatedStorage/Shared/Net/Net")
 local Quality = require("./Quality")
@@ -62,6 +63,84 @@ function Vfx.burst(position: Vector3, color: Color3, count: number, size: number
 	emitter:Emit(math.max(4, math.floor(count * (if q >= 3 then 1 elseif q == 2 then 0.6 else 0.3))))
 	task.delay(1.5, function()
 		holder:Destroy()
+	end)
+end
+
+-- Fireworks: rockets shoot up from `position` and burst in `color` (plus gold). Used for heist
+-- deliveries, big reveals and the login show.
+function Vfx.fireworks(position: Vector3, color: Color3, rockets: number?)
+	local q = Store.quality()
+	local count = math.max(2, math.floor((rockets or 5) * (if q >= 2 then 1 else 0.5)))
+	for i = 1, count do
+		task.delay((i - 1) * 0.18, function()
+			local offset = Vector3.new(math.random(-8, 8), 0, math.random(-8, 8))
+			local peak = position + offset + Vector3.new(0, 16 + math.random() * 10, 0)
+			local rocket = anchoredPart(
+				Vector3.new(0.5, 0.5, 0.5),
+				CFrame.new(position + offset),
+				Color3.new(1, 0.9, 0.6)
+			)
+			local trail = Instance.new("Trail")
+			local a0 = Instance.new("Attachment")
+			a0.Position = Vector3.new(0, 0.25, 0)
+			a0.Parent = rocket
+			local a1 = Instance.new("Attachment")
+			a1.Position = Vector3.new(0, -0.25, 0)
+			a1.Parent = rocket
+			trail.Attachment0, trail.Attachment1 = a0, a1
+			trail.Lifetime = 0.35
+			trail.LightEmission = 1
+			trail.Color = ColorSequence.new(Color3.fromRGB(255, 220, 140))
+			trail.Parent = rocket
+			TweenService
+				:Create(rocket, TweenInfo.new(0.55, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+					CFrame = CFrame.new(peak),
+				})
+				:Play()
+			task.delay(0.55, function()
+				rocket:Destroy()
+				Vfx.burst(peak, if i % 2 == 0 then C("gold") else color, 60, 1.6, 34)
+				local flash = anchoredPart(Vector3.new(1, 1, 1), CFrame.new(peak), color)
+				flash.Transparency = 1
+				local light = Instance.new("PointLight")
+				light.Color = color
+				light.Range = 40
+				light.Brightness = 4
+				light.Parent = flash
+				TweenService:Create(light, TweenInfo.new(0.6), { Brightness = 0 }):Play()
+				task.delay(0.7, function()
+					flash:Destroy()
+				end)
+			end)
+		end)
+	end
+end
+
+-- Camera shake through the humanoid's camera offset (respects Reduced Motion).
+function Vfx.shake(strength: number, duration: number)
+	if Quality.reducedMotion() then
+		return
+	end
+	local character = localPlayer.Character
+	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+	if not humanoid then
+		return
+	end
+	local started = os.clock()
+	local connection
+	connection = RunService.RenderStepped:Connect(function()
+		local elapsed = os.clock() - started
+		if elapsed >= duration or not humanoid.Parent then
+			humanoid.CameraOffset = Vector3.zero
+			connection:Disconnect()
+			return
+		end
+		local falloff = 1 - elapsed / duration
+		humanoid.CameraOffset = Vector3.new(
+			(math.random() - 0.5) * strength * falloff,
+			(math.random() - 0.5) * strength * falloff,
+			(math.random() - 0.5) * strength * falloff
+		)
 	end)
 end
 
@@ -260,6 +339,42 @@ local function onFx(kind: string, value: number, position: Vector3?)
 		Vfx.floatText(position, glyph, Color3.new(1, 1, 1))
 	elseif kind == "lockpick" then
 		Sound.play("lock")
+	elseif kind == "heistGrab" and position then
+		Vfx.burst(position + Vector3.new(0, 2, 0), C("gold"), 40, 1.4, 22)
+		if value == localPlayer.UserId then
+			Sound.play("lassoCatch")
+			Sound.play("alarm")
+			Vfx.shake(0.6, 0.35)
+			Store.toast("RUN IT HOME! Guards are coming!")
+		end
+	elseif kind == "heistDeliver" and position then
+		local rarityColor = C(Rarities.forTier(math.max(1, value)).color)
+		local big = Rarities.indexOf(Rarities.forTier(math.max(1, value)).id) >= 4
+		Vfx.fireworks(position, rarityColor, if big then 9 else 4)
+		Vfx.burst(position + Vector3.new(0, 3, 0), C("gold"), 80, 1.5, 26)
+		Sound.play("collect")
+		if big then
+			Sound.play("frontier")
+		end
+	elseif kind == "tackle" and position then
+		Vfx.burst(position, C("red"), 50, 1.4, 24)
+		Sound.play("caught")
+		if value == localPlayer.UserId then
+			Vfx.shake(2.2, 0.5)
+			Vfx.alarm()
+		end
+	elseif kind == "guardAlert" and position then
+		if root and (root.Position - position).Magnitude < 90 then
+			Vfx.floatText(position + Vector3.new(0, 7, 0), "!", C("red"))
+			Sound.play("whistle", 0.2)
+		end
+	elseif kind == "bootsUp" then
+		if root then
+			Vfx.burst(root.Position, C("sky"), 60, 1.3, 22)
+			Vfx.floatText(root.Position + Vector3.new(0, 5, 0), "SPEED UP!", C("sky"))
+			Vfx.shake(0.5, 0.3)
+		end
+		Sound.play("frontier")
 	end
 end
 
@@ -336,6 +451,48 @@ function Vfx.start()
 	end
 	Workspace:GetAttributeChangedSignal("ServerLuck"):Connect(syncLuck)
 	syncLuck()
+	-- Speed lines: white streaks at the screen edges when you're running fast (boots, carrying).
+	local gui = Instance.new("ScreenGui")
+	gui.Name = "SpeedLines"
+	gui.IgnoreGuiInset = true
+	gui.ResetOnSpawn = false
+	gui.DisplayOrder = -1
+	local lines: { Frame } = {}
+	for i = 1, 16 do
+		local line = Instance.new("Frame")
+		line.BackgroundColor3 = Color3.new(1, 1, 1)
+		line.BorderSizePixel = 0
+		line.AnchorPoint = Vector2.new(0.5, 0.5)
+		line.BackgroundTransparency = 1
+		line.Parent = gui
+		lines[i] = line
+	end
+	gui.Parent = localPlayer:WaitForChild("PlayerGui")
+	RunService.RenderStepped:Connect(function()
+		local character = localPlayer.Character
+		local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
+		local speed = if root
+			then Vector3.new(root.AssemblyLinearVelocity.X, 0, root.AssemblyLinearVelocity.Z).Magnitude
+			else 0
+		local amount = math.clamp((speed - 21) / 12, 0, 1)
+		if Quality.reducedMotion() then
+			amount = 0
+		end
+		for i, line in lines do
+			if amount <= 0 then
+				line.BackgroundTransparency = 1
+			else
+				-- Each frame, lines respawn at random spots around the edge, pointing at the centre.
+				local angle = (i / #lines) * math.pi * 2 + math.random() * 0.3
+				local dist = 0.42 + math.random() * 0.12
+				line.Position =
+					UDim2.fromScale(0.5 + math.cos(angle) * dist, 0.5 + math.sin(angle) * dist * 1.1)
+				line.Size = UDim2.fromOffset(4, 60 + math.random() * 120 * amount)
+				line.Rotation = math.deg(angle) + 90
+				line.BackgroundTransparency = 1 - amount * (0.25 + math.random() * 0.35)
+			end
+		end
+	end)
 	-- Weather particles follow the camera.
 	RunService.RenderStepped:Connect(function()
 		local camera = Workspace.CurrentCamera

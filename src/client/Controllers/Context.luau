@@ -15,6 +15,7 @@ local NumberFormat = require("@game/ReplicatedStorage/Shared/Sim/NumberFormat")
 local TrainClock = require("@game/ReplicatedStorage/Shared/Sim/TrainClock")
 local Net = require("@game/ReplicatedStorage/Shared/Net/Net")
 local TrainView = require("./TrainView")
+local HeistView = require("./HeistView")
 local Sound = require("./Sound")
 local Store = require("../Store")
 
@@ -257,6 +258,29 @@ local function banditAction(rootPos: Vector3): Action?
 	return nil
 end
 
+-- GRAB a crate off a heist nest (the server starts the guards chasing).
+local function heistAction(rootPos: Vector3): Action?
+	if
+		localPlayer:GetAttribute("HeistCarry") == true
+		or (localPlayer:GetAttribute("Carrying") or "") ~= ""
+	then
+		return nil
+	end
+	local zone, nest, species, tier = HeistView.nearestCrate(rootPos)
+	if not zone or not nest then
+		return nil
+	end
+	local rarity = Rarities.forTier(tier or 1)
+	return {
+		kind = "grab",
+		label = "GRAB!",
+		sub = `{rarity.name} {HeistView.speciesName(species)}`,
+		run = function()
+			Net.request("HeistGrab", zone, nest)
+		end,
+	}
+end
+
 local function plateAction(rootPos: Vector3): Action?
 	local ranches = ranchesFolder()
 	local mine = myRanchIndex()
@@ -342,6 +366,7 @@ function Context.start()
 			or crackAction(pos)
 			or stealAction(pos)
 			or banditAction(pos)
+			or heistAction(pos)
 			or plateAction(pos)
 		current = action
 		local previous = Store.action()
