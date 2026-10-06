@@ -28,7 +28,7 @@ local CARRY_TIMEOUT = 60
 local LASSO_RANGE = 40
 local LASSO_COOLDOWN = 2
 local STUN_SECONDS = 1.5
-local BANDIT_COOLDOWN = 10 * 60
+local BANDIT_COOLDOWN = 6 * 60 -- the camp "refreshes" for you every 6 minutes
 local TUTORIAL_BANDIT_ID = 1
 
 local Steal = {}

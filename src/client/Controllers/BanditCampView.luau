@@ -130,9 +130,11 @@ function BanditCampView.start()
 				return
 			end
 			last = state
+			local stashed = (Workspace:GetAttribute("BanditStash") :: number?) or 0
+			local loot = if stashed > 0 then ` ({stashed} STOLEN PETS HERE!)` else ""
 			if state == "napping" then
 				icon.Text, icon.TextColor3 = "Zzz", Color3.fromRGB(150, 230, 255)
-				label.Text, label.TextColor3 = "NAPPING - STEAL NOW!", Color3.fromRGB(120, 230, 110)
+				label.Text, label.TextColor3 = "NAPPING - STEAL NOW!" .. loot, Color3.fromRGB(120, 230, 110)
 				for _, e in eyes do
 					e.Size, e.Color, e.Material =
 						Vector3.new(0.35, 0.12, 0.1), Color3.fromRGB(43, 29, 20), Enum.Material.SmoothPlastic
