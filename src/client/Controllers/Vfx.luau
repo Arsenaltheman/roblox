@@ -70,8 +70,12 @@ function Vfx.floatText(position: Vector3, text: string, color: Color3)
 	local holder = anchoredPart(Vector3.new(0.2, 0.2, 0.2), CFrame.new(position), color)
 	holder.Transparency = 1
 	local gui = Instance.new("BillboardGui")
-	gui.Size = UDim2.fromScale(6, 2)
-	gui.AlwaysOnTop = true
+	-- Studs-sized and not always-on-top, so it stays a small pop in the world instead of a huge
+	-- number drawn over the HUD.
+	gui.Size = UDim2.fromScale(3.2, 1.1)
+	gui.StudsOffset = Vector3.new(1.5, 0, 0)
+	gui.AlwaysOnTop = false
+	gui.MaxDistance = 80
 	gui.LightInfluence = 0
 	local label = Instance.new("TextLabel")
 	label.Size = UDim2.fromScale(1, 1)
@@ -95,7 +99,7 @@ function Vfx.floatText(position: Vector3, text: string, color: Color3)
 	TweenService:Create(
 		holder,
 		TweenInfo.new(1.4, Enum.EasingStyle.Quad),
-		{ CFrame = holder.CFrame + Vector3.new(0, 6, 0) }
+		{ CFrame = holder.CFrame + Vector3.new(0, 2.5, 0) }
 	):Play()
 	task.delay(0.9, function()
 		TweenService:Create(label, TweenInfo.new(0.5), { TextTransparency = 1 }):Play()

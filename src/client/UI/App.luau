@@ -150,60 +150,19 @@ local function menuButton(
 	label: string,
 	menu: string,
 	visible: () -> boolean,
-	badge: (() -> number)?
+	badge: (() -> number)?,
+	color: Color3?
 ): Instance
-	return create("TextButton")({
-		Name = label,
-		Size = UDim2.fromOffset(74, 74),
-		BackgroundColor3 = Color3.new(1, 1, 1),
-		AutoButtonColor = false,
-		Text = "",
-		LayoutOrder = order,
-		Visible = visible,
-		Activated = function()
+	return Components.tile({
+		glyph = glyph,
+		label = label,
+		color = color or Theme.color.blue,
+		layoutOrder = order,
+		visible = visible,
+		badge = badge,
+		onClick = function()
 			open(menu)
 		end,
-		Components.corner(UDim.new(0, 18)),
-		Components.stroke(3),
-		Components.gradient(Theme.color.sky),
-		text({
-			Size = UDim2.fromScale(0.8, 0.55),
-			Position = UDim2.fromScale(0.5, 0.36),
-			AnchorPoint = Vector2.new(0.5, 0.5),
-			Text = glyph,
-			TextColor3 = Theme.color.white,
-			FontFace = Theme.font.title,
-			Components.textStroke(2),
-		}),
-		text({
-			Size = UDim2.fromScale(0.94, 0.26),
-			Position = UDim2.fromScale(0.5, 0.82),
-			AnchorPoint = Vector2.new(0.5, 0.5),
-			Text = label,
-			TextColor3 = Theme.color.white,
-			FontFace = Theme.font.heading,
-			Components.textStroke(1.5),
-		}),
-		(if badge
-			then show(function()
-				return badge() > 0
-			end, function()
-				return text({
-					Size = UDim2.fromOffset(28, 28),
-					Position = UDim2.new(1, 6, 0, -6),
-					AnchorPoint = Vector2.new(1, 0),
-					BackgroundTransparency = 0,
-					BackgroundColor3 = Theme.color.red,
-					TextColor3 = Theme.color.white,
-					FontFace = Theme.font.number,
-					Text = function()
-						return tostring(badge())
-					end,
-					Components.corner(UDim.new(1, 0)),
-					Components.stroke(2),
-				})
-			end)
-			else nil) :: any,
 	})
 end
 
@@ -234,7 +193,7 @@ local function sideMenu(): Instance
 	end
 	return create("Frame")({
 		Name = "SideMenu",
-		Size = UDim2.fromOffset(80, 470),
+		Size = UDim2.fromOffset(90, 500),
 		Position = UDim2.new(0, 12, 0.5, 0),
 		AnchorPoint = Vector2.new(0, 0.5),
 		BackgroundTransparency = 1,
@@ -245,19 +204,19 @@ local function sideMenu(): Instance
 		}),
 		menuButton(1, "★", "SHOP", "shop", function()
 			return step() >= 1
-		end),
+		end, nil, Theme.color.yellow),
 		menuButton(2, "◉", "EGGS", "eggs", function()
 			return step() >= 2 or #(state().eggs or {}) > 0
-		end, readyEggs),
+		end, readyEggs, Theme.color.pink),
 		menuButton(3, "!", "QUESTS", "quests", function()
 			return step() >= 2
-		end, readyQuests),
+		end, readyQuests, Theme.color.orange),
 		menuButton(4, "▤", "ALMANAC", "almanac", function()
 			return step() >= 3
-		end),
+		end, nil, Theme.color.purple),
 		menuButton(5, "⚙", "MORE", "settings", function()
 			return true
-		end),
+		end, nil, Theme.color.teal),
 	})
 end
 
@@ -439,6 +398,7 @@ local function actionButton(): Instance
 			anchor = Vector2.new(0.5, 0.5),
 			textSize = 40,
 			shine = true,
+			pulse = true,
 			onClick = function()
 				Context.execute()
 			end,
@@ -509,6 +469,7 @@ local function toasts(): Instance
 				Components.corner(UDim.new(0, 12)),
 				Components.stroke(3),
 				Components.padding(6),
+				Components.popIn(),
 			})
 		end),
 	})
@@ -566,39 +527,60 @@ local function card(props: {
 	onClick: () -> (),
 	order: number?,
 	extra: any,
+	glyph: string?,
 }): Instance
 	return create("Frame")({
-		Size = UDim2.new(1, -8, 0, 82),
-		BackgroundColor3 = Theme.color.cream,
+		Size = UDim2.new(1, -10, 0, 90),
+		BackgroundColor3 = Color3.new(1, 1, 1),
 		LayoutOrder = props.order,
-		Components.corner(UDim.new(0, 12)),
+		Components.corner(UDim.new(0, 16)),
 		Components.stroke(3),
+		Components.gradient(Theme.lighten(props.color, 0.82)),
+		Components.popIn((props.order or 0) * 0.03),
+		-- Icon tile in the item's colour.
 		create("Frame")({
-			Size = UDim2.new(0, 12, 1, 0),
-			BackgroundColor3 = props.color,
-			Components.corner(UDim.new(0, 12)),
+			Size = UDim2.fromOffset(66, 66),
+			Position = UDim2.new(0, 12, 0.5, 0),
+			AnchorPoint = Vector2.new(0, 0.5),
+			BackgroundColor3 = Color3.new(1, 1, 1),
+			Components.corner(UDim.new(0, 14)),
+			Components.stroke(3),
+			Components.gradient(props.color),
+			Components.gloss(UDim.new(0, 14)),
+			text({
+				Size = UDim2.fromScale(0.7, 0.7),
+				Position = UDim2.fromScale(0.5, 0.5),
+				AnchorPoint = Vector2.new(0.5, 0.5),
+				Text = props.glyph or "★",
+				TextColor3 = Theme.color.white,
+				FontFace = Theme.font.title,
+				ZIndex = 3,
+				Components.textStroke(2.5),
+			}),
 		}),
 		text({
-			Size = UDim2.new(0.62, 0, 0.45, 0),
-			Position = UDim2.new(0, 24, 0.08, 0),
+			Size = UDim2.new(0.5, 0, 0.44, 0),
+			Position = UDim2.new(0, 92, 0.1, 0),
 			Text = props.title,
-			FontFace = Theme.font.heading,
+			FontFace = Theme.font.title,
+			TextColor3 = Theme.color.white,
 			TextXAlignment = Enum.TextXAlignment.Left,
+			Components.textStroke(2.5),
 		}),
 		text({
-			Size = UDim2.new(0.62, 0, 0.32, 0),
-			Position = UDim2.new(0, 24, 0.56, 0),
+			Size = UDim2.new(0.5, 0, 0.3, 0),
+			Position = UDim2.new(0, 92, 0.58, 0),
 			Text = props.sub,
-			TextColor3 = Theme.darken(Theme.color.wood, 0.1),
+			TextColor3 = Theme.darken(Theme.color.wood, 0.25),
 			TextXAlignment = Enum.TextXAlignment.Left,
 		}),
 		Components.button({
 			text = props.button,
 			color = Theme.color.green,
-			size = UDim2.new(0.28, 0, 0, 52),
-			position = UDim2.new(1, -12, 0.5, 0),
+			size = UDim2.new(0.25, 0, 0, 54),
+			position = UDim2.new(1, -14, 0.5, -3),
 			anchor = Vector2.new(1, 0.5),
-			textSize = 24,
+			textSize = 26,
 			onClick = props.onClick,
 		}),
 		props.extra,
@@ -627,6 +609,31 @@ local function showOdds(kind: string)
 	end)
 end
 
+-- Icon glyph and colour for each shop item (no image assets needed).
+local SHOP_LOOK: { [string]: { any } } = {
+	VIP = { "★", Theme.color.yellow },
+	DoubleCash = { "2x", Theme.color.green },
+	AutoCollect = { "$", Theme.color.teal },
+	LuckyHorseshoe = { "♣", Theme.color.gold },
+	GoldenLasso = { "◎", Theme.color.orange },
+	SpeedSpurs = { "»", Theme.color.blue },
+	IronLock = { "■", Theme.color.purple },
+	HeavySaddlebag = { "▲", Theme.color.pink },
+	BigRanch = { "+2", Theme.color.green },
+	SheriffStar = { "✦", Theme.color.red },
+	ServerLuck2 = { "x2", Theme.color.gold },
+	ServerLuck3 = { "x3", Theme.color.gold },
+	ServerLuck5 = { "x5", Theme.color.gold },
+	Lockpick = { "!", Theme.color.purple },
+	CashBag10m = { "$", Theme.color.green },
+	CashBag1h = { "$$", Theme.color.green },
+	CashBag6h = { "$$$", Theme.color.green },
+	CashBag24h = { "$$$$", Theme.color.green },
+	StarterPack = { "◆", Theme.color.pink },
+	GoldenLocomotive = { "♛", Theme.color.yellow },
+	DiamondDesperado = { "♛", Theme.color.teal },
+}
+
 local function shopMenu(): Instance
 	local tab = source("robux")
 	local restricted = localPlayer:GetAttribute("RandomRestricted") == true
@@ -646,7 +653,9 @@ local function shopMenu(): Instance
 					sub = function()
 						return product.description
 					end,
-					color = if product.random then Theme.color.gold else Theme.color.sky,
+					color = SHOP_LOOK[product.key] and SHOP_LOOK[product.key][2]
+						or (if product.random then Theme.color.gold else Theme.color.blue),
+					glyph = SHOP_LOOK[product.key] and SHOP_LOOK[product.key][1] or "★",
 					button = function()
 						return if owned() then "OWNED" else "View Item"
 					end,

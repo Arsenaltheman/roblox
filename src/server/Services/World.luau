@@ -90,17 +90,6 @@ local function cactus(parent: Instance, at: Vector3, height: number)
 	end
 end
 
-local function rock(parent: Instance, at: Vector3, size: number, seed: number)
-	part({
-		name = "Rock",
-		size = Vector3.new(size * 1.4, size, size * 1.1),
-		cframe = CFrame.new(at + Vector3.new(0, size * 0.35, 0)) * CFrame.Angles(0, seed, math.rad(8)),
-		color = if seed % 2 < 1 then "rock" else "rockDark",
-		material = Enum.Material.Slate,
-		parent = parent,
-	})
-end
-
 local function building(
 	parent: Instance,
 	name: string,
@@ -140,22 +129,103 @@ local function building(
 	return model
 end
 
+-- Deterministic random numbers so every server builds the same map.
+local function rng(seed: number): () -> number
+	local state = seed
+	return function()
+		state = (state * 69069 + 12345) % 4294967296
+		return state / 4294967296
+	end
+end
+
+-- Real Roblox Terrain instead of plastic slabs: textured sand, a packed-dirt street, rolling dunes,
+-- a ring of layered sandstone cliffs, an oasis pond and 3D clouds.
+local function buildTerrain()
+	local terrain = Workspace.Terrain
+	terrain:Clear()
+	-- Base sand layer, top at y = 0.
+	terrain:FillBlock(CFrame.new(0, -6, 75), Vector3.new(1200, 12, 1200), Enum.Material.Sand)
+	-- Main street and the area around the station: packed dirt, so paths read at a glance.
+	terrain:FillBlock(CFrame.new(0, -2, 75), Vector3.new(232, 4, 16), Enum.Material.Ground)
+	terrain:FillBlock(CFrame.new(0, -2, 14), Vector3.new(124, 4, 20), Enum.Material.Ground)
+	-- Dirt aprons in front of the landmark buildings.
+	for _, at: Layout.V3 in Layout.landmarks :: { [string]: Layout.V3 } do
+		terrain:FillBlock(CFrame.new(at.x, -2, at.z), Vector3.new(30, 4, 24), Enum.Material.Ground)
+	end
+
+	local rand = rng(11)
+	-- Rolling dunes between the town and the cliffs (kept clear of the track loop).
+	for _ = 1, 70 do
+		local angle = rand() * math.pi * 2
+		local dist = 250 + rand() * 120
+		local radius = 18 + rand() * 30
+		local at = Vector3.new(math.cos(angle) * dist, -radius * 0.7, 75 + math.sin(angle) * dist)
+		terrain:FillBall(at, radius, Enum.Material.Sand)
+	end
+	-- Canyon cliffs: stacked, slightly offset blocks with alternating rock layers (strata), so the
+	-- horizon has the striped mesas of the Wild West.
+	for i = 1, 30 do
+		local angle = i / 30 * math.pi * 2 + rand() * 0.08
+		local dist = 400 + rand() * 60
+		local center = Vector3.new(math.cos(angle) * dist, 0, 75 + math.sin(angle) * dist)
+		local height = 50 + rand() * 60
+		local width = 70 + rand() * 40
+		local layers = math.floor(height / 12)
+		for layer = 0, layers do
+			local y = layer * 12
+			local shrink = 1 - layer / (layers + 3) * 0.5
+			local material = if layer % 3 == 2 then Enum.Material.Rock else Enum.Material.Sandstone
+			terrain:FillBlock(
+				CFrame.new(center + Vector3.new(0, y + 6, 0)) * CFrame.Angles(0, angle + rand() * 0.3, 0),
+				Vector3.new(width * shrink, 12, 50 * shrink),
+				material
+			)
+		end
+		-- Rubble at the cliff foot.
+		for _ = 1, 3 do
+			local off = Vector3.new((rand() - 0.5) * width, 0, (rand() - 0.5) * 40)
+			terrain:FillBall(center + off, 6 + rand() * 8, Enum.Material.Rock)
+		end
+	end
+	-- Natural rock outcrops scattered in the desert.
+	for _ = 1, 26 do
+		local angle = rand() * math.pi * 2
+		local dist = 220 + rand() * 150
+		local at = Vector3.new(math.cos(angle) * dist, 0, 75 + math.sin(angle) * dist)
+		terrain:FillBall(at, 4 + rand() * 7, Enum.Material.Rock)
+		terrain:FillBall(at + Vector3.new(4, -1, 3), 3 + rand() * 4, Enum.Material.Sandstone)
+	end
+	-- Oasis pond with grass around it, north of the station (outside the train loop).
+	local pond = Vector3.new(70, 0, -120)
+	terrain:FillCylinder(CFrame.new(pond + Vector3.new(0, -1, 0)), 3, 34, Enum.Material.LeafyGrass)
+	terrain:FillCylinder(CFrame.new(pond + Vector3.new(0, -1.5, 0)), 4, 24, Enum.Material.Water)
+	terrain:FillCylinder(CFrame.new(pond + Vector3.new(0, -5, 0)), 4, 24, Enum.Material.Mud)
+	for _ = 1, 12 do
+		local a = rand() * math.pi * 2
+		local d = 26 + rand() * 14
+		terrain:FillBall(
+			pond + Vector3.new(math.cos(a) * d, -2, math.sin(a) * d),
+			4 + rand() * 3,
+			Enum.Material.Grass
+		)
+	end
+	-- Sky: soft volumetric clouds.
+	local clouds = terrain:FindFirstChildOfClass("Clouds") or Instance.new("Clouds")
+	clouds.Cover = 0.55
+	clouds.Density = 0.6
+	clouds.Color = Color3.fromRGB(255, 236, 214)
+	clouds.Parent = terrain
+end
+
 local function buildGround(root: Instance)
+	buildTerrain()
+	-- An invisible floor just under the terrain surface keeps physics stable if terrain ever fails.
 	part({
-		name = "Ground",
+		name = "SafetyFloor",
 		size = Vector3.new(900, 2, 900),
-		cframe = CFrame.new(0, -1, 75),
+		cframe = CFrame.new(0, -3, 75),
 		color = "sand",
-		material = Enum.Material.Sand,
-		parent = root,
-	})
-	-- Main street
-	part({
-		name = "Street",
-		size = Vector3.new(230, 0.2, 14),
-		cframe = CFrame.new(0, 0.1, 75),
-		color = "dirt",
-		material = Enum.Material.Ground,
+		transparency = 1,
 		parent = root,
 	})
 end
@@ -440,37 +510,120 @@ local function buildLandmarks(root: Instance)
 	camp.Parent = root
 end
 
+-- Small wooden props so the town looks lived-in.
+local function barrel(parent: Instance, at: Vector3)
+	part({
+		name = "Barrel",
+		size = Vector3.new(3.2, 2.6, 2.6),
+		cframe = CFrame.new(at + Vector3.new(0, 1.6, 0)) * CFrame.Angles(0, 0, math.rad(90)),
+		color = "wood",
+		material = Enum.Material.WoodPlanks,
+		shape = Enum.PartType.Cylinder,
+		parent = parent,
+	})
+	for _, y in { 0.5, 2.7 } do
+		part({
+			name = "Hoop",
+			size = Vector3.new(0.3, 2.75, 2.75),
+			cframe = CFrame.new(at + Vector3.new(0, y, 0)) * CFrame.Angles(0, 0, math.rad(90)),
+			color = "iron",
+			material = Enum.Material.Metal,
+			shape = Enum.PartType.Cylinder,
+			collide = false,
+			parent = parent,
+		})
+	end
+end
+
+local function crate(parent: Instance, at: Vector3, size: number, turn: number)
+	part({
+		name = "Crate",
+		size = Vector3.new(size, size, size),
+		cframe = CFrame.new(at + Vector3.new(0, size / 2, 0)) * CFrame.Angles(0, turn, 0),
+		color = "woodLight",
+		material = Enum.Material.WoodPlanks,
+		parent = parent,
+	})
+end
+
+local function hayBale(parent: Instance, at: Vector3, turn: number)
+	part({
+		name = "HayBale",
+		size = Vector3.new(4, 2.4, 2.4),
+		cframe = CFrame.new(at + Vector3.new(0, 1.2, 0)) * CFrame.Angles(0, turn, 0),
+		color = "gold",
+		material = Enum.Material.Grass,
+		parent = parent,
+	})
+end
+
+-- Lantern post with a warm light (it glows at golden hour).
+local function lantern(parent: Instance, at: Vector3)
+	part({
+		name = "LanternPost",
+		size = Vector3.new(0.6, 9, 0.6),
+		cframe = CFrame.new(at + Vector3.new(0, 4.5, 0)),
+		color = "woodDark",
+		material = Enum.Material.Wood,
+		parent = parent,
+	})
+	part({
+		name = "LanternArm",
+		size = Vector3.new(2, 0.4, 0.4),
+		cframe = CFrame.new(at + Vector3.new(0.9, 8.8, 0)),
+		color = "woodDark",
+		material = Enum.Material.Wood,
+		collide = false,
+		parent = parent,
+	})
+	local glass = part({
+		name = "Lantern",
+		size = Vector3.new(0.9, 1.2, 0.9),
+		cframe = CFrame.new(at + Vector3.new(1.7, 8, 0)),
+		color = "gold",
+		material = Enum.Material.Neon,
+		collide = false,
+		parent = parent,
+	})
+	local light = Instance.new("PointLight")
+	light.Color = Color3.fromRGB(255, 190, 110)
+	light.Range = 18
+	light.Brightness = 1.4
+	light.Shadows = false
+	light.Parent = glass
+end
+
 local function buildScenery(root: Instance)
 	local scenery = Instance.new("Folder")
 	scenery.Name = "Scenery"
-	-- Deterministic scatter outside the loop so the town feels like a canyon oasis.
-	local seed = 7
-	local function rand(): number
-		seed = (seed * 69069 + 12345) % 4294967296
-		return seed / 4294967296
-	end
-	for _ = 1, 60 do
+	local rand = rng(7)
+	-- Cacti dotted through the desert outside the loop.
+	for _ = 1, 45 do
 		local angle = rand() * math.pi * 2
-		local dist = 230 + rand() * 180
-		local at = Vector3.new(math.cos(angle) * dist, 0, 75 + math.sin(angle) * dist)
-		if rand() < 0.45 then
-			cactus(scenery, at, 6 + rand() * 6)
-		else
-			rock(scenery, at, 4 + rand() * 14, rand() * 6)
+		local dist = 220 + rand() * 160
+		cactus(scenery, Vector3.new(math.cos(angle) * dist, 0, 75 + math.sin(angle) * dist), 6 + rand() * 7)
+	end
+	-- Lantern posts along both sides of the main street and the platform.
+	for x = -105, 105, 30 do
+		lantern(scenery, Vector3.new(x, 0, 66))
+		lantern(scenery, Vector3.new(x + 15, 0, 84))
+	end
+	-- Clutter by each landmark building: barrels, crates, hay.
+	for name, at: Layout.V3 in Layout.landmarks :: { [string]: Layout.V3 } do
+		local base = Vector3.new(at.x, 0, at.z)
+		if name ~= "banditCamp" then
+			barrel(scenery, base + Vector3.new(-12, 0, 9))
+			barrel(scenery, base + Vector3.new(-9.5, 0, 10))
+			crate(scenery, base + Vector3.new(12, 0, 9), 3, rand())
+			crate(scenery, base + Vector3.new(12.5, 3, 9), 2.2, rand())
+			hayBale(scenery, base + Vector3.new(9, 0, 12), rand() * 3)
 		end
 	end
-	-- Mesas on the horizon
-	for i = 1, 8 do
-		local angle = i / 8 * math.pi * 2 + 0.2
-		local at = Vector3.new(math.cos(angle) * 420, 0, 75 + math.sin(angle) * 420)
-		part({
-			name = "Mesa",
-			size = Vector3.new(90, 40 + (i % 3) * 18, 70),
-			cframe = CFrame.new(at + Vector3.new(0, 20, 0)) * CFrame.Angles(0, angle, 0),
-			color = if i % 2 == 0 then "rock" else "rockDark",
-			material = Enum.Material.Sandstone,
-			parent = scenery,
-		})
+	-- Freight on the platform ends.
+	for _, x in { -52, 52 } do
+		crate(scenery, Vector3.new(x, 2, 8), 3, 0.2)
+		crate(scenery, Vector3.new(x + 3.5, 2, 9), 2.4, 0.6)
+		barrel(scenery, Vector3.new(x - 3, 2, 10))
 	end
 	scenery.Parent = root
 end

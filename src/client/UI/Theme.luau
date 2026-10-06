@@ -26,7 +26,15 @@ Theme.color = {
 	shadow = Color3.fromRGB(43, 29, 20),
 	cash = Color3.fromRGB(120, 220, 90),
 	nugget = Color3.fromRGB(255, 200, 61),
+	-- Bright accents for buttons and tiles (each menu gets its own colour).
+	orange = Color3.fromRGB(255, 140, 40),
+	purple = Color3.fromRGB(150, 90, 255),
+	pink = Color3.fromRGB(255, 95, 170),
+	teal = Color3.fromRGB(30, 200, 200),
+	blue = Color3.fromRGB(60, 150, 255),
+	yellow = Color3.fromRGB(255, 205, 40),
 }
+Theme.color.green = Color3.fromRGB(70, 215, 70)
 
 Theme.font = {
 	title = Font.fromEnum(Enum.Font.LuckiestGuy),
