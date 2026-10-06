@@ -266,11 +266,19 @@ local function updateStatue(userId: number)
 	local m = model :: Model
 	m.Name = "ChampionStatue"
 	for _, d in m:GetDescendants() do
+		if d:IsA("Clothing") or d:IsA("ShirtGraphic") then
+			d:Destroy()
+		end
+	end
+	for _, d in m:GetDescendants() do
 		if d:IsA("BasePart") then
 			d.Anchored = true
 			d.CanCollide = false
 			d.Material = Enum.Material.Foil
 			d.Color = Color3.fromRGB(255, 200, 61)
+			if d:IsA("MeshPart") then
+				d.TextureID = ""
+			end
 		elseif d:IsA("Decal") then
 			d.Color3 = Color3.fromRGB(255, 200, 61)
 		end
@@ -293,8 +301,11 @@ local function refreshGlobal()
 			for _, player in Players:GetPlayers() do
 				if Registry.Data.get(player) then
 					local value = math.floor(math.min(board.value(player), 9e15))
+					-- Keep each player's best ever.
 					pcall(function()
-						store:SetAsync(tostring(player.UserId), value)
+						store:UpdateAsync(tostring(player.UserId), function(old: number?)
+							return math.max(old or 0, value)
+						end)
 					end)
 				end
 			end
@@ -314,6 +325,8 @@ local function refreshGlobal()
 				if board.id == "Income" and entries[1] then
 					updateStatue(entries[1].userId)
 				end
+			elseif board.global then
+				(board.global :: TextLabel).Text = "Turns on once the game is published."
 			end
 		elseif board.global then
 			(board.global :: TextLabel).Text = "Turns on once the game is published."

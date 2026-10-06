@@ -307,7 +307,9 @@ local function dropCarry(player: Player, reason: string)
 	end
 	if player.Parent == Players then
 		setCarryAttributes(player, nil)
-		if reason == "tackled" then
+		if carry.zone == BONUS_ZONE then
+			Registry.Ui.toast(player, "You dropped the crate and it's gone!")
+		elseif reason == "tackled" then
 			Registry.Ui.toast(player, "TACKLED! The crate went back to its nest.")
 		elseif reason == "timeout" then
 			Registry.Ui.toast(player, "Too slow! The crate escaped back to its nest.")
@@ -484,7 +486,8 @@ function Heist.stunGuardsNear(position: Vector3, radius: number, seconds: number
 	local count = 0
 	for _, guard in guards do
 		if (guard.root.Position - position).Magnitude <= radius then
-			guard.stunnedUntil = now() + seconds
+			-- 0 releases; otherwise never shorten a longer stun (e.g. the Bandit King's).
+			guard.stunnedUntil = if seconds <= 0 then now() else math.max(guard.stunnedUntil, now() + seconds)
 			guard.target = nil
 			guard.humanoid:MoveTo(guard.root.Position)
 			count += 1
@@ -512,6 +515,9 @@ end
 
 -- A temporary, unguarded bonus nest (Crate Rain). It vanishes when grabbed or after `lifetime`.
 function Heist.dropBonus(position: Vector3, tier: number, lifetime: number)
+	if not nests[BONUS_ZONE] then
+		return -- heists are switched off
+	end
 	local pad = Instance.new("Part")
 	pad.Name = "BonusNest"
 	pad.Shape = Enum.PartType.Cylinder
@@ -534,6 +540,7 @@ function Heist.dropBonus(position: Vector3, tier: number, lifetime: number)
 	showCrate(nest)
 	Registry.Ui.fxAll("crateDrop", species.tier, pad.Position)
 	task.delay(lifetime, function()
+		nest.crate = nil
 		if nests[BONUS_ZONE][index] == nest then
 			nests[BONUS_ZONE][index] = nil
 			pad:Destroy()

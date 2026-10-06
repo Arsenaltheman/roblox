@@ -99,6 +99,6 @@ return {
 	CRATE_SPREAD = 30, -- seconds over which crates fall
 	CRATE_LIFETIME = 75,
 	-- Main Street drop area (between the two ranch rows).
-	STREET = { minX = -105, maxX = 105, minZ = 64, maxZ = 80 },
+	STREET = { minX = -105, maxX = 105, minZ = 71, maxZ = 79 },
 	RESTOCK_BOOST = 1,
 }

@@ -190,6 +190,17 @@ function Gear.start()
 	Registry.Data.loaded:Connect(function(player: Player)
 		mirror(player)
 	end)
+	-- Tell players when a Frontier unlocks new gear.
+	Registry.Ranch.frontierReached:Connect(function(player: Player, n: number)
+		for _, item in GearConfig.list do
+			if item.frontier == n then
+				Registry.Ui.toast(
+					player,
+					`NEW GEAR UNLOCKED: {item.name}! Get it in the Trading Post (Gear tab).`
+				)
+			end
+		end
+	end)
 	Players.PlayerRemoving:Connect(function(player)
 		readyAt[player] = nil
 		local trap = traps[player]

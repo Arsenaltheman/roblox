@@ -74,7 +74,6 @@ return {
 			{ id = "golden1", kind = "goldenbuy", goal = 1, text = "Buy from the Golden Express" },
 			{ id = "heist3", kind = "heist", goal = 3, text = "Run 3 heist crates home" },
 			{ id = "heist8", kind = "heist", goal = 8, text = "Run 8 heist crates home" },
-			{ id = "boss1", kind = "boss", goal = 5, text = "Lasso the Bandit King 5 times" },
 		},
 	},
 

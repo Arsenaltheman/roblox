@@ -111,7 +111,7 @@ end
 
 -- Freeze a player briefly (guard tackle).
 function Steal.stun(player: Player, seconds: number)
-	stunnedUntil[player] = now() + seconds
+	stunnedUntil[player] = math.max(stunnedUntil[player] or 0, now() + seconds)
 	applySpeed(player)
 	task.delay(seconds, function()
 		if player.Parent == Players then

@@ -245,11 +245,19 @@ local function reward(f: Fight)
 			local cid = Registry.Ranch.addCritter(best, { species = species.id, tier = tier, src = "boss" })
 			if cid then
 				Registry.Ui.reveal(best, { kind = "wheel", species = species.id, tier = tier })
+				Registry.Ui.announce(
+					`{best.DisplayName} lassoed the Bandit King the most and won a {species.name}!`,
+					"golden"
+				)
+			else
+				local cash = BossConfig.cashReward(Registry.Ranch.income(best)) * 3
+				Registry.Wallet.addCash(best, cash, "BanditKingTop")
+				Registry.Ui.announce(`{best.DisplayName} lassoed the Bandit King the most!`, "golden")
+				Registry.Ui.toast(
+					best,
+					`Top lassoer! Your pens are full, so here's {NumberFormat.cash(cash)} instead.`
+				)
 			end
-			Registry.Ui.announce(
-				`{best.DisplayName} lassoed the Bandit King the most and won a {species.name}!`,
-				"golden"
-			)
 		end
 	end
 	for _, player in Players:GetPlayers() do
@@ -268,10 +276,17 @@ local function finish(f: Fight, defeated: boolean)
 	end
 	f.over = true
 	local pos = f.root.Position
+	if fight == f then
+		fight = nil
+	end
+	Workspace:SetAttribute("BossActive", false)
 	if defeated then
 		Registry.Ui.fxAll("bossDefeat", 0, pos)
 		Registry.Ui.announce("The Bandit King is DEFEATED! Loot for every helper!", "golden")
-		reward(f)
+		local ok, err = pcall(reward :: any, f)
+		if not ok then
+			warn("[Boss] reward failed:", err)
+		end
 		-- Topple over, then vanish.
 		TweenService:Create(f.root, TweenInfo.new(0.8, Enum.EasingStyle.Bounce), {
 			CFrame = f.root.CFrame * CFrame.new(0, -3, 0) * CFrame.Angles(math.rad(85), 0, 0),
@@ -287,13 +302,9 @@ local function finish(f: Fight, defeated: boolean)
 	task.delay(2.5, function()
 		model:Destroy()
 	end)
-	if fight == f then
-		fight = nil
-	end
-	Workspace:SetAttribute("BossActive", false)
 	-- The guards come back out.
 	local center, radius = zoneCenter()
-	Registry.Heist.stunGuardsNear(center, radius + 10, 0)
+	Registry.Heist.stunGuardsNear(center, radius + 40, 0)
 end
 
 local function hit(player: Player)
@@ -337,10 +348,11 @@ local function leapLoop(f: Fight)
 		Registry.Ui.fxAll("bossWarn", BossConfig.STOMP_RADIUS, target)
 		-- Jump: up, then down onto the target.
 		local from = f.root.CFrame
-		local look = CFrame.lookAt(
-			target + Vector3.new(0, 5, 0),
-			from.Position * Vector3.new(1, 0, 1) + Vector3.new(0, 5, 0)
-		)
+		local landing = target + Vector3.new(0, 5, 0)
+		local flat = (landing - from.Position) * Vector3.new(1, 0, 1)
+		local look = if flat.Magnitude > 0.5
+			then CFrame.lookAt(landing, landing + flat.Unit)
+			else CFrame.new(landing) * from.Rotation
 		local mid = from:Lerp(look, 0.5) + Vector3.new(0, 18, 0)
 		local half = BossConfig.WARN_SECONDS / 2
 		TweenService:Create(
@@ -397,7 +409,7 @@ function Boss.spawn(seconds: number)
 	fight = f
 	Workspace:SetAttribute("BossActive", true)
 	-- The posse guards hide while the King is in town.
-	Registry.Heist.stunGuardsNear(center, radius + 10, seconds)
+	Registry.Heist.stunGuardsNear(center, radius + 40, seconds)
 	Registry.Ui.fxAll("bossSpawn", 0, center)
 	task.spawn(leapLoop, f)
 	task.delay(seconds, function()
