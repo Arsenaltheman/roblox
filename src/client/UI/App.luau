@@ -1412,7 +1412,18 @@ local WHEEL_ICONS: { [string]: string } = {
 local function wheelMenu(): Instance
 	local bubbles = {}
 	local count = #WheelConfig.segments
-	local odds = WheelConfig.odds()
+	-- Live odds for the player's next spin under the daily jackpot rules.
+	local jackpotToday = source(localPlayer:GetAttribute("JackpotToday") == true)
+	local spinsToday = source((localPlayer:GetAttribute("SpinsToday") :: number?) or 0)
+	localPlayer:GetAttributeChangedSignal("JackpotToday"):Connect(function()
+		jackpotToday(localPlayer:GetAttribute("JackpotToday") == true)
+	end)
+	localPlayer:GetAttributeChangedSignal("SpinsToday"):Connect(function()
+		spinsToday((localPlayer:GetAttribute("SpinsToday") :: number?) or 0)
+	end)
+	local odds = derive(function()
+		return WheelConfig.oddsFor(jackpotToday(), spinsToday())
+	end)
 	for i, segment in WheelConfig.segments do
 		local angle = (i - 1) / count * math.pi * 2 - math.pi / 2
 		local color = Palette.color(segment.color)
@@ -1465,7 +1476,9 @@ local function wheelMenu(): Instance
 					Size = UDim2.fromScale(1, 0.2),
 					Position = UDim2.fromScale(0.5, 1.12),
 					AnchorPoint = Vector2.new(0.5, 0.5),
-					Text = string.format("%.1f%%", odds[i]),
+					Text = function()
+						return string.format("%.1f%%", odds()[i])
+					end,
 					FontFace = Theme.font.number,
 					TextColor3 = Theme.color.white,
 					ZIndex = 4,
@@ -1556,7 +1569,13 @@ local function wheelMenu(): Instance
 				AnchorPoint = Vector2.new(0.5, 1),
 				FontFace = Theme.font.heading,
 				TextColor3 = Theme.color.ink,
-				Text = "Free spins: 1 a day, +1 every 3 heists, +1 every 20 min played. Never sold.",
+				Text = function()
+					if jackpotToday() then
+						return "Jackpot already won today (1 a day). Free spins: +1 every 5 min, +1 every 3 heists."
+					end
+					local left = math.max(1, WheelConfig.JACKPOT_GUARANTEE_SPIN - spinsToday())
+					return `JACKPOT guaranteed within {left} more spin{if left == 1 then "" else "s"} today! Free spins every 5 min.`
+				end,
 			}),
 		},
 	})

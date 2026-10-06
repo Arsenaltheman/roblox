@@ -1,6 +1,7 @@
 --!strict
--- The Prize Wheel. Spins are free only: one each UTC day, one per WHEEL.HEISTS_PER_SPIN delivered
--- heists and one per 20 minutes played (stored up to MAX_STORED). They are never sold for Robux.
+-- The Prize Wheel. Spins are free only: one each UTC day, one per HEISTS_PER_SPIN delivered heists
+-- and one per 5 minutes played (stored up to MAX_STORED). They are never sold for Robux. Jackpot:
+-- at most one per UTC day, guaranteed by the JACKPOT_GUARANTEE_SPIN-th spin of the day.
 -- The server rolls and grants the prize first; the client's spin animation only shows the result.
 
 local Players = game:GetService("Players")
@@ -24,6 +25,15 @@ end
 
 local function mirror(player: Player)
 	player:SetAttribute("Spins", spins(player))
+	local d = Registry.Data.get(player)
+	if d then
+		local today = WheelConfig.day(os.time())
+		player:SetAttribute("JackpotToday", (d.Stats.JackpotDay or 0) == today)
+		player:SetAttribute(
+			"SpinsToday",
+			if (d.Stats.SpinDay or 0) == today then d.Stats.SpinsToday or 0 else 0
+		)
+	end
 end
 
 function Wheel.addSpins(player: Player, count: number, reason: string)
@@ -89,7 +99,18 @@ local function spin(player: Player)
 	end
 	spinning[player] = true
 	d.Stats.Spins -= 1
-	local index = WheelConfig.pick(random:NextNumber())
+	-- Daily jackpot rules: at most one per UTC day, and guaranteed by the Nth spin of the day.
+	local today = WheelConfig.day(os.time())
+	if (d.Stats.SpinDay or 0) ~= today then
+		d.Stats.SpinDay = today
+		d.Stats.SpinsToday = 0
+	end
+	local jackpotToday = (d.Stats.JackpotDay or 0) == today
+	local index = WheelConfig.pickFor(random:NextNumber(), jackpotToday, d.Stats.SpinsToday or 0)
+	d.Stats.SpinsToday = (d.Stats.SpinsToday or 0) + 1
+	if WheelConfig.segments[index].id == WheelConfig.JACKPOT_ID then
+		d.Stats.JackpotDay = today
+	end
 	local segment = WheelConfig.segments[index]
 	local prizeText = grant(player, segment)
 	d.Stats.WheelSpins = (d.Stats.WheelSpins or 0) + 1
@@ -129,7 +150,7 @@ function Wheel.start()
 					d.Stats.WheelPlay = (d.Stats.WheelPlay or 0) + 60
 					if d.Stats.WheelPlay >= WheelConfig.PLAY_SECONDS_PER_SPIN then
 						d.Stats.WheelPlay = 0
-						Wheel.addSpins(player, 1, "20 minutes played")
+						Wheel.addSpins(player, 1, "5 minutes played")
 					end
 				end
 			end

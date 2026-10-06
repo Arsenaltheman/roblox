@@ -35,6 +35,33 @@ return function()
 			end
 		end)
 
+		test.case("jackpot: at most one a day, guaranteed by the Nth spin", function()
+			local jp
+			for i, s in Wheel.segments do
+				if s.id == Wheel.JACKPOT_ID then
+					jp = i
+				end
+			end
+			-- Already hit today: jackpot can never come up, other odds still sum to 100.
+			local sum = 0
+			for i, p in Wheel.oddsFor(true, 3) do
+				sum += p
+				if i == jp then
+					check.equal(p, 0)
+				end
+			end
+			check.is_true(math.abs(sum - 100) < 1e-9)
+			for k = 0, 99 do
+				check.is_true(Wheel.pickFor(k / 100, true, 20) ~= jp)
+			end
+			-- Not hit yet and this is the guarantee spin: always the jackpot.
+			for k = 0, 99 do
+				check.equal(Wheel.pickFor(k / 100, false, Wheel.JACKPOT_GUARANTEE_SPIN - 1), jp)
+			end
+			-- Before that: normal odds.
+			check.equal(Wheel.oddsFor(false, 0)[jp], Wheel.odds()[jp])
+		end)
+
 		test.case("daily spin resets on the UTC day boundary", function()
 			check.equal(Wheel.day(86399), 0)
 			check.equal(Wheel.day(86400), 1)
