@@ -31,6 +31,8 @@ export type IncomeContext = {
 	incomeScale: number?,
 	-- Completed Almanac rarity sets.
 	almanacSets: number?,
+	-- The critter following the player around (Equipped.companion), if any.
+	companion: { tier: number, mutation: string? }?,
 }
 
 export type CritterLike = {
@@ -65,6 +67,19 @@ function Economy.critterIncome(critter: CritterLike): number
 	return Economy.income(critter.tier) * Mutations.multiplierOf(critter.mutation)
 end
 
+-- Free boost from a companion: one step per rarity (1..8), one more if mutated.
+function Economy.companionBoost(companion: { tier: number, mutation: string? }?): number
+	if not companion then
+		return 0
+	end
+	local tier = math.clamp(companion.tier, 1, Rarities.maxTier)
+	local steps = Rarities.indexOf(Rarities.forTier(tier).id)
+	if companion.mutation and companion.mutation ~= "" then
+		steps += 1
+	end
+	return Config.companionBoostPerRarity * steps
+end
+
 -- Total multiplier on base income. Free boosts add (capped); paid multipliers multiply.
 function Economy.multiplier(ctx: IncomeContext): number
 	local free = 0
@@ -72,6 +87,7 @@ function Economy.multiplier(ctx: IncomeContext): number
 	if ctx.eventActive then
 		free += Config.eventBoost
 	end
+	free += Economy.companionBoost(ctx.companion)
 	free = math.min(free, Config.freeBoostCap)
 
 	local paid = 1

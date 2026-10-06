@@ -35,6 +35,7 @@ Status: ✅ built · 🔨 being built now · 📅 next · 🧊 later.
 | Speed training to reach harder biomes | **Speed Boots** (10 levels; the panel shows which zones you can outrun) | ✅ |
 | Harder biomes with better eggs | Cactus Flats → Rattlesnake Canyon → Gold Mine → Ghost Town | ✅ |
 | Hatch eggs into pets | Eggs + Hatchery with reveal cinematics | ✅ |
+| Pets that follow you and boost you | **Companion**: pick any critter you own (MORE → Wardrobe → COMPANION); it trots behind you, Legendary+ sparkle, +3% cash per rarity step (+3% mutated), inside the free-boost cap; it still earns in its pen | ✅ |
 | **Weekly bosses** | **Bandit King** boss raid in Ghost Town (server co-op, big loot) (a server event, about every hour or two) | ✅ |
 
 ### From Grow a Garden (offline progress and check-ins)

@@ -1371,6 +1371,13 @@ local function nextHint(): string
 	if not anyGear and (s.cash or 0) >= 2500 and heists < 10 then
 		return "New: buy a SMOKE BOMB in the Shop's GEAR tab!"
 	end
+	local critterCount = 0
+	for _ in s.critters or {} do
+		critterCount += 1
+	end
+	if (s.equipped or {}).companion == nil and critterCount >= 3 and heists >= 2 then
+		return "Pick a COMPANION in MORE → Wardrobe: it follows you and boosts your cash!"
+	end
 	return ""
 end
 

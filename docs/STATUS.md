@@ -28,6 +28,7 @@ All pushed to `main`; 140 unit tests and every check pass. Still never run in St
 - **Instant Hatch** (9 R$) on waiting eggs.
 - **Premium perks** (x1.1 income, top hat), **invite friends** card, **group reward** (set the group id), **Starter Pack offer** at a calm moment after the tutorial.
 - 30-day streak → Legendary critter + "Regular" title; the daily panel says what tomorrow brings.
+- **Companions:** any critter you own can follow you around (MORE → Wardrobe → COMPANION) for +3% cash per rarity step (+3% mutated, within the free cap); everyone sees it, Legendary+ sparkle.
 - Private servers: the host can switch stealing off. Everyone's ranch is locked 30 s after joining.
 - Nothing prohibited: no like/favorite rewards, no fake timers, odds shown, PolicyService gates.
 
