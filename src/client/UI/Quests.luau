@@ -505,9 +505,9 @@ function Quests.tracker(visible: () -> boolean): Instance
 	local pulse = source(0)
 	return create("TextButton")({
 		Name = "TrailTracker",
-		Size = UDim2.fromOffset(270, 0),
+		Size = UDim2.fromOffset(240, 0),
 		AutomaticSize = Enum.AutomaticSize.Y,
-		Position = UDim2.new(0, 112, 0, 120),
+		Position = UDim2.new(0, 112, 0, 230),
 		BackgroundColor3 = Color3.new(0, 0, 0),
 		BackgroundTransparency = 0.45,
 		AutoButtonColor = false,

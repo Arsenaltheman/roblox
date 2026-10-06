@@ -77,8 +77,9 @@ function EventBanner.build(): Instance
 		Size = function()
 			return if hot() then UDim2.fromOffset(330, 92) else UDim2.fromOffset(230, 44)
 		end,
-		Position = UDim2.new(1, -16, 0, 320),
-		AnchorPoint = Vector2.new(1, 0),
+		-- Left side, under the Trail tracker (the right side holds badges and the action button).
+		Position = UDim2.new(0, 112, 0, 340),
+		AnchorPoint = Vector2.new(0, 0),
 		BackgroundColor3 = Color3.new(1, 1, 1),
 		-- Kept out of the way until the tutorial is done (fewer things to read in the first minutes).
 		Visible = function()

@@ -35,6 +35,7 @@ local Theme = require("./Theme")
 local create = Vide.create :: any
 local show = Vide.show
 local indexes = Vide.indexes
+local values = Vide.values :: any
 local derive = Vide.derive
 local source = Vide.source
 local spring = Vide.spring
@@ -191,7 +192,7 @@ end
 
 local function readyEggs(): number
 	local count = 0
-	local now = os.time()
+	local now = Workspace:GetServerTimeNow()
 	for _, egg in state().eggs or {} do
 		if egg.hatchAt <= now then
 			count += 1
@@ -525,15 +526,18 @@ local function toasts(): Instance
 			Padding = UDim.new(0, 6),
 			VerticalAlignment = Enum.VerticalAlignment.Bottom,
 			HorizontalAlignment = Enum.HorizontalAlignment.Center,
+			SortOrder = Enum.SortOrder.LayoutOrder,
 		}),
-		indexes(Store.toasts, function(toast)
+		-- Keyed by value so each toast keeps its own row as older ones expire.
+		values(Store.toasts, function(toast, i)
 			return text({
+				LayoutOrder = i,
 				Size = UDim2.fromOffset(540, 40),
 				BackgroundTransparency = 0.05,
 				BackgroundColor3 = Theme.color.paper,
 				FontFace = Theme.font.heading,
 				Text = function()
-					return toast().text
+					return toast.text
 				end,
 				Components.corner(UDim.new(0, 12)),
 				Components.stroke(3),
@@ -554,9 +558,10 @@ local function announcements(): Instance
 		create("UIListLayout")({
 			Padding = UDim.new(0, 6),
 			HorizontalAlignment = Enum.HorizontalAlignment.Center,
+			SortOrder = Enum.SortOrder.LayoutOrder,
 		}),
-		indexes(Store.announcements, function(item)
-			local kind = item().kind
+		values(Store.announcements, function(item, i)
+			local kind = item.kind
 			local color = if Rarities.byId[kind]
 				then Theme.rarityColor(kind)
 				elseif kind == "golden" or kind == "luck" then Theme.color.gold
@@ -569,13 +574,14 @@ local function announcements(): Instance
 				scale(1)
 			end)
 			return text({
+				LayoutOrder = i,
 				Size = UDim2.fromOffset(740, 46),
 				BackgroundTransparency = 0,
 				BackgroundColor3 = color,
 				TextColor3 = Theme.color.white,
 				FontFace = Theme.font.title,
 				Text = function()
-					return item().text
+					return item.text
 				end,
 				create("UIScale")({ Scale = s }),
 				Components.corner(UDim.new(0, 14)),
@@ -686,11 +692,11 @@ local function shopMenu(): Instance
 end
 
 local function eggsMenu(): Instance
-	local clock = source(os.time())
+	local clock = source(Workspace:GetServerTimeNow())
 	local alive = true
 	task.spawn(function()
 		while alive do
-			clock(os.time())
+			clock(Workspace:GetServerTimeNow())
 			task.wait(1)
 		end
 	end)
@@ -733,7 +739,7 @@ local function eggsMenu(): Instance
 							return if egg().hatchAt <= clock() then "HATCH!" else "..."
 						end,
 						onClick = function()
-							if egg().hatchAt <= os.time() then
+							if egg().hatchAt <= Workspace:GetServerTimeNow() then
 								Net.request("Hatch", i)
 							end
 						end,
@@ -1366,11 +1372,15 @@ local function wheelMenu(): Instance
 	-- Live odds for the player's next spin under the daily jackpot rules.
 	local jackpotToday = source(localPlayer:GetAttribute("JackpotToday") == true)
 	local spinsToday = source((localPlayer:GetAttribute("SpinsToday") :: number?) or 0)
-	localPlayer:GetAttributeChangedSignal("JackpotToday"):Connect(function()
+	local jackpotConn = localPlayer:GetAttributeChangedSignal("JackpotToday"):Connect(function()
 		jackpotToday(localPlayer:GetAttribute("JackpotToday") == true)
 	end)
-	localPlayer:GetAttributeChangedSignal("SpinsToday"):Connect(function()
+	local spinsTodayConn = localPlayer:GetAttributeChangedSignal("SpinsToday"):Connect(function()
 		spinsToday((localPlayer:GetAttribute("SpinsToday") :: number?) or 0)
+	end)
+	Vide.cleanup(function()
+		jackpotConn:Disconnect()
+		spinsTodayConn:Disconnect()
 	end)
 	local odds = derive(function()
 		return WheelConfig.oddsFor(jackpotToday(), spinsToday())
@@ -1542,7 +1552,7 @@ local function runBanner(): any
 		return text({
 			Name = "RunBanner",
 			Size = UDim2.fromOffset(560, 64),
-			Position = UDim2.new(0.5, 0, 0, 150),
+			Position = UDim2.new(0.5, 0, 0, 222),
 			AnchorPoint = Vector2.new(0.5, 0),
 			BackgroundTransparency = 0,
 			BackgroundColor3 = Theme.color.red,
@@ -1584,9 +1594,13 @@ function App.build(scale: () -> number): Instance
 		Name = "CritterExpressUI",
 		ResetOnSpawn = false,
 		ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
+		-- A UIScale also scales the frame's own size, so the frame is sized 1/scale to still cover the
+		-- whole screen; everything inside is laid out in 1280x720 design pixels.
 		create("Frame")({
 			Name = "Root",
-			Size = UDim2.fromScale(1, 1),
+			Size = function()
+				return UDim2.fromScale(1 / scale(), 1 / scale())
+			end,
 			BackgroundTransparency = 1,
 			create("UIScale")({ Scale = scale }),
 			cashPills(),
@@ -1608,7 +1622,10 @@ function App.build(scale: () -> number): Instance
 		}),
 		create("Frame")({
 			Name = "Menus",
-			Size = UDim2.fromScale(1, 1),
+			Size = function()
+				return UDim2.fromScale(1 / scale(), 1 / scale())
+			end,
+			create("UIScale")({ Scale = scale }),
 			BackgroundTransparency = 1,
 			ZIndex = 10,
 			show(function()

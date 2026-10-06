@@ -160,7 +160,7 @@ function Components.idle(amplitude: number?, period: number?): Child
 		local alive = true
 		task.spawn(function()
 			local gui = instance :: GuiObject
-			while alive and gui.Parent do
+			while alive do
 				tween(
 					gui,
 					(period or 1.6) / 2,
@@ -721,7 +721,7 @@ function Components.sunburst(color: Color3?, rays: number?, size: UDim2?): Insta
 			local gui = instance :: GuiObject
 			local alive = true
 			task.spawn(function()
-				while alive and gui.Parent do
+				while alive do
 					gui.Rotation = (gui.Rotation + 0.25) % 360
 					task.wait()
 				end
@@ -757,7 +757,7 @@ function Components.sparkles(count: number?, color: Color3?): Instance
 					local alive = true
 					task.spawn(function()
 						task.wait(i * 0.37)
-						while alive and label.Parent do
+						while alive do
 							label.Position = UDim2.fromScale(math.random(), math.random())
 							tween(scale, 0.35, { Scale = 0.6 + math.random() * 0.8 }, Enum.EasingStyle.Back)
 							task.wait(0.6 + math.random() * 0.6)
@@ -815,7 +815,7 @@ function Components.mascot(props: {
 			local alive = true
 			local seed = math.random() * 10
 			task.spawn(function()
-				while alive and viewport.Parent do
+				while alive do
 					local t = os.clock()
 					model:PivotTo(
 						CFrame.new(0, math.abs(math.sin(t * 3 + seed)) * 0.5, 0)

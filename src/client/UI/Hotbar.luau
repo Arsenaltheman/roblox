@@ -66,7 +66,7 @@ function Hotbar.build(): Instance
 			create("TextButton")({
 				Name = gear.key,
 				LayoutOrder = i,
-				Size = UDim2.fromOffset(74, 74),
+				Size = UDim2.fromOffset(62, 62),
 				BackgroundTransparency = 1,
 				AutoButtonColor = false,
 				Text = "",
@@ -148,7 +148,7 @@ function Hotbar.build(): Instance
 			FillDirection = Enum.FillDirection.Horizontal,
 			HorizontalAlignment = Enum.HorizontalAlignment.Center,
 			VerticalAlignment = Enum.VerticalAlignment.Bottom,
-			Padding = UDim.new(0, 12),
+			Padding = UDim.new(0, 8),
 			SortOrder = Enum.SortOrder.LayoutOrder,
 		}),
 		buttons :: any,

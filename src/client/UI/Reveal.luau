@@ -196,6 +196,9 @@ local function buildEgg(parent: Instance, color: Color3): Frame
 	return egg
 end
 
+-- The reveal on screen right now, so a failed one can be cleaned up.
+local current: { root: Instance?, blur: Instance? } = {}
+
 local function play(data: any)
 	skip = false
 	local reduced = Quality.reducedMotion()
@@ -210,6 +213,7 @@ local function play(data: any)
 	local isCritter = data.species ~= nil
 
 	local root = make("Frame", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, ZIndex = 50 }, gui)
+	current.root = root
 	local dim = make("TextButton", {
 		Size = UDim2.fromScale(1, 1),
 		BackgroundColor3 = Color3.new(0, 0, 0),
@@ -222,6 +226,7 @@ local function play(data: any)
 	end)
 	tween(dim, 0.25, { BackgroundTransparency = 0.35 })
 	local blur = make("BlurEffect", { Size = 0 }, Lighting)
+	current.blur = blur
 	tween(blur, 0.3, { Size = 14 })
 
 	-- Build-up
@@ -404,7 +409,14 @@ local function pump()
 			local ok, err = pcall(play :: any, data)
 			if not ok then
 				warn("[Reveal] " .. tostring(err))
+				-- Never leave the screen blurred or covered after a failed reveal.
+				for _, leftover in { current.root, current.blur } do
+					if leftover then
+						(leftover :: Instance):Destroy()
+					end
+				end
 			end
+			current.root, current.blur = nil, nil
 		end
 		playing = false
 	end)
